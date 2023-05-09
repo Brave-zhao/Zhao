@@ -1,0 +1,538 @@
+body, div, dl, dt, dd, ul, ol, li, h1, h2, h3, h4, h5, h6, pre, code, form, fieldset, legend, input, textarea, p, blockquote, th, td {
+    margin: 0;
+    padding: 0;
+}
+body {
+    font: 14px Arial,"PingFang SC","Hiragino Sans GB",STHeiti,"Microsoft YaHei","WenQuanYi Micro Hei",sans-serif;
+}
+ol, ul {
+    list-style:none
+}
+sup {
+    vertical-align:text-top
+}
+sub {
+    vertical-align:text-bottom
+}
+input, textarea, select {
+    font-family:inherit;
+    font-size:inherit
+}
+
+body {
+    font-family: 'Lucida Sans', 'PingFang SC', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
+}
+
+div,span,input, textarea, button {
+    /* box-sizing: border-box; */
+    font-weight: inherit;
+}
+
+span {
+    display: inline-block;
+    font-weight: inherit;
+}
+small {
+    font-size: 12px;
+}
+
+input,
+button,
+textarea {
+    outline: 0 none;
+    background-color: transparent;
+    border: none;
+}
+
+button {
+    padding-top: 0;
+    padding-bottom: 0;
+    cursor: pointer;
+}
+
+.w0 {
+    width: 0;
+}
+.h0 {
+    height: 0;
+}
+.w100 {
+    width: 100%;
+}
+.h100 {
+    height: 100%;
+}
+.wh100 {
+    width: 100%;
+    height: 100%;
+}
+.fit-cover {
+    object-fit: cover;
+}
+.fit-contain {
+    object-fit: contain;
+}
+
+/* margin 相关的类 */
+
+/* ================================== 右margin ========================= */
+.mr-2 {
+    margin-right: 2px;
+}
+.mr-4 {
+    margin-right: 4px;
+}
+.mr-5 {
+    margin-right: 5px;
+}
+.mr-10 {
+    margin-right: 10px;
+}
+.mr-15 {
+    margin-right: 15px;
+}
+.mr-20 {
+    margin-right: 20px;
+}
+.mr-30 {
+    margin-right: 30px;
+}
+.mr-25 {
+    margin-right: 25px;
+}
+.mr-auto {
+    margin-right: auto;
+}
+.mr-52 {
+    margin-right: 52px;
+}
+
+/* ============================ 左margin ===================================*/
+.ml-2 {
+    margin-left: 2px;
+}
+.ml-5 {
+    margin-left: 5px;
+}
+.ml-10 {
+    margin-left: 10px;
+}
+.ml-15 {
+    margin-left: 15px;
+}
+.ml-20 {
+    margin-left: 20px;
+}
+.ml-25 {
+    margin-left: 25px;
+}
+.ml-30 {
+    margin-left: 30px;
+}
+.ml-35 {
+    margin-left: 35px;
+}
+.ml-auto {
+    margin-left: auto;
+}
+
+
+/* ============================= 下margin ========================== */
+.mb-2 {
+    margin-bottom: 2px;
+}
+.mb-4 {
+    margin-bottom: 4px;
+}
+.mb-5 {
+    margin-bottom: 5px;
+}
+.mb-10 {
+    margin-bottom: 10px;
+}
+.mb-15 {
+    margin-bottom: 15px;
+}
+.mb-20 {
+    margin-bottom: 20px;
+}
+.mb-25 {
+    margin-bottom: 25px;
+}
+.mb-30 {
+    margin-bottom: 30px;
+}
+.mb-35 {
+    margin-bottom: 35px;
+}
+.mb-40 {
+    margin-bottom: 40px;
+}
+.mb-auto {
+    margin-bottom: auto;
+}
+
+/* ====================== 上margin ================================= */
+.mt-2 {
+    margin-top: 2px;
+}
+.mt-5 {
+    margin-top: 5px;
+}
+.mt-7 {
+    margin-top: 7px;
+}
+.mt-10 {
+    margin-top: 10px;
+}
+.mt-15 {
+    margin-top: 15px;
+}
+.mt-20 {
+    margin-top: 20px;
+}
+.mt-30 {
+    margin-top: 30px;
+}
+.mt-35 {
+    margin-top: 35px;
+}
+.mt-50 {
+    margin-top: 50px;
+}
+.mt-auto {
+    margin-top: auto;
+}
+
+/* ========================= 组合margin ====================================== */
+.m-inline-10 {
+    margin-left: 10px;
+    margin-right: 10px;
+}
+.m-block-10 {
+    margin-top: 10px;
+    margin-bottom: 10px;
+}
+.m-inline-auto {
+    margin-left: auto;
+    margin-right: auto;
+}
+.m-block-auto {
+    margin-top: auto;
+    margin-bottom: auto;
+}
+.m-auto {
+    margin: auto;
+}
+/* endregion */
+
+
+/* ============================= 结构 flex 对齐相关 ======================== */
+.flex {
+    display: flex;
+}
+.flex-wrap {
+    flex-wrap: wrap;
+}
+.flex-column {
+    flex-direction: column;
+}
+.flex-center {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.flex-start-center {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+}
+.flex-between-center {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.flex-shrink-0 {
+    flex-shrink: 0;
+}
+.flex-grow-1 {
+    /*width: 0;*/
+    flex-grow: 1;
+}
+.align-self_start {
+    align-self: flex-start;
+}
+.align-self_end {
+    align-self: flex-end;
+}
+
+/* ===================================== 结构 定位 居中相关 ====================================================== */
+.pos-fixed {
+    position: fixed;
+}
+.pos-rel {
+    position: relative;
+}
+.pos-left-center {
+    position: absolute;
+    top: 50%;
+    left: 0;
+    transform: translateY(-50%);
+}
+.pos-right-center {
+    position: absolute;
+    top: 50%;
+    right: 0;
+    transform: translateY(-50%);
+}
+.pos-center {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%， -50%);
+}
+.float-left {
+    float: left;
+}
+
+
+.p-0 {
+    padding: 0;
+}
+
+.border-none {
+    border: none;
+}
+
+.pt-10 {
+    padding-top: 10px;
+}
+
+/* ================================= 字体颜色 ========================== */
+.color-main {
+    color: #43B498;
+}
+.color-gray {
+    color: #646A88;
+}
+.color-lightgray {
+    color: #C2C2C2;
+}
+.color-black {
+    color: #333333
+}
+.color-white {
+    color: #fff;
+}
+
+.color-b3b3b3 {
+    color: #B3B3B3;
+}
+.color-028CFE {
+    color: #028CFE;
+}
+.color-4B6DFF {
+    color: #4B6DFF;
+}
+.color-bbb {
+    color: #bbb;
+}
+
+.color-2E8BF2 {
+    color: #2E8BF2;
+}
+.color-FF9C00 {
+    color: #FF9C00;
+}
+.color-EB5353 {
+    color: #EB5353;
+}
+
+.color-111 {
+    color: #111;
+}
+.color-222 {
+    color: #222;
+}
+.color-333 {
+    color: #333;
+}
+.color-444 {
+    color: #444;
+}
+.color-555 {
+    color: #555;
+}
+.color-666 {
+    color: #666;
+}
+.color-777 {
+    color: #777;
+}
+.color-888 {
+    color: #888;
+}
+.color-999 {
+    color: #999;
+}
+
+/* ============================= 背景色 ===================================== */
+.bg-main {
+    background-color: #43B498;
+}
+.bg-7099FF {
+    background-color: #7099FF;
+}
+.bg-ccc {
+    background-color: #ccc;
+}
+.bg-fff {
+    background-color: #fff;
+}
+
+
+/* ============================ 辅助线，方便查看标签结构位置 */
+.box-shadow {
+    box-shadow: 0 0 1px rgba(0, 0, 0, .3);
+}
+
+
+/* ============================= 行内内容文本对齐方式 ====================== */
+.text-center {
+    text-align: center;
+}
+.text-right {
+    text-align: right;
+}
+.text-left {
+    text-align: left;
+}
+
+/* ============================= 常规字号 ================================ */
+.font-10 {
+    font-size: 10px;
+}
+.font-11 {
+    font-size: 11px;
+}
+.font-12 {
+    font-size: 12px;
+}
+.font-13 {
+    font-size: 13px;
+}
+.font-14 {
+    font-size: 14px;
+}
+.font-15 {
+    font-size: 15px;
+}
+.font-16 {
+    font-size: 16px;
+}
+.font-17 {
+    font-size: 17px;
+}
+.font-18 {
+    font-size: 18px;
+}
+.font-19 {
+    font-size: 19px;
+}
+.font-20 {
+    font-size: 20px;
+}
+.font-30 {
+    font-size: 30px;
+}
+.font-40 {
+    font-size: 40px;
+}
+.font-italic {
+    font-style: italic;
+}
+
+.line-1 {
+    line-height: 1;
+}
+
+/* =================== 文本加粗 ===================== */
+.font-bold {
+    font-weight: bold;
+}
+.font-normal {
+    font-weight: normal;
+}
+
+/* =============== 阻止换行 ========================= */
+.text-nowrap {
+    white-space: nowrap;
+}
+
+/* ===================== 单行省略 =================== */
+.single-ellipsis {
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+[hidden] {
+    display: none;
+}
+
+.collapse-transition {
+    transition: height .3s;
+}
+
+
+
+/* ================================ 项目用到的初始化 ==================================== */
+
+/* region # el-scrollbar 纵向滚动无故出现 */
+.el-scrollbar__wrap {
+    /* overflow: auto; */
+    height: calc(100% + 17px);
+}
+/* endregion */
+
+
+/* region # 修改 el-select 组件,自定义了高度时，下拉内容不能正常显示全部，无故被裁剪掉部分内容 */
+.el-select-dropdown__wrap {
+    padding-bottom: 17px;
+}
+/* endregion */
+
+
+/* region # 空白dialog 弹框，外部再加个flex-center完美 */
+.kb-dialog {
+    margin-top: 44px !important;
+    background-color: transparent;
+    width: auto;
+}
+    /* title */
+.kb-dialog .el-dialog__header {
+    display: none;
+}
+.kb-dialog .el-dialog__title {
+}
+.kb-dialog .el-dialog__headerbtn .el-dialog__close {
+}
+    /* body */
+.kb-dialog .el-dialog__body {
+    padding: 0;
+}
+/* endregion */
+
+
+/* 统一 取消扁平图字体图标 的大小与颜色 */
+.iconOAkaoqin-quxiao-1 {
+    font-size: 22px;
+    line-height: 1;
+    color: rgb(204, 204, 204);
+}
+
+
+.isOverlapped {
+    align-self: flex-start;
+    margin-top: 10px;
+}

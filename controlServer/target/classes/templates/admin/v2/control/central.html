@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="renderer" content="webkit">
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, minimum-scale=0.5, maximum-scale=2.0, user-scalable=yes" />
+    <title>控制中心</title>
+    <link rel="icon" href="/public/images/icon.png" />
+    <link rel="stylesheet" href="/public/element-ui-2.15.9/theme/index.css">
+    <link rel="stylesheet" href="/public/css/components/common.css">
+    <link rel="stylesheet" href="/public/css/common/admin-common.css">
+    <link rel="stylesheet" href="/public/font-awesome/css/font-awesome.min.css">
+    <link rel="stylesheet" href="/public/ali-icon/control/iconfont.css">
+    <link rel="stylesheet" href="/public/css/common/custom-element.css">
+
+    <link rel="stylesheet" href="/public/css/admin/v2/control/central.css">
+
+    <style>
+        [v-cloak] {
+            display: none !important;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="v2-central-container h100 custom-relative" id="app" v-cloak>
+        <div class="h100">
+            <div class="body wh100">
+                <!-- 地点筛选 -->
+                <div class="place h100 flex column shrink-0">
+                    <!-- 搜索，切换 -->
+                    <div class="search-switch-content shrink-0">
+                        <!-- 切换 -->
+                        <div>
+                            <div class="flex switch-classroom pointer">
+                                <div class="single" @click="changeClassroomType(0)"
+                                    :class="{ 'active-bg': classrommType === 0 }">
+                                    <span>{{ $t("v2ctml1") }}</span>
+                                </div>
+                                <div class="many" @click="changeClassroomType(1)"
+                                    :class="{ 'active-bg': classrommType === 1 }">
+                                    <span>{{ $t("v2ctml2") }}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- 搜索 -->
+                        <div class="place-search-content">
+                            <div class="flex place-search">
+                                <i class="iconfont iconsousuo2 active-color"></i>
+                                <el-input type="text" :placeholder="$t('v2ctml3')" v-model="placeSearch"></el-input>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="place-line-content">
+                        <div class="place-line"></div>
+                    </div>
+                    <!-- 地点树 -->
+                    <div class="place-content">
+                        <el-scrollbar class="custom-scrollbar">
+                            <!-- 单课室 -->
+                            <el-tree v-if="classrommType == 0"
+                                class="left-tree custom-tree el-tree--highlight-current central-tree central-tree-single"
+                                :props="props" :filter-node-method="filterNode" ref="placeTree" :indent="25"
+                                @node-click="changePlaceNode" :default-expanded-keys="defaultExpandedKeys"
+                                :current-node-key="placeId" node-key="id" :data="placeDataList">
+                            </el-tree>
+                            <!-- 多课室 -->
+                            <el-tree v-else class="left-tree custom-tree el-tree--highlight-current central-tree"
+                                :props="props" :filter-node-method="filterNode" :show-checkbox="true" ref="placeTree"
+                                @check="checkChangePlaceNode" :indent="25" :default-expanded-keys="defaultExpandedKeys"
+                                :current-node-key="placeId" node-key="id" :data="placeDataList">
+                            </el-tree>
+                        </el-scrollbar>
+                    </div>
+                </div>
+
+                <!-- 数据详情 -->
+                <div class="detail h100 flex column" v-if="!showTemplateDialog">
+                    <!-- 设置 -->
+                    <div class="seting shrink-0" v-if="showSeting">
+                        <el-tooltip class="item" effect="dark" :content="$t('v2ctml4')" placement="top">
+                            <i class="iconfont icona-shezhi_fuzhi font-24 pointer" @click="changSeting"></i>
+                        </el-tooltip>
+                    </div>
+
+                    <div class="wh100 classroom-type-0 flex column" v-show="classrommType == 0">
+                        <!-- 数据统计 -->
+                        <div class="statistics-content shrink-0">
+                            <div class="statistics-list flex">
+                                <div v-for="(data, key) in statisticsDataText"
+                                    :class="['data-' + data.type, {'statistics-active': key == placePage.status}]"
+                                    :key="key" class="statistics-item relative">
+                                    <div class="statistics-item-image">
+                                        <img class="wh100 vertical-bottom"
+                                            :src="$global.fullStaticUrl('public/images/admin/v2/control/' + 'data-' + data.type + '.png')"
+                                            alt="">
+                                    </div>
+
+                                    <div class="statistics-data-content absolute wh100">
+                                        <div class="statistics-data h100 flex column"
+                                            @click="selectStatisticsStatus(key)">
+                                            <div class="statistics-data-value text">
+                                                <span>{{$t("statisticsDataText")[key]}}</span>
+                                                <el-tooltip class="item" effect="dark" :content="$t('v2ctml8')"
+                                                    placement="top">
+                                                    <i v-if="data.type == 'fault'"
+                                                        class="iconfont iconi statistics-data-value__icon pointer"></i>
+                                                </el-tooltip>
+                                            </div>
+                                            <div class="statistics-data-value num"><span>{{ statisticsData[key] || 0
+                                                    }}</span>
+                                            </div>
+                                            <div class="statistics-data-value total">
+                                                <el-progress :percentage="data.value" :stroke-width="12" color="#fff">
+                                                </el-progress>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 地点详情 -->
+                        <div class="place-detail-content flex column">
+                            <div class="wh100">
+                                <div v-if="!placeDetailList.length"
+                                    class="h100 place-detail-placeholder flex justify-center">{{ $t("null[0]") }}</div>
+                                <el-scrollbar v-else class="custom-scrollbar place-detail-scrollbar">
+                                    <div class="place-detail-list flex">
+                                        <div v-for="data in placeDetailList" :key="data.id"
+                                            class="place-detail-item pointer" @click="showTemplate(data, $event)">
+                                            <div class="wh100 relative">
+                                                <div class="place-detail-item-image w100">
+                                                    <img class="wh100 vertical-bottom"
+                                                        :src="$global.fullStaticUrl('public/images/admin/v2/control/' + 'item-' + placeStatus[data.placeStatus].url + '.png')"
+                                                        alt="">
+                                                </div>
+
+                                                <div class="place-detail-data-content absolute wh100">
+                                                    <div class="place-detail-data flex column wh100">
+                                                        <!-- 地点名称 -->
+                                                        <div
+                                                            class="place-detail-data-value place-text font-24 weight-500">
+                                                            <span>{{ data.name }}</span>
+                                                        </div>
+                                                        <!-- 地点状态 -->
+                                                        <div class="place-detail-data-value place-status w100 ellipsis">
+                                                            <span class="place-detail-data-value__text"
+                                                                :title="placeStatusText(data)">{{ placeStatusText(data)
+                                                                }}
+                                                            </span>
+                                                        </div>
+                                                        <!-- 地点设备状态 -->
+                                                        <div class="place-detail-data-value place-icon w100 flex">
+                                                            <div class="place-detail-data-value__item relative"
+                                                                v-for="(icon, iconIndex) in placeIconList"
+                                                                :key="icon.type">
+                                                                <i :title="$t('placeIconListText')[iconIndex] + ' - ' + placeDevStatus[data.deviceStatus[icon.type] || 0].status"
+                                                                    :class="['iconfont font-24', icon.icon, placeDevStatus[data.deviceStatus[icon.type] || 0].name ]"></i>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </el-scrollbar>
+                            </div>
+
+                            <div class="tr-pagination shrink-0 justify-center">
+                                <button type="button" class="tr-pagination__btn" @click="jumpFirst">
+                                    {{ $t("page.f") }}
+                                </button>
+                                <el-pagination class="tr-pagination__page" layout="prev, pager, next"
+                                    :current-page="placePage.pageNum" :page-size="placePage.pageSize"
+                                    :total="placePageTotal" @current-change="changePage">
+                                </el-pagination>
+                                <button type="button" class="tr-pagination__btn" @click="jumpLast">
+                                    {{ $t("page.l") }}
+                                </button>
+
+                                <div class="tr-pagination__line"></div>
+                                <div class="tr-pagination__jumper">
+                                    <span>{{ $t("page.to") }}</span>
+                                    <input type="number" class="tr-pagination__jumper--input" v-model="indexInput"
+                                        @keyup.enter="jumpTo"></input>
+                                    <span>{{ $t("page.p") }}</span>
+
+                                    <button type="button" class="tr-pagination__jumper--btn" @click="jumpTo">{{
+                                        $t("page.ok") }}</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div v-show="classrommType == 1" class="classroom-type-1 flex">
+                        <!-- 选择 -->
+                        <div class="select-multiple-classroom flex column">
+                            <!-- 数据统计 -->
+                            <div class="statistics-content shrink-0 bg-302d39">
+                                <div class="statistics-list-content">
+                                    <div class="statistics-list flex">
+                                        <div v-for="(data, key) in statisticsDataText" :class="'data-' + data.type"
+                                            :key="key" class="statistics-item relative">
+                                            <div class="statistics-data h100 flex column">
+                                                <div class="statistics-data-value num" :style="{'color': data.color}">
+                                                    <span>{{ multipleStatisticsData[key] || 0 }}</span>
+                                                </div>
+                                                <div class="statistics-data-value text">
+                                                    <span>{{ data.text }}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- 选中列表 -->
+                            <div class="classroom-select-content bg-302d39">
+                                <div class="classroom-select flex column wh100">
+                                    <div class="classroom-select-title relative">
+                                        <span>{{ $t("v2ctml5") }}</span>
+                                    </div>
+                                    <div class="classroom-select-list-content">
+                                        <el-scrollbar class="custom-scrollbar">
+                                            <div v-show="!checkedPlaceList.length" class="classroom-select-empty">
+                                                <el-empty :description="$t('v2ctml5')" class="wh100"></el-empty>
+                                            </div>
+                                            <div class="classroom-select-list flex" v-show="checkedPlaceList.length">
+                                                <div class="classroom-select-item" v-for="check in checkedPlaceList"
+                                                    :key="'check' + check.id">
+                                                    <div class="wh100 relative classroom-select-item-content">
+                                                        <div class="classroom-select-item-image">
+                                                            <!-- <img class="wh100 vertical-bottom"
+                                                        :src="$global.fullStaticUrl('public/images/admin/v2/control/' + 'select-' + placeStatus[check.placeStatus].url + '.png')"
+                                                        alt=""> -->
+                                                            <img class="wh100 vertical-bottom"
+                                                                :src="$global.fullStaticUrl('public/images/admin/v2/control/' + 'select-' + placeStatus[multiplePlaceStatus[check.id]].url +'.png')"
+                                                                alt="">
+                                                        </div>
+                                                        <div class="absolute cancel-icon pointer"
+                                                            @click="cancelSelectPlace(check)">
+                                                            <i class="iconfont iconyijujue"></i>
+                                                        </div>
+                                                        <div class="classroom-select-item-text-box flex absolute wh100">
+                                                            <div class="classroom-select-item-text">
+                                                                <span>{{ check.name }}</span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </el-scrollbar>
+                                    </div>
+
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 控制 -->
+                        <div class="control-multiple-classroom bg-302d39 flex column">
+                            <div class="classroom-select-title relative">
+                                <span>{{ $t("v2ctml7") }}</span>
+                            </div>
+                            <div class="control-multiple-classroom-list-content">
+                                <el-scrollbar class="custom-scrollbar">
+                                    <div v-show="!controlButtonList.length" class="classroom-select-empty">
+                                        <el-empty :description="$t('v2ctml5')" class="wh100"></el-empty>
+                                    </div>
+                                    <div v-show="controlButtonList.length"
+                                        class="control-multiple-classroom-list flex column">
+                                        <div class="control-multiple-classroom-item flex"
+                                            v-for="(control, controlI) in controlButtonList" :key="control.id">
+                                            <div class="control-multiple-classroom-name">
+                                                <span>{{ control.name }}</span>
+                                            </div>
+                                            <div class="control-multiple-classroom-status">
+                                                <el-switch v-model="control.myStatus"
+                                                    class="control-multiple-classroom-switch"
+                                                    :disabled="control.myStatus && controlI != 6 && controlI != 7 "
+                                                    @change="changeControl($event, control, controlI)"
+                                                    active-color="#4b7dfd" inactive-color="#9E9BA9">
+                                                </el-switch>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </el-scrollbar>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div v-if="showTemplateDialog" class="template-iframe-container h100 shrink-0">
+                    <div class="template-iframe-wrapper w100">
+                        <iframe class="template-iframe wh100" :src="$global.fullServerUrl(templateUrl)"></iframe>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- 基础 -->
+    <script src="/public/js/bluebird.min.js"></script>
+    <script src="/public/js/vue.min.js"></script>
+    <script src="/public/element-ui-2.15.9/index.js"></script>
+    <script src="/public/js/jquery-3.3.1.min.js"></script>
+    <script src="/public/js/moment.min.js"></script>
+    <script src="/public/js/config/config.js"></script>
+    <script src="/public/js/common/vue-common-util.js"></script>
+    <script src="/public/js/common/vue-ajax.js"></script>
+    <script src="/public/js/common/iframe.js"></script>
+
+    <!-- 翻译 -->
+    <script src="/public/locales/vue-i18n.js"></script>
+    <script src="/public/element-ui-2.15.9/locale/lang/zh-CN.js"></script>
+    <script src="/public/element-ui-2.15.9/locale/lang/en.js"></script>
+    <script src="/public/locales/i18n-config.js"></script>
+    <script src="/public/locales/i18n-all.js"></script>
+
+    <script src="/public/js/echarts.min.js"></script>
+    <script src="/public/js/components/common.js"></script>
+
+    <!-- 当前 -->
+    <script src="/public/js/websocket/sockjs.min.js"></script>
+    <script src="/public/js/websocket/stomp.min.js"></script>
+    <script src="/public/js/components/template/ComponentList.js"></script>
+    <script src="/public/js/components/template/DragDrop.js"></script>
+
+
+    <script src="/public/js/admin/v2/control/central.js"></script>
+</body>
+
+</html>

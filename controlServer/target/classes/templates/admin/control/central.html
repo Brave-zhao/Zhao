@@ -1,0 +1,1262 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="renderer" content="webkit">
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, minimum-scale=0.5, maximum-scale=2.0, user-scalable=yes" />
+    <title>控制中心</title>
+    <link rel="stylesheet" href="/public/element-ui-2.15.9/theme/index.css">
+    <link rel="stylesheet" href="/public/css/components/common.css">
+    <link rel="stylesheet" href="/public/css/common/admin-common.css">
+    <link rel="stylesheet" href="/public/font-awesome/css/font-awesome.min.css">
+    <link rel="stylesheet" href="/public/ali-icon/control/iconfont.css">
+    <link rel="stylesheet" href="/public/css/common/custom-element.css">
+
+    <link rel="stylesheet" href="/public/css/admin/control/central.css">
+
+    <style>
+        [v-cloak] {
+            display: none !important;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="wh100" id="app" v-cloak>
+        <div class="main-container custom-container" ref="fullCanvas"
+            :class="{'custom-container-padding': showPlaceList, 'edit-body': showEdit}">
+            <div class="breadcrumbs" v-if="showPlaceList">
+                <span>{{ $t('cctml13') }}</span>
+            </div>
+
+            <!-- 深色按钮 -->
+            <div class="custom-relative" v-if="editTemplate && showEdit">
+                <div class="dbclick-tip-box-edit custom-absolute" :class="{'is-cancel': isEdit}" ref="tipBox">
+                    <div class="dbclick-right custom-items-center" ref="editTipBox">
+                        <el-button class="ter-btn ter-btn--success" @click="save(null)">{{ $t('save') }}
+                        </el-button>
+                        <el-button class="ter-btn ter-btn--success" @click="clickUndo">
+                            {{ $t('cctml1') }}
+                        </el-button>
+                        <el-button class="ter-btn ter-btn--success central-button" v-show="isEdit" @click="clickEdit">
+                            <span>{{ $t('cancel') }}</span>
+                        </el-button>
+                        <div class="seting shrink-0" @click="clickEdit" v-show="!isEdit">
+                            <el-tooltip class="item" effect="dark" :content="$t('edit')" placement="top">
+                                <i class="iconfont icona-shezhi_fuzhi font-24 pointer"></i>
+                            </el-tooltip>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="dbclick-tip-box custom-justify-between" v-if="showPlaceList">
+                <div class="dbclick-left custom-justify-around">
+                    <el-button class="ter-btn ter-btn--success classroom-type" v-for="types in classroomType"
+                        @click="changeClassroomType(types.value)"
+                        :class="{'class-active': classroomTypeActive == types.value}" :key="'type' + types.value">
+                        {{ types.label }}
+                    </el-button>
+                </div>
+                <div class="dbclick-right">
+                    <!-- <el-button class="ter-btn ter-btn--on-duty" @click="parent.showTopImage()">
+                    <div class="custom-items-center">
+                        <i class="iconfont iconsuoding"></i>
+                        <span>{{ $t('cctml33') }}</span>
+                    </div>
+                </el-button> -->
+                    <template v-if="classroomTypeActive == 0">
+                        <el-button class="ter-btn ter-btn--success" v-show="isEdit" @click="save(null)">{{
+                            $t('save') }}
+                        </el-button>
+                        <el-button class="ter-btn ter-btn--success central-button" v-show="showDragDrop && !showEmpty"
+                            @click="clickEdit">
+                            <span>{{ isEdit ? $t('cancel') : $t('edit') }}</span>
+                        </el-button>
+                        <el-button class="ter-btn ter-btn--success" v-show="isEdit" @click="clickUndo">
+                            {{ $t('cctml1') }}
+                        </el-button>
+                    </template>
+                    <el-button v-else class="ter-btn ter-btn--success central-button" @click="clickEditClassroom">
+                        <span>{{ editClassroomName ? $t('cancel') : $t('edit') }}</span>
+                    </el-button>
+                    <el-button class="ter-btn ter-btn--success central-button" @click="switchTheme" v-if="true">
+                        <span>{{ $t('cctml47') }}</span>
+                    </el-button>
+                </div>
+            </div>
+            <div class="body" ref="body" :class="{'h-full':!showPlaceList }">
+                <div class="control-center custom-flex" ref="canvasScroll"
+                    :class="{'edit': dialog.showButtonEditDrawer,'wh100':!showPlaceList,'edit-control-center': showEdit }">
+                    <div class="place-list custom-relative" v-if="showPlaceList"
+                        :class="{'custom-border-right-none':showDragDrop,'show': placeListShowWidth}">
+                        <el-scrollbar class="custom-scrollbar custom-scrollbar-place" ref="placeScrollbar">
+                            <el-tree class="left-tree custom-tree el-tree--highlight-current" :props="props"
+                                v-if="classroomTypeActive == 0" :default-expanded-keys="defaultExpandedKeys"
+                                :current-node-key="placeId" @current-change="changePlaceNode" ref="placeTree"
+                                node-key="id" :data="placeData">
+                            </el-tree>
+                            <el-tree v-else class="el-tree--highlight-current place-checked" :props="props"
+                                :show-checkbox="true" :default-expanded-keys="defaultExpandedKeys"
+                                :check-on-click-node="true" @check="checkChangePlaceNode" ref="placeTree" node-key="id"
+                                :data="placeData">
+                            </el-tree>
+                        </el-scrollbar>
+                        <div class="place-disaplay-icon pointer" @click="placeListShowWidth = !placeListShowWidth">
+                            <div class="place-disaplay-bg pointer">
+                                <span class="iconfont iconjiantou2"></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div :class="{'canvas-container-border': showPlaceList}" ref="bodyRight">
+                        <template v-if="classroomTypeActive==0">
+                            <!-- 当前地点是课室显示拖拽页面 或者是唯一的一个节点 -->
+                            <div class="custom-justify-center canvas-content" :class="{'border-302f2f': showEdit}"
+                                @click="clickNotActive" v-if="showDragDrop">
+                                <div class="components-border custom-relative">
+
+
+                                    <div class="bg-opactiy custom-absolute wh100" :style="canvasBgStyle"></div>
+                                    <div class="outer-component custom-absolute custom-column"
+                                        v-for="item in componentData" :key="'parent' + item.id"
+                                        :class="{'z-index999': item.type == 'remote-assistance' && isFullScreen}"
+                                        :name="item.item" :style="setComponentStyle(item)">
+                                        <span class="custom-flex-center custom-absolute wh100 cursor-default">{{
+                                            showNotButtonData(item) }}</span>
+                                        <div :style="rectangleBgStyle(item)"
+                                            class="wh100 component-bg-size custom-absolute"></div>
+
+                                        <div class="wh100 component-item-content-box" :style="item.title.show
+                                    ? dynamicSize(item, paddingNum[item.type], null, null, 'padding')
+                                    : ''">
+                                            <!-- 区域标题 -->
+                                            <div class="component-title-name custom-relative flex-shrink-0 custom-items-center custom-justify-between"
+                                                :class="{'fixed-title': isFullScreen}"
+                                                :style="[dynamicSize(item), dynamicSize(item, 22, null, null, 'paddingBottom')]"
+                                                v-if="item.title.show" :ref="item.type + '-title'">
+                                                <!-- logo -->
+                                                <div class="flex-shrink-0 custom-relative custom-items-center title-left-box"
+                                                    :class="{'only': item.type != 'video-display' && item.type != 'remote-assistance'}"
+                                                    :ref="item.type + '-logo'">
+                                                    <div class="component-title-name-log custom-absolute"
+                                                        :style="dynamicSize(item, 9, null, null, 'width')"></div>
+                                                    <div :style="[item.title.style, {'font-size': item.title.style.fontSize + 'px'}]"
+                                                        class="title-left-text custom-ellipsis">
+                                                        <span :title="item.title.text">{{
+                                                            item.title.text }}</span>
+                                                    </div>
+                                                </div>
+
+                                                <div v-if="item.type == 'video-display' || item.type == 'remote-assistance'"
+                                                    class="title-right-box">
+
+                                                    <!-- 视频播放 -->
+                                                    <div class="custom-items-center h100 color-A0A3BE"
+                                                        v-if="item.type == 'video-display'">
+                                                        <span class="video-select-label flex-shrink-0">{{
+                                                            $i.t("cctjs6")
+                                                            }}：</span>
+
+                                                        <el-select :popper-class="{'edit-popper': showEdit}"
+                                                            :placeholder="$i.t('tipsText[0]')" v-model="videoObject.id"
+                                                            @change="changeStreamSelect($event, item.parentType)">
+                                                            <el-option v-for="(li, liI) in streamList"
+                                                                :key="'stream' + liI" :value="li.id" :label="li.name">
+                                                            </el-option>
+                                                        </el-select>
+                                                    </div>
+
+                                                    <!-- 远程按钮 -->
+                                                    <div v-if="item.type == 'remote-assistance'"
+                                                        class="remote-assistance-title custom-flex-center">
+                                                        <button class="remote-button pointer custom-ellipsis"
+                                                            :title="returnRemoteOperationText"
+                                                            @click="operationRemoteAssistance">{{
+                                                            returnRemoteOperationText }}</button>
+
+                                                        <button
+                                                            class="click-disconnect pointer custom-ellipsis margin-l-5"
+                                                            :title="$i.t('ccjs31')"
+                                                            @click="disconnectRemoteAssistance">{{ $i.t("ccjs31")
+                                                            }}</button>
+
+                                                        <i :title="$t(isFullScreen ? 'ccjs30' : 'ccjs29')"
+                                                            @click="fullScreen" class="iconfont pointer margin-l-5"
+                                                            :class="isFullScreen ? 'iconsuoxiao-xiaoping-02' : 'iconfangda'"></i>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div class="parent-component-box">
+                                                <components :style="{'justify-content': componentTextStyle(item)}"
+                                                    :is="item.parentType" :min-style="minStyle" :ref="item.parentType"
+                                                    class="component cursor-default custom-absolute custom-flex-center wh100 click-component"
+                                                    @function-button="changeFunctionButton" @remote="handlerRemote"
+                                                    @operation="operationRemoteAssistance"
+                                                    @disconnect="disconnectRemoteAssistance" @full="fullScreen"
+                                                    :place-id="placeId" :item="item">
+                                                </components>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- 当前地点未分配模板 -->
+                                    <div class="container-empty" v-if="showEmpty">
+                                        <el-empty :description="$t('cctml15')"></el-empty>
+                                    </div>
+                                    <drag-drop-group :style="{'z-index': isEdit ? 3 : 'initial'}" :data="buttonAllData"
+                                        :is-button="true" :width="dragDropCanvas.width"
+                                        :select-multiple="selectMultiple" @mouse-move-component="mouseMoveComponent"
+                                        @dragover.native="handleDragOver" @mouseup-component="mouseupComponent"
+                                        @drop.native="handleDrop" :com-min="comMin" :height="dragDropCanvas.height"
+                                        :outer-data="componentData" :is-conflict-ids="isConflictIds"
+                                        :is-lock="currActiveComponent[0] && currActiveComponent[0].lock"
+                                        :all-is-lock="!isEdit" :active.sync="activeComponent" ref="drag">
+                                        <template slot-scope="scope">
+                                            <div class="wh100 custom-absolute pointer"
+                                                :class="{'z-index-1': scope.item.propertyFlag == 'button', 'dashed-43b498': isEdit && !scope.item.order && scope.item.order != 0}">
+                                                <!-- IP对讲时 -->
+                                                <div @dblclick="dbclickEditButton($event, scope.item)"
+                                                    v-if="placeStatus[scope.item.id] && scope.item.propertyFlag == 'ip_intercom'"
+                                                    class="component-slot-button-text wh100 custom-absolute pointer"
+                                                    :style="[{'justify-content': setButtonTextAlgin(scope.item)},componentBorderStyle(scope.item),alotMinWidth(scope.item)]">
+
+
+                                                    <!-- 转语音 || 转视频 -->
+                                                    <span class="flex-shrink-0 button__text-active"
+                                                        @click="changeCallType(false, scope.item)"
+                                                        :class="{'is-active': !isEdit}">{{
+                                                        $t(callType == 1 ? "ccjs53" : "ccjs55")
+                                                        }}</span>
+
+                                                    <div class="custom-ellipsis button__text-active custom-flex-1"
+                                                        @click="sendButtonInstructions(scope.item)"
+                                                        :class="{'is-active': !isEdit}" :title="buttonText(scope.item)">
+                                                        <i class="iconfont"
+                                                            :style="{'font-size': scope.item.style.fontSize + 'px'}"
+                                                            :class="ipIntercomIcon(scope.item)"></i>
+                                                        <span>{{ buttonText(scope.item) }}</span>
+                                                    </div>
+                                                </div>
+
+                                                <!-- 普通按钮 -->
+                                                <div @dblclick="dbclickEditButton($event, scope.item)" v-if="!(placeStatus[scope.item.id] && scope.item.propertyFlag == 'ip_intercom') && !groupButtonIcons[scope.item.componentId
+                                            ] && scope.item.componentName != directionComponentType"
+                                                    @click="sendButtonInstructions(scope.item)"
+                                                    :class="{'is-active': !isEdit}"
+                                                    class="component-slot-button-text wh100 custom-absolute pointer button__text-active"
+                                                    :style="[{'justify-content': setButtonTextAlgin(scope.item)},componentBorderStyle(scope.item),alotMinWidth(scope.item)]">
+
+                                                    <div class="custom-ellipsis"
+                                                        :class="{'custom-items-center': enlargeNarrowIcon(scope.item)}"
+                                                        :title="buttonText(scope.item)">
+                                                        <i :style="{'font-size': scope.item.style.fontSize + 'px'}"
+                                                            :class="enlargeNarrowIcon(scope.item)"></i>
+                                                        <span v-html="buttonText(scope.item, true)"></span>
+                                                    </div>
+                                                </div>
+
+                                                <!-- 特殊圆角按钮 -->
+                                                <template
+                                                    v-if="groupButtonIcons[scope.item.componentId] && scope.item.componentId != placeId + switchComponentId">
+                                                    <div @dblclick="dbclickEditButton($event, scope.item)"
+                                                        @click="sendButtonInstructions(scope.item)"
+                                                        :class="{'is-active': !isEdit}"
+                                                        class="component-slot-button-text wh100 custom-absolute pointer button__text-active"
+                                                        :style="[{'justify-content': setButtonTextAlgin(scope.item)},alotMinWidth(scope.item)]">
+
+                                                        <div class="custom-column">
+                                                            <div class="custom-ellipsis"
+                                                                :title="buttonText(scope.item)">
+                                                                <span>{{ scope.item.name }}</span>
+                                                            </div>
+                                                            <div class="custom-flex-center component-group-icon"
+                                                                :class="{'group-active': scope.item.myActive}"
+                                                                :style="[groupButtonStyle(scope.item.style), dynamicSize(scope.item, 10, 56, 85, 'marginTop'), dynamicSize(scope.item, 56, 56, 85, 'width'), dynamicSize(scope.item, 56, 56, 85, 'height')]">
+                                                                <i class="iconfont"
+                                                                    :style="{'font-size': scope.item.style.fontSize + 'px'}"
+                                                                    :class="groupButtonIcons[scope.item.componentId]"></i>
+                                                            </div>
+                                                        </div>
+
+                                                    </div>
+                                                </template>
+
+                                                <!-- 开关 -->
+                                                <template v-if="scope.item.componentId == placeId + switchComponentId">
+                                                    <div class="custom-absolute wh100 custom-flex-center"
+                                                        @dblclick="dbclickEditButton($event, scope.item)">
+                                                        <div class="pointer" :style="{'z-index': isEdit ? -1 : 'auto'}">
+                                                            <el-switch class="component-group-switch"
+                                                                v-model="scope.item.myActive"
+                                                                @change="sendButtonInstructions(scope.item, $event)"
+                                                                active-color="#283553" inactive-color="#191d20">
+                                                            </el-switch>
+                                                        </div>
+                                                    </div>
+                                                </template>
+
+                                                <el-tooltip class="item" effect="dark"
+                                                    :content="buttonTextTip(scope.item)"
+                                                    v-if="isEdit && (scope.item.order || scope.item.order >= 0)"
+                                                    placement="top">
+                                                    <div class="tip-number-left custom-absolute pointer">
+                                                        {{ scope.item.order }}
+                                                    </div>
+                                                </el-tooltip>
+                                            </div>
+                                        </template>
+                                    </drag-drop-group>
+                                </div>
+                            </div>
+                            <template v-else>
+                                <div :style="canvasWidthHeight" class="custom-column class-room-container">
+                                    <div :style="{opacity: showPlaceList ? 1 : 0}"
+                                        class="class-room-header custom-items-center custom-justify-between">
+                                        <div class="room-header-left custom-items-center">
+                                            <el-checkbox-group v-model="checkedClassroomHeader" @change="changeCheckbox"
+                                                :max="checkedClassroomMax"
+                                                class="classroom-header-group custom-items-center">
+                                                <el-checkbox :label="icon.type" v-for="icon in classroomHeader"
+                                                    :key="icon.icon">
+                                                    <div class="custom-r20 custom-items-center" :title="icon.text">
+                                                        <i class="iconfont" :class="icon.icon"></i>
+                                                        <span class="custom-l5 classroom-header-text">{{ icon.text
+                                                            }}</span>
+                                                    </div>
+                                                </el-checkbox>
+                                            </el-checkbox-group>
+                                            <!-- <div v-for="icon in classroomHeader" :key="icon.icon"
+                                            class="custom-r30 custom-items-center">
+                                            <i class="iconfont" :class="icon.icon"></i>
+                                            <span class="custom-l5">{{ icon.text }}</span>
+                                        </div> -->
+                                        </div>
+                                        <div class="room-header-right custom-items-center">
+                                            <div v-for="status in devStatusListHeader"
+                                                class="room-status custom-items-center custom-r30" :key="status.status">
+                                                <div :class="classroomHeaderStatus(status)" class="room-status-icon">
+                                                </div>
+                                                <span class="custom-l5">{{ status.text }}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <el-scrollbar class="custom-scrollbar">
+                                        <div class="room-list custom-flex-warp">
+                                            <div class="classroom-empty" v-if="showClassroomEmpty">
+                                                <el-empty :description="$t('ccjs1')"></el-empty>
+                                            </div>
+                                            <div v-for="room in classroomList" :key="room.id" class="room-list-item">
+                                                <div
+                                                    class="custom-items-center custom-column border-dedede room-list-item-content">
+                                                    <div class="ellipsis">{{ room.name }}</div>
+                                                    <div class="ellipsis">
+                                                        <span>{{ classroomCourse(room) }}</span>
+                                                        <!-- <span>暂无课程</span> -->
+                                                    </div>
+                                                    <div class="custom-items-center">
+                                                        <div v-for="types in checkedClassroomHeader"
+                                                            :key="returnDataByType(types).icon"
+                                                            class="romm-list-icon room-status custom-items-center">
+                                                            <div :class="classroomListStatus(room,returnDataByType(types)).className"
+                                                                class="room-status-icon">
+                                                            </div>
+                                                            <i class="iconfont custom-l5"
+                                                                :class="returnDataByType(types).icon"></i>
+                                                        </div>
+                                                    </div>
+                                                    <div
+                                                        class="custom-items-center room-status w100 custom-justify-around">
+                                                        <div class="custom-items-center"
+                                                            @click="abnormalGoToPage(room)">
+                                                            <div :class="classroomListStatus(room,'total').className"
+                                                                class="room-status-icon">
+                                                            </div>
+                                                            <span :title="classroomListStatus(room,'total').text"
+                                                                :class="{pointer: room.alertStatus == 2}"
+                                                                class="custom-l5 classroom-total-status">{{
+                                                                classroomListStatus(room,'total').text }}</span>
+                                                        </div>
+
+                                                        <button class="show-template pointer"
+                                                            @click="showTemplate(room)">{{ $t("cctml22") }}</button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </el-scrollbar>
+
+                                </div>
+                            </template>
+                        </template>
+                        <div :style="canvasWidthHeight" class="classroom-inuse-data custom-column" v-else>
+                            <!-- 多课室数据 -->
+                            <div class="custom-justify-between">
+                                <div v-for="status in classrommStatus" :key="'status' + status.value"
+                                    :class="[status.value,'classromm-data']" :style="{'backgroundColor': status.color}">
+                                    <span>{{ status.label }}：</span>
+                                    <div class="classromm-num-box custom-flex-center">
+                                        <span class="classromm-num">{{ classrommStatusData[status.value] }}</span>
+                                        <span class="classromm-text">{{ $t("cctml34") }}</span>
+                                    </div>
+                                    <span></span>
+                                </div>
+                            </div>
+                            <!-- 多课室操作 -->
+                            <div class="classromm-control-box">
+                                <div class="custom-flex-center classromm-control-title">
+                                    <div class="classromm-control-title-left">
+                                        <span>{{ $t("cctml35") }}：{{ getCheckedKeys().length }}</span>
+                                        <span class="custom-l15">{{ $t("cctml34") }}</span>
+                                    </div>
+                                    <div>{{ $t("cctml36") }}</div>
+                                    <div></div>
+                                </div>
+                                <el-scrollbar class="custom-scrollbar">
+                                    <div class="custom-justify-between custom-flex-warp control-button-list">
+                                        <div v-if="!controlButtonData().length" class="control-button-empty">
+                                            <el-empty :description="$t('cctml37')"></el-empty>
+                                        </div>
+                                        <template v-else>
+                                            <div v-for="btn in controlButtonData()" :key="'control' + btn.id"
+                                                :style="{'opacity': !btn.id ? 0 : 1}" class="control-button-item">
+                                                <div class="control-button-item-text custom-relative" :title="btn.name"
+                                                    @click="clickSendClassroomOrder(btn)"
+                                                    :class="[btn.id ? 'pointer' : 'cursor-default',{'classroom-edit': editClassroomName}]">
+                                                    <span v-if="!editClassroomName">{{ btn.name }}</span>
+                                                    <template v-else>
+                                                        <div class="tip-number-left custom-absolute pointer">
+                                                            {{ btn.order }}
+                                                        </div>
+                                                        <el-input v-model="btn.name" v-show="editClassroomName"
+                                                            @change="confirmUpdateClassroom(btn,$event)"
+                                                            @blur="hiddenInput" :ref="'updateClassroom' + btn.id"
+                                                            :placeholder="$t('tipsText[5]')">
+                                                        </el-input>
+                                                    </template>
+
+                                                </div>
+                                            </div>
+                                        </template>
+
+                                    </div>
+                                </el-scrollbar>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+
+                <!-- 通话视频框 -->
+                <div style="height: 0;width: 0" class="call-canvas" v-if="showCallDialog"
+                    :style="{overflow: minimizeSize == 'min' ? 'hidden' : 'inherit'}">
+                    <drag-drop-group :data="callCanvasStyleData" @hang-up="changeHangUp" @change-canvas="changeCanvas"
+                        @show-video="changeShowMyVideo" @chang-type="changeCallType" @minimize="changeMinimize"
+                        :restricted-area="videoRestrictedArea" :width="0" :com-min="callCanvasMin" :height="0"
+                        canvas-ref="video-canvas" :active.sync="callCanvasActive">
+                    </drag-drop-group>
+                </div>
+
+                <!-- 缩小后的语音框 -->
+                <div v-show="showCallDialog && minimizeSize == 'min'" class="enlarge-container custom-items-center"
+                    @click="changeMinimize(false)">
+                    <div class="w100">
+                        <i class="iconfont iconoutBound-hujiao"></i>
+                        <span class="enlarge-time">{{ callTimeTotal }}</span>
+                    </div>
+                </div>
+
+                <!-- <button @click="_desktop">_desktop</button> -->
+
+            </div>
+
+            <tr-drawer :visible.sync="dialog.showButtonEditDrawer" class="component-edit-drawer" :title="$t('edit')"
+                @confirm="confirmUpdateButtonStyle" @cancel="beforeClose">
+
+                <!-- 按钮信息 -->
+                <template v-if="currActiveComponent.length && !specialComponent[currActiveComponent[0].propertyFlag]">
+                    <el-form class="custom-flex-warp button-info">
+                        <div class="manage-collapse-content custom-items-center">
+
+                            <template v-if="$refs.drag && !$refs.drag.isChecked()">
+                                <el-form-item class="modal-form-item" :label="$t('ccjs9') + '：'">
+                                    <!-- <div class="modal-form-wrapper">
+                                    <el-input v-model="currActiveComponent[0].propertyName" disabled></el-input>
+                                </div> -->
+                                    <div class="modal-form-wrapper custom-ellipsis"
+                                        :title="currActiveComponent[0].propertyName">
+                                        {{ currActiveComponent[0].propertyName }}
+                                    </div>
+
+                                </el-form-item>
+                                <el-form-item class="modal-form-item" :label="$t('ccjs10') + '：'">
+                                    <!-- <div class="modal-form-wrapper">
+                                    <el-input v-model="currActiveComponent[0].order" disabled></el-input>
+                                </div> -->
+                                    <div class="modal-form-wrapper custom-ellipsis"
+                                        :title="currActiveComponent[0].order">
+                                        {{ currActiveComponent[0].order }}</div>
+
+                                </el-form-item>
+                            </template>
+                            <el-form-item v-for="(s,si) in activeStyleKey" :key="si" :label="styleLabelKey[si]">
+                                <el-input v-model="dialogComponentStyle[s]" @change="componentStyleWHXY(s,$event)"
+                                    type="number">
+                                </el-input>
+                            </el-form-item>
+
+                            <!-- 按钮名称编辑 -->
+                            <template
+                                v-if="currActiveComponentInstructList && !instructionsPropertyFlag[currActiveComponent[0].propertyFlag]">
+                                <el-form-item class="w100"
+                                    :label="currActiveComponentInstructList > 1 ? $t('ccjs4')[i] : $t('name')"
+                                    v-for="(instruct, i) in currActiveComponent[0].instructList"
+                                    :key="instruct.id + 'instruct'">
+                                    <el-input v-model="instruct.name" :placeholder="$t('tipsText[2]')"></el-input>
+                                </el-form-item>
+                            </template>
+                        </div>
+                    </el-form>
+                </template>
+                <!-- 单独按钮样式 -->
+                <template v-if="currActiveComponent.length && !specialComponent[currActiveComponent[0].propertyFlag]">
+                    <el-form>
+                        <!-- 多选对齐 -->
+                        <el-form-item label=" " v-if="$refs.drag && $refs.drag.isChecked()">
+                            <div class="font-style custom-justify-between custom-items-center">
+                                <div v-for="align in checkedAlign"
+                                    :class="['checked-align-icon custom-items-center',checkedAlignColorClass(align)]"
+                                    :key="align.icon" @click="setCheckedAlign(align)">
+                                    <el-tooltip class="item" effect="dark" :content="align.tip" placement="top">
+                                        <i :class="['iconfont',align.icon]"></i>
+                                    </el-tooltip>
+                                </div>
+                            </div>
+                        </el-form-item>
+                        <!-- 字体字号 -->
+                        <div class="size-family custom-items-center">
+                            <el-form-item v-for="(style,key) in label" :class="key" :key="'f' + key" :label="style">
+                                <el-select :popper-class="{'edit-popper': showEdit}"
+                                    v-model="currActiveComponent[0].style[key]" :placeholder="$t('tipsText[0]')"
+                                    filterable :allow-create="key == 'fontSize'">
+                                    <template v-if="key == 'fontFamily'">
+                                        <el-option :label="fontFamilyList[fIndex]" :value="family"
+                                            v-for="(family,fIndex) in fontFamilyListText" :key="'family' + fIndex">
+                                        </el-option>
+                                    </template>
+
+                                    <template v-if="key == 'fontSize'">
+                                        <el-option :label="size * 10" :value="size * 10" v-for="(size,sIndex) in 20"
+                                            :key="'size' + sIndex">
+                                        </el-option>
+                                    </template>
+                                </el-select>
+                            </el-form-item>
+                        </div>
+
+                        <!-- 对齐方式 -->
+                        <el-form-item label=" " v-show="currActiveComponent[0].componentName != directionComponentType">
+                            <div class="font-style custom-justify-between custom-items-center">
+                                <el-tooltip class="item" effect="dark" :content="$t('cctml5')" placement="top">
+                                    <el-color-picker v-model="currActiveComponent[0].style.color" size="mini"
+                                        @change="changeColor($event,currActiveComponent[0].style,'color')">
+                                    </el-color-picker>
+                                </el-tooltip>
+                                <div v-for="font in fontStyleHtml" :key="font.icon" @click="setUpfontStyle(font)"
+                                    :class="['font-style-item',{'custom-success-bgcolor': currActiveComponent[0].style[font.model] == font.value}]">
+                                    <el-tooltip class="item" effect="dark" :content="font.tip" placement="top">
+                                        <i :class="['iconfont',font.icon]"></i>
+                                    </el-tooltip>
+                                </div>
+                            </div>
+                        </el-form-item>
+                        <!-- 边框、圆角 -->
+                        <el-form-item :label="$t('cctml20')">
+                            <div class="font-style radius-style custom-justify-between custom-items-center">
+                                <!-- 颜色 -->
+                                <el-tooltip class="item" effect="dark" :content="$t('cctml18')" placement="top">
+                                    <el-color-picker v-model="currActiveComponent[0].style.borderColor" size="mini"
+                                        @change="changeColor($event,currActiveComponent[0].style,'borderColor')">
+                                    </el-color-picker>
+                                </el-tooltip>
+                                <!-- 边框大小 -->
+                                <el-select :popper-class="{'edit-popper': showEdit}"
+                                    v-model="currActiveComponent[0].style.borderWidth" class="borderWidth"
+                                    @change="changeBorderWidth($event,currActiveComponent[0])" allow-create filterable
+                                    :placeholder="$t('tipsText[0]')">
+                                    <el-option v-for="item in 11" :key="item" :label="item - 1" :value="item - 1">
+                                    </el-option>
+                                </el-select>
+                                <!-- 圆角 -->
+                                <i class="iconfont iconyuanjiaojuxing yuanjiao custom-l15 font-style-item"
+                                    @click="changeRadiusType(currActiveComponent[0].style,'radio',1)"
+                                    :class="{'custom-success-bgcolor':currActiveComponent[0].style.radio == 1}"></i>
+                                <i class="iconfont iconyuanjiao banyuanjiao custom-l5 font-style-item"
+                                    @click="changeRadiusType(currActiveComponent[0].style,'radio',2)"
+                                    :class="{'custom-success-bgcolor':currActiveComponent[0].style.radio == 2}"></i>
+                                <template v-if="currActiveComponent[0].style.radio == 2">
+                                    <div v-for="(ra,key) in currActiveComponent[0].style.borderRadius" :key="key"
+                                        class="custom-relative custom-l5">
+                                        <el-input type="number" v-model="currActiveComponent[0].style.borderRadius[key]"
+                                            @input="setRadiusSize(currActiveComponent[0].style.borderRadius,key,$event,true)"
+                                            :min="0">
+                                        </el-input>
+                                        <div class="custom-absolute radius-size">
+                                            <div class="el-icon-caret-top add"
+                                                @mousedown="setRadiusSize(currActiveComponent[0].style.borderRadius,key,1)"
+                                                @mouseup="moveStop" @mouseout="moveStop">
+                                            </div>
+                                            <div class="el-icon-caret-bottom reduce"
+                                                @mousedown="setRadiusSize(currActiveComponent[0].style.borderRadius,key,-1)"
+                                                @mouseup="moveStop" @mouseout="moveStop">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </template>
+                                <template v-else>
+                                    <div class="custom-relative custom-l5">
+                                        <el-input type="number" v-model="currActiveComponent[0].style.borderRadius.top"
+                                            :min="0" @input="setRadiusSize(null,'borderRadius',$event,true)">
+                                        </el-input>
+                                        <div class="custom-absolute radius-size">
+                                            <div class="el-icon-caret-top add"
+                                                @mousedown="setRadiusSize(null,'borderRadius',1)" @mouseup="moveStop"
+                                                @mouseout="moveStop">
+                                            </div>
+                                            <div class="el-icon-caret-bottom reduce"
+                                                @mousedown="setRadiusSize(null,'borderRadius',-1)" @mouseup="moveStop"
+                                                @mouseout="moveStop">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+                        </el-form-item>
+
+                        <!-- 背景色 -->
+                        <el-form-item :label="$t('set.set9')">
+                            <el-radio-group v-model="currActiveComponent[0].style.backgroundRadio">
+                                <el-radio :label="1">{{ $i.t("set.set10") }}</el-radio>
+                                <el-radio :label="2">{{ $i.t("cctml50") }}</el-radio>
+                            </el-radio-group>
+                        </el-form-item>
+                        <div class="custom-items-center component-bg-set_up">
+                            <template v-if="currActiveComponent[0].style.backgroundRadio == 1">
+                                <el-form-item v-for="(bg,key) in bgLabel" :key="key" :label="bg" :class="key">
+                                    <el-color-picker v-if="key == 'backgroundColor'"
+                                        v-model="currActiveComponent[0].style[key]"
+                                        @change="changeColor($event,currActiveComponent[0].style,'backgroundColor')"
+                                        size="mini">
+                                    </el-color-picker>
+                                    <el-slider v-if="key == 'backgroundOpacity'"
+                                        v-model="currActiveComponent[0].style[key]">
+                                    </el-slider>
+                                </el-form-item>
+                            </template>
+                        </div>
+
+                        <!-- 渐变色 -->
+                        <div class="gradient-comtainer custom-items-center  background-radio"
+                            v-if="currActiveComponent[0].style.backgroundRadio == 2">
+                            <!-- 起始 -->
+                            <el-form-item :label="$t('cctml48')" class="backgroundColor">
+                                <el-color-picker @change="gradientBgColor"
+                                    v-model="componentBuackgroundImageData[currActiveComponent[0].type].start"
+                                    size="mini">
+                                </el-color-picker>
+                            </el-form-item>
+                            <!-- 结束 -->
+                            <el-form-item :label="$t('cctml49')" class="backgroundColor">
+                                <el-color-picker @change="gradientBgColor"
+                                    v-model="componentBuackgroundImageData[currActiveComponent[0].type].end"
+                                    size="mini">
+                                </el-color-picker>
+                            </el-form-item>
+                        </div>
+
+
+                    </el-form>
+                </template>
+
+                <!-- 指令 -->
+                <template v-if="currActiveComponent.length">
+                    <div class="special" v-if="currActiveComponent[0].componentName != directionComponentType">
+                        <el-form v-if="customInstructions[currActiveComponent[0].propertyFlag]">
+                            <!-- 按钮文本 -->
+                            <el-form-item :label="$t('cctml45')" class="dialog-first-template-item">
+                                <el-input type="textarea" resize="none" :rows="1" :placeholder="$t('tipsText[5]')"
+                                    v-model="currActiveComponent[0].style.text">
+                                </el-input>
+                            </el-form-item>
+
+                            <!-- 按钮 -->
+                            <template v-if="currActiveComponent[0].propertyFlag == 'button'">
+                                <!-- 选择按钮功能 -->
+                                <el-form-item :label="$t('cctml39')">
+                                    <el-radio v-model="currActiveComponent[0].style.function" :label="ftk"
+                                        v-for="(ft,ftk) in myButtonText">
+                                        {{ ft }}
+                                    </el-radio>
+                                </el-form-item>
+                                <!-- 跳页 -->
+                                <template v-if="currActiveComponent[0].style.function == 'jumpPage'">
+                                    <!-- 选择按钮跳页链接类型 -->
+                                    <el-form-item :label="$t('type')">
+                                        <el-radio v-model="currActiveComponent[0].style.router.type" :label="jdk"
+                                            v-for="(jd,jdk) in buttonJumpRadioData">
+                                            {{ jd }}
+                                        </el-radio>
+                                    </el-form-item>
+
+                                    <!-- 选择跳页方式 -->
+                                    <el-form-item :label="$t('cctml38')">
+                                        <el-select :popper-class="{'edit-popper': showEdit}" class="dialog-input-w100"
+                                            v-model="currActiveComponent[0].style.router.openType"
+                                            :placeholder="$t('tipsText[0]')">
+                                            <el-option v-for="(bo, bok) in buttonOpenRadioData" :key="bok" :label="bo"
+                                                :value="bok">
+                                            </el-option>
+                                        </el-select>
+                                    </el-form-item>
+
+                                    <!-- 跳转链接 -->
+                                    <el-form-item :label="$t('link')" class="">
+                                        <!-- 自定义跳转链接 -->
+                                        <el-input v-show="currActiveComponent[0].style.router.type == 'custom'"
+                                            type="textarea" :rows="2" resize="none" :placeholder="$t('cctml46')"
+                                            v-model="currActiveComponent[0].style.router.url">
+                                        </el-input>
+                                        <!-- 选择后台页面 -->
+                                        <el-select :popper-class="{'edit-popper': showEdit}" class="dialog-input-w100"
+                                            v-show="currActiveComponent[0].style.router.type == 'backstage'"
+                                            v-model="currActiveComponent[0].style.router.menuFlag"
+                                            :placeholder="$t('tipsText[0]')">
+                                            <el-option v-for="item in backstagePageData" :key="item.id"
+                                                :label="item.name" :value="item.flag">
+                                            </el-option>
+                                        </el-select>
+                                    </el-form-item>
+                                </template>
+
+                                <!-- 控制 -->
+                                <template v-else>
+                                    <el-form-item :label="$t('type')">
+                                        <el-radio v-model="currActiveComponent[0].style.control.type" :label="dck"
+                                            v-for="(dc,dck) in devControl">
+                                            {{ dc }}
+                                        </el-radio>
+                                    </el-form-item>
+                                    <!-- 自定义指令 -->
+                                    <template v-if="currActiveComponent[0].style.control.type == 'custom'">
+                                        <!-- 指令协议 -->
+                                        <el-form-item :label="$t('cctml42')">
+                                            <el-select :popper-class="{'edit-popper': showEdit}"
+                                                class="dialog-input-w100"
+                                                v-model="currActiveComponent[0].style.control.protocol">
+                                                <el-option v-for="item in instructionProtocol" :key="item" :label="item"
+                                                    :value="item">
+                                                </el-option>
+                                            </el-select>
+                                        </el-form-item>
+                                        <!-- host -->
+                                        <el-form-item :label="$t('cctml40')">
+                                            <el-input
+                                                @blur="blurHost($event, currActiveComponent[0] ? currActiveComponent[0].style.control.host : '')"
+                                                v-model="currActiveComponent[0].style.control.host"
+                                                :placeholder="$t('tipsText[5]') + $t('cctml40')">
+                                            </el-input>
+                                        </el-form-item>
+                                        <!-- 端口 -->
+                                        <el-form-item :label="$t('cctml41')">
+                                            <el-input type="number" v-model="currActiveComponent[0].style.control.port"
+                                                :placeholder="$t('tipsText[5]') + $t('cctml41')">
+                                            </el-input>
+                                        </el-form-item>
+                                        <!-- 自定义指令 -->
+                                        <el-form-item :label="$t('cctml43')">
+                                            <el-input v-model="currActiveComponent[0].style.control.instruct"
+                                                :placeholder="$t('tipsText[5]') + $t('cctml43')">
+                                            </el-input>
+                                        </el-form-item>
+                                    </template>
+                                    <!-- 选择本地设备 -->
+                                    <template v-else>
+                                        <!-- 本地设备 -->
+                                        <el-form-item :label="$t('cctml44')">
+                                            <el-select :popper-class="{'edit-popper': showEdit}"
+                                                class="dialog-input-w100" @change="changeLocalDevice"
+                                                v-model="currActiveComponent[0].style.control.instructList[0].propertyId">
+                                                <el-option v-for="item in devList" :key="item.id" :label="item.name"
+                                                    :value="item.id">
+                                                </el-option>
+                                            </el-select>
+                                        </el-form-item>
+                                        <!-- 本地指令 -->
+                                        <el-form-item :label="$t('cctml43')">
+                                            <div>{{ currActiveComponent[0].style.instructId }}</div>
+                                            <el-select :popper-class="{'edit-popper': showEdit}"
+                                                class="dialog-input-w100"
+                                                v-model="currActiveComponent[0].style.control.instructId">
+                                                <el-option
+                                                    v-for="item in instructionObjList[currActiveComponent[0].style.control.instructList[0].propertyId]"
+                                                    :key="item.id" :label="item.name" :value="item.id">
+                                                </el-option>
+                                            </el-select>
+                                        </el-form-item>
+                                    </template>
+
+                                </template>
+
+                            </template>
+
+
+                            <!-- 空调、摄像机 -->
+                            <template
+                                v-if="currActiveComponent[0].propertyFlag == 'aircondition' || currActiveComponent[0].propertyFlag == 'recognition'">
+                                <el-form-item :label="$t('cctml44')" class="dialog-first-template-item">
+                                    <el-select :popper-class="{'edit-popper': showEdit}" class="dialog-input-w100"
+                                        @change="changeLocalDevice"
+                                        v-model="currActiveComponent[0].style.control.instructList[0].propertyId">
+                                        <el-option v-for="item in devList" :key="item.id" :label="item.name"
+                                            :value="item.id">
+                                        </el-option>
+                                    </el-select>
+                                </el-form-item>
+
+                                <el-form-item
+                                    :label="currActiveComponent[0].componentId == placeId + saveComponentId ? cameraPresetName(instruct) : $t('instruct')[instruct.label || 0]"
+                                    v-for="instruct in currActiveComponent[0].style.control.instructList"
+                                    :key="instruct.id + 'instruct'">
+                                    <el-select :popper-class="{'edit-popper': showEdit}" class="dialog-input-w100"
+                                        v-model="instruct.instructId">
+                                        <el-option
+                                            v-for="item in instructionObjList[currActiveComponent[0].style.control.instructList[0].propertyId]"
+                                            :key="item.id" :label="item.name" :value="item.id">
+                                        </el-option>
+                                    </el-select>
+                                </el-form-item>
+                            </template>
+
+                        </el-form>
+                    </div>
+
+                </template>
+
+                <!-- 方向 -->
+                <template v-if="directionArrActive">
+                    <el-form class="special">
+                        <el-form-item class="w100" :label="directionArrActive.style.control.instructList.length > 1 ? $t('ccjs4')[i] : $t('name')"
+                            v-for="(instruct, i) in directionArrActive.style.control.instructList"
+                            :key="instruct.id + 'instruct'">
+                            <el-input v-model="instruct.name" :placeholder="$t('tipsText[2]')"></el-input>
+                        </el-form-item>
+                        <el-form-item :label="$t('cctml44')" class="dialog-first-template-item">
+                            <el-select :popper-class="{'edit-popper': showEdit}" class="dialog-input-w100"
+                                v-model="directionArrActive.style.control.instructList[0].propertyId"
+                                @change="changeLocalDevice">
+                                <el-option v-for="item in devList" :key="item.id" :label="item.name" :value="item.id">
+                                </el-option>
+                            </el-select>
+                        </el-form-item>
+                        <el-form-item :label="$t('cctml43')">
+                            <el-select :popper-class="{'edit-popper': showEdit}" class="dialog-input-w100"
+                                v-model="directionArrActive.style.control.instructList[0].instructId">
+                                <el-option
+                                    v-for="item in instructionObjList[directionArrActive.style.control.instructList[0].propertyId]"
+                                    :key="item.id" :label="item.name" :value="item.id">
+                                </el-option>
+                            </el-select>
+                        </el-form-item>
+
+                        <!-- 图标颜色 -->
+                        <el-form-item :label="$t('set.set5')">
+                            <el-tooltip class="item" effect="dark" :content="$t('cctml5')" placement="top">
+                                <el-color-picker v-model="directionArrActive.style.color" size="mini"
+                                    @change="changeColor($event,directionArrActive.style,'color')">
+                                </el-color-picker>
+                            </el-tooltip>
+                        </el-form-item>
+                    </el-form>
+                </template>
+
+
+                <!-- 全局按钮样式 -->
+                <template
+                    v-if="currActiveComponent.length ? !specialComponent[currActiveComponent[0].propertyFlag] : false">
+                    <el-collapse v-model="activeNames" class="custom-collapse component-collapse">
+                        <el-collapse-item :title="$t('ccml1')" name="1">
+                            <el-form class="right-style-w-h-x-y custom-flex-warp custom-items-center">
+                                <el-form-item v-for="(s,si) in styleKey" :key="si" :label="styleLabelKey[si]">
+                                    <el-input v-model="globalWHXY[s]" @change="componentStyleWHXY(s,$event,'global')"
+                                        type="number">
+                                    </el-input>
+                                </el-form-item>
+                            </el-form>
+                            <el-form>
+                                <!-- 字体字号 -->
+                                <div class="size-family custom-items-center">
+                                    <el-form-item v-for="(style,key) in label" :class="key" :key="'f' + key"
+                                        :label="style">
+                                        <el-select :popper-class="{'edit-popper': showEdit}"
+                                            v-model="globalButtonStyle[key]" :placeholder="$t('tipsText[0]')" filterable
+                                            :allow-create="key == 'fontSize'">
+                                            <template v-if="key == 'fontFamily'">
+                                                <el-option :label="fontFamilyList[fIndex]" :value="family"
+                                                    v-for="(family,fIndex) in fontFamilyListText"
+                                                    :key="'family' + fIndex">
+                                                </el-option>
+                                            </template>
+
+                                            <template v-if="key == 'fontSize'">
+                                                <el-option :label="size * 10" :value="size * 10"
+                                                    v-for="(size,sIndex) in 20" :key="'size' + sIndex">
+                                                </el-option>
+                                            </template>
+                                        </el-select>
+                                    </el-form-item>
+                                </div>
+
+                                <!-- 对齐方式 -->
+                                <el-form-item label=" ">
+                                    <div class="font-style custom-justify-between custom-items-center">
+                                        <el-tooltip class="item" effect="dark" :content="$t('cctml5')" placement="top">
+                                            <el-color-picker v-model="globalButtonStyle.color" size="mini"
+                                                @change="changeColor($event,globalButtonStyle,'color')">
+                                            </el-color-picker>
+                                        </el-tooltip>
+                                        <div v-for="font in fontStyleHtml" :key="font.icon"
+                                            @click="setUpfontStyle(font,'global')"
+                                            :class="['font-style-item',{'custom-success-bgcolor': globalButtonStyle[font.model] == font.value}]">
+                                            <el-tooltip class="item" effect="dark" :content="font.tip" placement="top">
+                                                <i :class="['iconfont',font.icon]"></i>
+                                            </el-tooltip>
+                                        </div>
+                                    </div>
+                                </el-form-item>
+
+                                <!-- 边框、圆角 -->
+                                <el-form-item :label="$t('cctml20')">
+                                    <div class="font-style radius-style custom-justify-between custom-items-center">
+                                        <!-- 颜色 -->
+                                        <el-tooltip class="item" effect="dark" :content="$t('cctml18')" placement="top">
+                                            <el-color-picker v-model="globalButtonStyle.borderColor" size="mini"
+                                                @change="changeColor($event,globalButtonStyle,'borderColor')">
+                                            </el-color-picker>
+                                        </el-tooltip>
+                                        <!-- 边框大小 -->
+                                        <el-select :popper-class="{'edit-popper': showEdit}"
+                                            v-model="globalButtonStyle.borderWidth" class="borderWidth" allow-create
+                                            filterable :placeholder="$t('tipsText[0]')">
+                                            <el-option v-for="item in 11" :key="item" :label="item - 1"
+                                                :value="item - 1">
+                                            </el-option>
+                                        </el-select>
+                                        <!-- 圆角 -->
+                                        <i class="iconfont iconyuanjiaojuxing yuanjiao custom-l15 font-style-item"
+                                            @click="changeRadiusType(globalButtonStyle, 'radio', 1)"
+                                            :class="{ 'custom-success-bgcolor': globalButtonStyle.radio == 1 }"></i>
+                                        <i class="iconfont iconyuanjiao banyuanjiao custom-l5 font-style-item"
+                                            @click="changeRadiusType(globalButtonStyle, 'radio', 2)"
+                                            :class="{ 'custom-success-bgcolor': globalButtonStyle.radio == 2 }"></i>
+                                        <template v-if="globalButtonStyle.radio == 2">
+                                            <div v-for="(ra,key) in globalButtonStyle.borderRadius" :key="key"
+                                                class="custom-relative custom-l5">
+                                                <el-input type="number" v-model="globalButtonStyle.borderRadius[key]"
+                                                    @input="setRadiusSize(globalButtonStyle.borderRadius,key,$event,true,'global')"
+                                                    :min="0">
+                                                </el-input>
+                                                <div class="custom-absolute radius-size">
+                                                    <div class="el-icon-caret-top add"
+                                                        @mousedown="setRadiusSize(globalButtonStyle.borderRadius,key,1,false,'global')"
+                                                        @mouseup="moveStop" @mouseout="moveStop">
+                                                    </div>
+                                                    <div class="el-icon-caret-bottom reduce"
+                                                        @mousedown="setRadiusSize(globalButtonStyle.borderRadius,key,-1,false,'global')"
+                                                        @mouseup="moveStop" @mouseout="moveStop">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </template>
+                                        <template v-else>
+                                            <div v-for="ra in 4" :key="ra" class="custom-relative custom-l5"
+                                                v-show="ra==1">
+                                                <el-input type="number" v-model="globalButtonStyle.borderRadius.top"
+                                                    :min="0"
+                                                    @input="setRadiusSize(null,'borderRadius',$event,true,'global')">
+                                                </el-input>
+                                                <div class="custom-absolute radius-size">
+                                                    <div class="el-icon-caret-top add"
+                                                        @mousedown="setRadiusSize(null,'borderRadius',1,false,'global')"
+                                                        @mouseup="moveStop" @mouseout="moveStop">
+                                                    </div>
+                                                    <div class="el-icon-caret-bottom reduce"
+                                                        @mousedown="setRadiusSize(null,'borderRadius',-1,false,'global')"
+                                                        @mouseup="moveStop" @mouseout="moveStop">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </el-form-item>
+
+                                <!-- 背景色 -->
+                                <el-form-item :label="$t('set.set9')">
+                                    <el-radio-group v-model="globalButtonStyle.backgroundRadio">
+                                        <el-radio :label="1">{{ $i.t("set.set10") }}</el-radio>
+                                        <el-radio :label="2">{{ $i.t("cctml50") }}</el-radio>
+                                    </el-radio-group>
+                                </el-form-item>
+                                <div class="custom-items-center component-bg-set_up"
+                                    v-if="globalButtonStyle.backgroundRadio == 1">
+                                    <el-form-item v-for="(bg,key) in bgLabel" :key="key" :label="bg" :class="key">
+                                        <el-color-picker v-if="key == 'backgroundColor'"
+                                            v-model="globalButtonStyle[key]"
+                                            @change="changeColor($event,globalButtonStyle,'backgroundColor')"
+                                            size="mini">
+                                        </el-color-picker>
+                                        <el-slider v-if="key == 'backgroundOpacity'" v-model="globalButtonStyle[key]">
+                                        </el-slider>
+                                    </el-form-item>
+                                </div>
+
+                                <!-- 渐变色 -->
+                                <div class="gradient-comtainer custom-items-center  background-radio"
+                                    v-if="globalButtonStyle.backgroundRadio == 2">
+                                    <!-- 起始 -->
+                                    <el-form-item :label="$t('cctml48')" class="backgroundColor">
+                                        <el-color-picker @change="gradientGlobalBgColor"
+                                            v-model="globalBuackgroundImageData.start" size="mini">
+                                        </el-color-picker>
+                                    </el-form-item>
+                                    <!-- 结束 -->
+                                    <el-form-item :label="$t('cctml49')" class="backgroundColor">
+                                        <el-color-picker @change="gradientGlobalBgColor"
+                                            v-model="globalBuackgroundImageData.end" size="mini">
+                                        </el-color-picker>
+                                    </el-form-item>
+                                </div>
+                            </el-form>
+                        </el-collapse-item>
+                    </el-collapse>
+                </template>
+
+            </tr-drawer>
+
+            <!-- 呼出 -->
+            <el-dialog :show-close="false" :modal="false" :close-on-click-modal="false" title=""
+                :visible.sync="ipIntercomDialog" width="600px" center class="ip-intercom-dialog">
+                <div class="ip-intercom-body" :class="{'show':exhale.show && incomingCall.show}">
+                    <div class="exhale-content" :class="{'show': exhale.show}">
+                        <div class="dialog-tips-text">
+                            <i class="iconfont iconoutBound-hujiao"></i>
+                            <span class="custom-l5">{{ $t(callOutDialogText) }}.....</span>
+                        </div>
+                        <span slot="footer" class="dialog-footer">
+                            <el-button v-for="bt in iPIntercomButtonText[exhale.text]" class="ter-btn"
+                                :style="{backgroundColor:bt.color}" @click="cancelExhale">
+                                <i :class="['iconfont',bt.icon]"></i>
+                                <span class="custom-l5">{{ bt.text }}</span>
+                            </el-button>
+                        </span>
+                    </div>
+
+                    <div class="incoming-call-content"
+                        :class="{'dialog-top':exhale.show && incomingCall.show,'show': incomingCall.show}">
+                        <div class="dialog-tips-text incoming-call">
+                            <i class="iconfont iconoutBound-hujiao"></i>
+                            <span class="custom-l5">{{ dialogTipstext }}</span>
+                        </div>
+                        <span slot="footer" class="dialog-footer">
+                            <el-button v-for="bt in iPIntercomButtonText[incomingCall.text]" class="ter-btn"
+                                :style="{backgroundColor:bt.color}" @click="incomingCallButtons(bt)">
+                                <i :class="['iconfont',bt.icon]"></i>
+                                <span class="custom-l5">{{ bt.text }}</span>
+                            </el-button>
+                        </span>
+                    </div>
+                </div>
+            </el-dialog>
+
+            <!-- 转接 -->
+            <tr-dialog :title="transferText" top="25vh" center :confirm-text="$t('confirm')" :cancel-text="$t('cancel')"
+                :visible.sync="showTransferDialog" @confirm="confirmTransfer">
+                <el-form label-width="0.8rem" @submit.native.prevent>
+                    <el-form-item :label="$t('ccjs40')" class="module-name" style="margin-left: -0.15rem">
+                        <el-input v-model.trim="transferId" :placeholder="$t('tipsText[5]')" type="text">
+                        </el-input>
+                    </el-form-item>
+                </el-form>
+            </tr-dialog>
+
+            <!-- 分配工单模态框 -->
+            <el-dialog :title="$t('cctml30')" class="view-modal import-modal add-modal" v-loading="dialog.add.loading"
+                :visible.sync="dialog.add.show" width="768px" center>
+                <el-form :model="dialog.add.obj" :rules="rules" class="custom-flex custom-flex-warp add-form"
+                    ref="add-form">
+                    <el-form-item :label="item.label" :prop="item.model" v-for="item in repairFormData"
+                        label-width="80px"
+                        v-show="item.model == 'completeTimeMillis' ? dialog.add.obj.status == 4 : true"
+                        :class="item.model" :key="item.model">
+                        <template v-if="item.type != 'el-select' && item.type != 'radio'&& item.model !='description'">
+                            <component :is="item.type" class="custom-input" v-model="dialog.add.obj[item.model]"
+                                value-format="timestamp" format="yyyy-MM-dd HH:mm" :picker-options="pickerOptions"
+                                :placeholder="item.placeholder" type="datetime" :readonly="item.readonly">
+                            </component>
+
+                            <div class="modal-form-wrapper" v-if="item.model == 'file'">
+                                <el-upload accept="image/*,video/*" ref="add-upload" action="#" list-type="picture-card"
+                                    :on-change="fileChange" :auto-upload="false">
+                                    <i slot="default" class="el-icon-plus"></i>
+                                    <div slot="file" slot-scope="_obj" style="height: 100%">
+                                        <video class="el-upload-list__item-thumbnail" :src="_obj.file.url"
+                                            v-if="/\.(swf|flv|mp4|rmvb|avi|mpeg|ra|ram|mov|wmv)$/.test(_obj.file.name.toLowerCase())"></video>
+                                        <img style="object-fit: cover" v-else class="el-upload-list__item-thumbnail"
+                                            :src="_obj.file.url" alt="">
+                                        <span class="el-upload-list__item-actions">
+                                            <span class="el-upload-list__item-preview"
+                                                v-if="/\.(swf|flv|mp4|rmvb|avi|mpeg|ra|ram|mov|wmv)$/.test(_obj.file.name.toLowerCase())"
+                                                @click="handleVideoPreview(_obj.file.url)">
+                                                <i class="el-icon-zoom-in"></i>
+                                            </span>
+                                            <span class="el-upload-list__item-preview" v-else
+                                                @click="handlePicturePreview(_obj.file.url)">
+                                                <i class="el-icon-zoom-in"></i>
+                                            </span>
+                                            <span class="el-upload-list__item-delete"
+                                                @click="$refs['add-upload'][0].handleRemove(_obj.file)">
+                                                <i class="el-icon-delete"></i>
+                                            </span>
+                                        </span>
+                                    </div>
+                                </el-upload>
+                            </div>
+                        </template>
+
+                        <template v-else-if="item.type == 'el-select'">
+                            <el-select :popper-class="{'edit-popper': showEdit}" v-model="dialog.add.obj[item.model]"
+                                :placeholder="item.placeholder" @change="changeRepairType($event,item)">
+                                <el-option v-for="(option, idx) in elSelectList(item.list)" :key="option.id"
+                                    :label="option.name" :value="option.id">
+                                </el-option>
+                            </el-select>
+                        </template>
+
+                        <template v-else-if="item.model=='description'">
+                            <el-input type="textarea" resize="none" :placeholder="item.placeholder"
+                                v-model="dialog.add.obj[item.model]" rows="3" maxlength="300" show-word-limit>
+                            </el-input>
+                        </template>
+
+                        <template v-else>
+                            <el-radio v-model="dialog.add.obj[item.model]" v-for="(status,key) in addStatusMap"
+                                :key="key" :label="Number(key)">{{ status }}
+                            </el-radio>
+                        </template>
+
+                    </el-form-item>
+                </el-form>
+
+
+                <div slot="footer" class="footer-center">
+                    <span @click="add"
+                        class="el-button ter-btn ter-btn--success central-button el-button--default">{{$t('end')}}</span>
+                </div>
+            </el-dialog>
+
+            <!--		图片预览-->
+            <el-dialog :visible.sync="previewImageVisible" class="preview-image">
+                <div class="custom-flex">
+                    <img width="100%" :src="previewImageUrl" alt="">
+                </div>
+            </el-dialog>
+
+            <!--		视频预览-->
+            <el-dialog :visible.sync="previewVideoVisible" class="preview-image" width="640px" top="20vh">
+                <div class="preview-title">{{$t('cctml31')}}</div>
+                <div class="flex" style="padding: 0 10px 10px">
+                    <video width="100%" :src="previewVideoVisible ? previewVideoUrl : ''" autoplay controls></video>
+                </div>
+            </el-dialog>
+
+            <preview-dialog :visible.sync="previewVisible" class="on-duty-preview-dialog"
+                :url="$global.fullStaticUrl('/public/images/admin/control/ip.png')">
+            </preview-dialog>
+
+
+            <!-- 网页弹框 -->
+            <el-dialog :visible.sync="showPageDialog" class="page-dialog" width="100%" top="0">
+                <iframe id="myFrameId" class="page-iframe" width="100%" height="100%" frameBorder="0" :src="pageUrl"
+                    name="myFrameName"></iframe>
+            </el-dialog>
+
+            <!-- 另存 -->
+            <tr-dialog :title="$t('cctml52')" top="25vh" center :confirm-text="$t('confirm')"
+                :cancel-text="$t('cancel')" :visible.sync="showPresetDialog" @confirm="confirmSendPreset">
+                <el-form label-width="0.8rem" @submit.native.prevent>
+                    <el-form-item :label="$t('cctml51')" class="module-name" style="margin-left: -0.15rem">
+                        <el-select class="dialog-input-w100" v-model="savePreset"
+                            :popper-class="{'edit-popper': showEdit}">
+                            <el-option v-for="item in (saveButtonData ? saveButtonData.style.control.instructList : [])"
+                                :key="item.id" :label="item.name" :value="item.id">
+                            </el-option>
+                        </el-select>
+                    </el-form-item>
+                </el-form>
+            </tr-dialog>
+
+        </div>
+
+        <!-- 提示打开或者下载omcs插件 -->
+        <el-dialog
+            class="omcs-dialog"
+            :title="$t('tips')"
+            top="35vh"
+            :visible.sync="showHtmlOMCSDialog"
+            width="30%"
+        >
+            <span>{{ $t("ccjs57") }}</span>
+            <div slot="footer" class="dialog-footer">
+                <el-button @click="downOmcsCallback">{{ $t("down") }}</el-button>
+                <el-button @click="openOmcs">{{ $t("open") }}</el-button>
+                <el-button type="primary" @click="retryOpenOmcs">{{ $t("ccjs58") }}</el-button>
+            </div>
+        </el-dialog>
+    </div>
+    <!-- 基础 -->
+    <script src="/public/js/bluebird.min.js"></script>
+    <script src="/public/js/vue.min.js"></script>
+    <script src="/public/element-ui-2.15.9/index.js"></script>
+    <script src="/public/js/jquery-3.3.1.min.js"></script>
+    <script src="/public/js/moment.min.js"></script>
+    <script src="/public/js/config/config.js"></script>
+    <script src="/public/js/common/vue-common-util.js"></script>
+    <script src="/public/js/common/vue-ajax.js"></script>
+    <script src="/public/js/common/iframe.js"></script>
+
+    <!-- 翻译 -->
+    <script src="/public/locales/vue-i18n.js"></script>
+    <script src="/public/element-ui-2.15.9/locale/lang/zh-CN.js"></script>
+    <script src="/public/element-ui-2.15.9/locale/lang/en.js"></script>
+    <script src="/public/locales/i18n-config.js"></script>
+    <script src="/public/locales/i18n-all.js"></script>
+
+    <script src="/public/js/components/common.js"></script>
+    <script src="/public/js/echarts.min.js"></script>
+    <script src="/public/js/websocket/sockjs.min.js"></script>
+    <script src="/public/js/websocket/stomp.min.js"></script>
+
+    <!-- 当前 -->
+    <script src="/public/ckplayer/ckplayer.min.js"></script>
+    <script src="/public/js/flv.min.js"></script>
+    <script src="/public/js/hls.min.js"></script>
+    <script src="/public/js/components/template/ComponentList.js"></script>
+    <script src="/public/js/components/template/DragDrop.js"></script>
+    <script src="/public/js/components/template/OMCS_M.js"></script>
+    <script src="/public/js/components/template/omcs-client.min.js"></script>
+    <script src="/public/js/admin/control/central.js"></script>
+</body>
+
+</html>

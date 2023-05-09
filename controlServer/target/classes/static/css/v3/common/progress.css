@@ -1,0 +1,59 @@
+/**
+  进度条
+ */
+.progress{
+    height: 10px;
+}
+.progress-bar {
+    float: left;
+    width: 0;
+    height: 100%;
+    font-size: 12px;
+    line-height: 20px;
+    color: #fff;
+    text-align: center;
+    background-color: #337ab7;
+    -webkit-box-shadow: inset 0 -1px 0 rgba(0,0,0,.15);
+    box-shadow: inset 0 -1px 0 rgba(0,0,0,.15);
+    -webkit-transition: width .6s ease;
+    -o-transition: width .6s ease;
+    transition: width .6s ease;
+}
+/*
+    绿色进度条
+ */
+.progress .progress-bar {
+    border-radius: 20px;
+    position: relative;
+    animation: animate-positive .5s;
+    background-color: #84FADB;
+    background-image: -webkit-linear-gradient(135deg,#39DF76 25%,transparent 25%,transparent 50%,#39DF76 50%,#39DF76 75%,transparent 75%,transparent);
+    background-image: -o-linear-gradient(135deg,#39DF76 25%,transparent 25%,transparent 50%,#39DF76 50%,#39DF76 75%,transparent 75%,transparent);
+    background-image: linear-gradient(135deg,#39DF76 25%,transparent 25%,transparent 50%,#39DF76 50%,#39DF76 75%,transparent 75%,transparent);
+    -webkit-background-size: 12px 12px;
+    background-size: 12px 12px;
+}
+/*
+    黄色进度条
+ */
+.progress-bar.progress-yellow {
+    background-color: #FAD126;
+    background-image: -webkit-linear-gradient(135deg,#FF544F 25%,transparent 25%,transparent 50%,#FF544F 50%,#FF544F 75%,transparent 75%,transparent);
+    background-image: -o-linear-gradient(135deg,#FF544F 25%,transparent 25%,transparent 50%,#FF544F 50%,#FF544F 75%,transparent 75%,transparent);
+    background-image: linear-gradient(135deg,#FF544F 25%,transparent 25%,transparent 50%,#FF544F 50%,#FF544F 75%,transparent 75%,transparent);
+}
+/*
+    红色进度条
+ */
+.progress-bar.progress-red {
+    background-color: #FFAB96;
+    background-image: -webkit-linear-gradient(135deg,#FF0F47 25%,transparent 25%,transparent 50%,#FF0F47 50%,#FF0F47 75%,transparent 75%,transparent);
+    background-image: -o-linear-gradient(135deg,#FF0F47 25%,transparent 25%,transparent 50%,#FF0F47 50%,#FF0F47 75%,transparent 75%,transparent);
+    background-image: linear-gradient(135deg,#FF0F47 25%,transparent 25%,transparent 50%,#FF0F47 50%,#FF0F47 75%,transparent 75%,transparent);
+}
+@-webkit-keyframes animate-positive{
+    0% { width: 0; }
+}
+@keyframes animate-positive{
+    0% { width: 0; }
+}

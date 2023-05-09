@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>开门记录</title>
+    <link rel="stylesheet" href="/public/css/v3/common/common.css" />
+    <link rel="stylesheet" href="/public/css/v3/common/modal.css" />
+    <link rel="stylesheet" href="/public/elementui/element-ui.css" />
+    <link rel="stylesheet" href="/public/ali-icon/iconfont.css" />
+    <link rel="stylesheet" href="/public/ali-icon/energy-icon/iconfont.css" />
+    <link rel="stylesheet" href="/public/css/v3/common/el-custom.css" />
+    <link rel="stylesheet" href="/public/css/v3/common/progress.css" />
+    <link rel="stylesheet" href="/public/css/v3/common/energyCommon.css" />
+    <link
+      rel="stylesheet"
+      href="/public/font-awesome/css/font-awesome.min.css"
+    />
+    <link rel="stylesheet" href="/public/css/energy/timing.css" />
+  </head>
+  <body>
+    <div id="app" v-cloak>
+      <div class="container">
+        <div class="head-wrapper">
+          <div class="head"><span></span><span>{{$t('head')}}</span></div>
+        </div>
+
+        <div class="flex-column wh100">
+          <!-- 筛选区 -->
+          <div class="content-wrapper" style="margin-bottom: 35px">
+            <div class="energy-screen">
+              <div class="flex">
+                <div class="screen-item back pointer" @click="changeBack">
+                  <i class="iconfont iconjiantou2"></i>
+                  <span>{{$t('prev')}}</span>
+                </div>
+                <div class="screen-item">
+                  <span>{{$t('place')}}</span>
+                  <span>{{placeValue}}</span>
+                </div>
+                <!-- <div class="screen-item">
+                  <span>配电箱:</span>
+                  <span>内蒙古测试</span>
+                </div> -->
+                <div class="screen-item">
+                  <span>{{$t('status')}}</span>
+                  <div class="flex-center">
+                    <div class="screen-status" :class="{active:true}"></div>
+                    <span>{{$t('on')}}</span>
+                  </div>
+                </div>
+              </div>
+              <div class="margin-l-20 flex-center">
+                <!-- <div class="screen-item">
+                  <el-input class="search-input" placeholder="搜索相关内容">
+                    <i
+                      slot="suffix"
+                      class="el-input__icon el-icon-search main-color font-bold"
+                    ></i>
+                  </el-input>
+                </div> -->
+              </div>
+            </div>
+          </div>
+
+          <div class="energy-container relative">
+            <!-- 表格 -->
+            <el-table
+              :data="tableData"
+              style="width: 100%"
+              stripe
+              :row-class-name="tableRowClassName"
+              @cell-click="changeDelete"
+            >
+              <el-table-column prop="name" :label="$t('dialog.h1')" show-overflow-tooltip>
+                <template slot-scope="scope">
+                  <span>{{scope.row.name || $t('dialog.h2') + (Number(scope.row.id))}}</span>
+                </template>
+              </el-table-column>
+              <el-table-column prop="opCode" :label="$t('dialog.h3')">
+                <template slot-scope="scope">
+                  <div>{{scope.row.opCode?$t('dialog.h21'):$t('dialog.h22')}}</div>
+                </template>
+              </el-table-column>
+              <el-table-column :label="$t('dialog.h4')" show-overflow-tooltip>
+                <template slot-scope="scope">
+                  <div class="flex-column flex">
+                    <span
+                      >{{scope.row.time.substring(0, scope.row.time.length -
+                      3)}}</span
+                    >
+                    <span>{{currTiminWeek(scope.row)}}</span>
+                  </div>
+                </template>
+              </el-table-column>
+              <el-table-column :label="$t('dialog.h5')" show-overflow-tooltip>
+                <template slot-scope="scope">
+                  <span>{{currAirSwitchsName(scope.row)}}</span>
+                </template>
+              </el-table-column>
+              <el-table-column :label="$t('dialog.h6')">
+                <template slot-scope="scope">
+                  <button class="table-delete">{{$t('delete')}}</button>
+                </template>
+              </el-table-column>
+            </el-table>
+            <!-- 底部 -->
+            <div class="energy-footer absolute">
+              <div class="flex-center relative wh100">
+                <div class="footer-left absolute left-0 flex-items-center">
+                  <button
+                    class="timing-add"
+                    @click="timing.isShowDialog = true"
+                  >
+                    <i class="iconfont icon-buqian"></i>
+                    {{$t('add')}}
+                  </button>
+                </div>
+                <div class="page">
+                  <el-pagination
+                    @current-change="changeCurrPageNum"
+                    :page-size="page.size"
+                    layout="prev, pager, next"
+                    :current-page="page.num"
+                    :pager-count="10"
+                    :total="page.count"
+                  >
+                  </el-pagination>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 添加定时 -->
+        <tr-dialog
+          :title="$t('dialog.h7')"
+          :visible.sync="timing.isShowDialog"
+          width="50rem"
+          :confirm-text="$t('dialog.h8')"
+          class="timing-dialog"
+          @confirm="addTiming"
+        >
+          <div class="timing-item-box">
+            <span>{{$t('dialog.h9')}}</span>
+            <div class="timing-item">
+              <span>{{$t('dialog.h10')}}</span>
+              <div class="checkbox-content">
+                <el-checkbox
+                  v-model="timing.week"
+                  :label="item.value"
+                  v-for="item in timing.dateList"
+                  :key="item.value"
+                  >{{item.text}}</el-checkbox
+                >
+                <el-checkbox
+                  @change="changeCheckBox"
+                  class="date-checkbox pos-rel"
+                  v-model="timing.dateCheckbox"
+                  >{{timing.date == ''? $t('dialog.h11') :timing.date}}
+                  <el-date-picker
+                    @change="changeDatepicker"
+                    class="pos-abs"
+                    :style="{'z-index':timing.dateCheckbox?-1:2}"
+                    v-model="timing.date"
+                    type="date"
+                    :clearable="false"
+                    :editable="false"
+                    prefix-icon=" "
+                    value-format="yyyy-MM-dd"
+                  >
+                  </el-date-picker>
+                </el-checkbox>
+                <el-checkbox v-model="timing.everyday" :label="timing.everyday"
+                  >{{$t('dialog.h12')}}</el-checkbox
+                >
+              </div>
+            </div>
+          </div>
+          <div class="timing-item-box">
+            <span>{{$t('dialog.h1')}}</span>
+            <div class="timing-item">
+              <input class="timing-item-name" :placeholder="$t('dialog.h13')" v-model="timing.name" />
+            </div>
+          </div>
+          <div class="timing-item-box">
+            <span>{{$t('dialog.h14')}}</span>
+            <div class="timing-time timing-item">
+              <el-time-picker
+                v-model="timing.time"
+                format="HH:mm"
+                :clearable="false"
+                :editable="false"
+                prefix-icon=" "
+              >
+              </el-time-picker>
+            </div>
+          </div>
+          <div class="timing-item-box">
+            <span>{{$t('dialog.h15')}}</span>
+            <div class="timing-item">
+              <span>{{$t('dialog.h16')}}</span>
+              <div class="checkbox-content">
+                <el-checkbox-group v-model="timing.equipment">
+                  <el-checkbox
+                    :label="item.uuid"
+                    v-for="item in timing.equipmentList"
+                    :key="item.value"
+                    >{{item.name}}</el-checkbox
+                  >
+                </el-checkbox-group>
+              </div>
+            </div>
+          </div>
+          <div class="timing-item-box">
+            <span>{{$t('dialog.h6')}}</span>
+            <div class="timing-item">
+              <el-radio-group v-model="timing.operation">
+                <el-radio :label="1">{{$t('dialog.h17')}}</el-radio>
+                <el-radio :label="0">{{$t('dialog.h18')}}</el-radio>
+              </el-radio-group>
+            </div>
+          </div>
+        </tr-dialog>
+
+        <!-- 删除定时 -->
+        <tr-dialog
+          :title="$t('dialog.h20')"
+          width="35rem"
+          class="update-name-dialog"
+          :visible.sync="timing.deleteTiming"
+          with-cancel
+          top="25vh"
+          @confirm="confirmDeleteTiming"
+        >
+          <div class="delete-timing-body flex-center">
+            <span>{{$t('dialog.h19', {param: timing.currRowValue.id})}}</span>
+          </div>
+        </tr-dialog>
+      </div>
+    </div>
+  </body>
+  <script src="/public/js/vue.min.js"></script>
+  <script src="/public/elementui/element-ui.js"></script>
+  <script src="/public/js/jquery-3.3.1.min.js"></script>
+  <script src="/public/js/config/config.js"></script>
+  <script src="/public/js/energy/WebSocket.js"></script>
+  <script src="/public/js/date.js"></script>
+  <script src="/public/js/ajax-el.js"></script>
+  <script src="/public/js/moment.min.js"></script>
+  <script src="/public/js/common/iframe.js"></script>
+  <script src="/public/js/common/constants.js"></script>
+  <script src="/public/js/common/import-tip.js"></script>
+  <script src="/public/js/common/common-util.js"></script>
+  <script src="/public/js/echarts.min.js"></script>
+  <script src="/public/js/brand-tree.js"></script>
+  <script src="/public/js/tr-dialog.js"></script>
+  <script src="/public/js/check-all-checkbox.js"></script>
+  <script src="/public/js/common/vue-directive.js"></script>
+  <script src="/public/js/vue-i18n.js"></script>
+  <script src="/public/js/config/i18n-config.js"></script>
+  <script src="/public/js/i18n/energy/i18n-timing.js"></script>
+  <script src="/public/elementui/locale/lang/zh-CN.js"></script>
+  <script src="/public/elementui/locale/lang/en.js"></script>
+  <script src="/public/js/energy/timing.js"></script>
+</html>

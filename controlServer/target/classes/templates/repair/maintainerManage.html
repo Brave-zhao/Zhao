@@ -1,0 +1,1698 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>我的维修</title>
+    <link rel="stylesheet" href="/public/css/v3/common/common.css">
+    <link rel="stylesheet" href="/public/css/v3/common/modal.css">
+    <link rel="stylesheet" href="/public/elementui/element-ui.css">
+    <link rel="stylesheet" href="/public/ali-icon/iconfont.css">
+    <link rel="stylesheet" href="/public/css/v3/common/el-custom.css">
+    <link rel="stylesheet" href="/public/css/v3/common/progress.css">
+    <link rel="stylesheet" href="/public/css/repair/maintainerManage.css">
+    <link rel="stylesheet" href="/public/css/components/ChooseDialog.css">
+</head>
+<body>
+<div id="app" v-cloak>
+    <div>
+        <div class="head-wrapper">
+            <div class="head">
+                <span></span><span v-t="'title'"></span>
+            </div>
+        </div>
+
+        <div class="content-wrapper" style="margin-bottom: 0;">
+            <div class="screen">
+                <div class="flex">
+                    <!--<div class="screen-item">
+                        <div @click="showAddModal" class="custom-button button-style1">{{$t('p9')}}</div>
+                    </div>-->
+                    <!--						<div class="screen-item">
+                                                <div @click="showImportDialog" class="custom-button button-style1">导入</div>
+                                            </div>
+                                            <div v-if="dialog.batchExport.isExporting" class="screen-item">
+                                                <div class="custom-button button-style1">{{dialog.batchExport.progress}}%</div>
+                                            </div>
+                                            <div v-else class="screen-item">
+                                                <div @click="showExportDialog" class="custom-button button-style1">{{$t('export')}}</div>
+                                            </div>
+                                            <div class="screen-item">
+                                                <div @click="" class="custom-button button-style1">数据同步</div>
+                                            </div>-->
+                    <!--<div class="screen-item">
+                        <div @click="multipleDelete" class="custom-button button-style2"><i class="el-icon-delete"></i>{{$tc('d', 2)}}
+                        </div>
+                    </div>-->
+                </div>
+                <div>
+                    <div class="screen-item">
+                        <el-input
+                                v-model="condition.like"
+                                class="search-input"
+                                :placeholder="$t('tipsText[1]')"
+                                @keyup.enter.native="toFirstPage">
+                            <i @click="toFirstPage" slot="suffix" class="el-input__icon el-icon-search"></i>
+                        </el-input>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="content-wrapper flex" style="margin: 0 30px">
+            <div class="width-full">
+                <el-table
+                        :row-class-name="highLightRow"
+                        class="custom-table border-table"
+                        ref="multipleTable"
+                        v-loading="mainLoading"
+                        :data="list"
+                        tooltip-effect="dark"
+                        :default-sort="{prop: 'create_time', order: 'descending'}"
+                        @sort-change="sortChange"
+                        style="width: 100%"
+                        @selection-change="handleSelectionChange">
+                    <!--<el-table-column
+                            type="selection"
+                            width="55">
+                    </el-table-column>-->
+                    <el-table-column
+                            prop="create_time"
+                            sortable="custom"
+                            width="200"
+                            :label="$t('p42')">
+                        <template slot-scope="scope">
+                            <span>{{scope.row.createTime | dateFull}}</span>
+                        </template>
+                    </el-table-column>
+                    <el-table-column
+                            prop="type"
+                            :label="$t('p11')">
+                        <template scope="scope" slot="header">
+                            <el-dropdown
+                                    :hide-on-click="false" trigger="click" placement="bottom-start">
+                                <span class="custom-table-th pointer">{{$t('p11')}}<i
+                                        class="el-icon-caret-bottom margin-l-5"></i></span>
+                                <el-dropdown-menu class="table-select check" slot="dropdown">
+                                    <el-dropdown-item>
+                                        <el-checkbox-group @change="toFirstPage"
+                                                           v-model="condition.screen['TYPE_NAME'].value"
+                                                           class="relative">
+                                            <div class="search-check-input-wrapper">
+                                                <el-input v-model="condition.screen.TYPE_NAME.like"
+                                                          class="search-input" :placeholder="$t('p12')">
+                                                    <i slot="suffix" class="el-input__icon el-icon-search"></i>
+                                                </el-input>
+                                            </div>
+                                            <div class="search-check-space" v-loading="condition.loading.name">
+                                                <el-scrollbar style="height: 100%;">
+                                                    <div v-for="screen in typeNameList"
+                                                         class="flex search-check-item">
+                                                        <el-checkbox :label="screen.name" :key="screen.type">
+                                                            {{screen.name}}
+                                                        </el-checkbox>
+                                                    </div>
+                                                </el-scrollbar>
+                                            </div>
+                                        </el-checkbox-group>
+                                    </el-dropdown-item>
+                                </el-dropdown-menu>
+                            </el-dropdown>
+                        </template>
+                        <template slot-scope="scope">
+                            <span>{{scope.row.typeName || DEFAULT_TYPE_NAME}}</span>
+                        </template>
+                    </el-table-column>
+                    <el-table-column
+                            :label="$t('local')">
+                        <template scope="scope" slot="header">
+                            <el-dropdown :hide-on-click="false" trigger="click" placement="bottom-start">
+                                <span class="custom-table-th pointer">{{$t('local')}}<i class="el-icon-caret-bottom margin-l-5"></i></span>
+                                <el-dropdown-menu class="table-select check" slot="dropdown">
+                                    <el-dropdown-item>
+                                        <el-checkbox-group v-model="condition.names" class="relative">
+                                            <div class="search-check-input-wrapper">
+                                                <el-input v-model="condition.placeLike" class="search-input"
+                                                          :placeholder="$t('tipsText[3]')">
+                                                    <i slot="suffix" class="el-input__icon el-icon-search"></i>
+                                                </el-input>
+                                            </div>
+                                            <div class="search-check-space" v-loading="condition.loading.place">
+                                                <div
+                                                v-if="place && place.length"
+                                                    @click="cancelNodeSelect2('condition', condition, 1, 'placeId', 'placeName')"
+                                                    class="ztree-cancle ads"
+                                                >
+                                                    <span>{{$t('all')}}</span>
+                                                </div>
+                                                <el-scrollbar style="height: 100%;width: 250px;">
+                                                    <el-tree class="custom-tree" default-expand-all="true"
+                                                             ref="condition" node-key="id"
+                                                             :data="place" :props="defaultProps"
+                                                             highlight-current="true"
+                                                             :filter-node-method="placeFilter"
+                                                             @node-click="handleNodeClick($event, condition, 1, 'placeId', 'placeName')">
+                                                        <div class="custom-tree-label" slot-scope="scope">
+                                                            <span class="tree-label font-14">{{ scope.node.label }}</span>
+                                                        </div>
+                                                    </el-tree>
+                                                </el-scrollbar>
+                                            </div>
+                                        </el-checkbox-group>
+                                    </el-dropdown-item>
+                                </el-dropdown-menu>
+                            </el-dropdown>
+                        </template>
+                        <template slot-scope="scope">
+                            <span>{{scope.row.placeName | text}}</span>
+                        </template>
+                    </el-table-column>
+                    <el-table-column
+                            prop="description"
+                            width="110"
+                            :label="$t('p13')"
+                            show-overflow-tooltip="true">
+                        <template slot-scope="scope">
+                            <span>{{scope.row.description | text}}</span>
+                        </template>
+                    </el-table-column>
+                    <el-table-column
+                            :label="$t('p14')">
+                        <template scope="scope" slot="header">
+                            <el-dropdown
+                                    @visible-change="function(isExpand) {initScreenList(isExpand, 'PROPERTY_NAME')}"
+                                    :hide-on-click="false" trigger="click" placement="bottom-start">
+                                <span class="custom-table-th pointer">{{$t('p14')}}<i
+                                        class="el-icon-caret-bottom margin-l-5"></i></span>
+                                <el-dropdown-menu class="table-select check" slot="dropdown">
+                                    <el-dropdown-item>
+                                        <el-checkbox-group @change="toFirstPage"
+                                                           v-model="condition.screen['PROPERTY_NAME'].value"
+                                                           class="relative">
+                                            <div class="search-check-input-wrapper">
+                                                <el-input v-model="condition.screen.PROPERTY_NAME.like"
+                                                          class="search-input" :placeholder="$t('p15')">
+                                                    <i slot="suffix" class="el-input__icon el-icon-search"></i>
+                                                </el-input>
+                                            </div>
+                                            <div class="search-check-space" v-loading="condition.loading.name">
+                                                <el-scrollbar style="height: 100%;">
+                                                    <div v-for="screen in screenNameList"
+                                                         class="flex search-check-item">
+                                                        <el-checkbox :label="screen.name" :key="screen.id">
+                                                            {{screen.name}}
+                                                        </el-checkbox>
+                                                    </div>
+                                                </el-scrollbar>
+                                            </div>
+                                        </el-checkbox-group>
+                                    </el-dropdown-item>
+                                </el-dropdown-menu>
+                            </el-dropdown>
+                        </template>
+                        <template slot-scope="scope">
+                            <span>{{scope.row.name | text}}</span>
+                        </template>
+                    </el-table-column>
+                    <el-table-column
+                            :label="$t('type')">
+                        <template scope="scope" slot="header">
+                            <el-dropdown :hide-on-click="false" trigger="click" placement="bottom-start">
+                                <span class="custom-table-th pointer">{{$t('type')}}<i class="el-icon-caret-bottom margin-l-5"></i></span>
+                                <el-dropdown-menu class="table-select check" slot="dropdown">
+                                    <el-dropdown-item>
+                                        <el-checkbox-group @change="toFirstPage" v-model="condition.propertyType"
+                                                           class="relative">
+                                            <div class="search-check-input-wrapper">
+                                                <el-input v-model="condition.ptLike" class="search-input"
+                                                          :placeholder="$t('p21')">
+                                                    <i slot="suffix" class="el-input__icon el-icon-search"></i>
+                                                </el-input>
+                                            </div>
+                                            <div class="search-check-space">
+                                                <el-scrollbar style="height: 100%;">
+                                                    <div v-for="pt in screenTypeList" class="flex search-check-item">
+                                                        <el-checkbox :label="pt.id" :key="pt.id">{{pt.name}}
+                                                        </el-checkbox>
+                                                    </div>
+                                                </el-scrollbar>
+                                            </div>
+                                        </el-checkbox-group>
+                                    </el-dropdown-item>
+                                </el-dropdown-menu>
+                            </el-dropdown>
+                        </template>
+                        <template slot-scope="scope">
+                            <span>{{propertyTypeMap[scope.row.propertyType] ? propertyTypeMap[scope.row.propertyType].name : '——'}}</span>
+                        </template>
+                    </el-table-column>
+
+                    <el-table-column
+                            :label="$t('p16')">
+                        <template scope="scope" slot="header">
+                            <el-dropdown
+                                    @visible-change="function(isExpand) {initScreenList(isExpand, 'REPAIR_NICKNAME')}"
+                                    :hide-on-click="false" trigger="click" placement="bottom-start">
+                                <span class="custom-table-th pointer">{{$t('p16')}}<i class="el-icon-caret-bottom margin-l-5"></i></span>
+                                <el-dropdown-menu class="table-select check" slot="dropdown">
+                                    <el-dropdown-item>
+                                        <el-checkbox-group @change="toFirstPage"
+                                                           v-model="condition.screen['REPAIR_NICKNAME'].value"
+                                                           class="relative">
+                                            <div class="search-check-input-wrapper">
+                                                <el-input v-model="condition.screen.REPAIR_NICKNAME.like"
+                                                          class="search-input" :placeholder="$t('p17')">
+                                                    <i slot="suffix" class="el-input__icon el-icon-search"></i>
+                                                </el-input>
+                                            </div>
+                                            <div class="search-check-space"
+                                                 v-loading="condition.loading.REPAIR_NICKNAME">
+                                                <el-scrollbar style="height: 100%;">
+                                                    <div v-for="screen in screenNicknameList"
+                                                         class="flex search-check-item">
+                                                        <el-checkbox :label="screen.name" :key="screen.id">
+                                                            {{screen.name}}
+                                                        </el-checkbox>
+                                                    </div>
+                                                </el-scrollbar>
+                                            </div>
+                                        </el-checkbox-group>
+                                    </el-dropdown-item>
+                                </el-dropdown-menu>
+                            </el-dropdown>
+                        </template>
+                        <template slot-scope="scope">
+                            <span>{{scope.row.nickname | text}}</span>
+                        </template>
+                    </el-table-column>
+
+                    <el-table-column
+                            prop="bookTime"
+                            width="110"
+                            :label="$t('p175')">
+                        <template slot-scope="scope">
+                            <span>{{scope.row.bookTime | dateFull}}</span>
+                        </template>
+                    </el-table-column>
+
+                    <el-table-column
+                            prop="spend"
+                            sortable="custom"
+                            width="110"
+                            :label="$t('p18')">
+                        <template slot-scope="scope">
+                            <span>{{scope.row.spend | spendFormat(scope.row.status)}}</span>
+                        </template>
+                    </el-table-column>
+
+                    <el-table-column
+                            width="80"
+                            :label="$t('p19')">
+                        <template scope="scope" slot="header">
+                            <el-dropdown @command="statusChange" trigger="click" placement="bottom-start">
+                                <span class="custom-table-th pointer">{{$t('p19')}}<i class="el-icon-caret-bottom margin-l-5"></i></span>
+                                <el-dropdown-menu class="table-select" slot="dropdown">
+                                    <el-dropdown-item :class="{active: null == condition.status}" :command="[condition, {}, 1]">{{$t('all')}}</el-dropdown-item>
+                                    <el-dropdown-item :class="{active: key === condition.status}"
+                                                      v-for="(value, key) in processMap" :command="[condition, {value: key, label: value}, 1]">{{value}}</el-dropdown-item>
+                                </el-dropdown-menu>
+                            </el-dropdown>
+                        </template>
+
+                        <template slot-scope="scope">
+                            <span class="status-wrapper"
+                                  :style="{ backgroundColor: statusMap[scope.row.status].color }">{{statusMap[scope.row.status].name}}</span>
+                        </template>
+                    </el-table-column>
+
+                    <!--<el-table-column
+                            :label="$t('p20')">
+                        <template scope="scope" slot="header">
+                            <el-dropdown @command="statusChange" trigger="click" placement="bottom-start">
+                                <span class="custom-table-th pointer">{{$t('p20')}}<i class="el-icon-caret-bottom margin-l-5"></i></span>
+                                <el-dropdown-menu class="table-select" slot="dropdown">
+                                    <el-dropdown-item :class="{active: null == condition.status}" :command="[condition, {}, 1]">{{$t('all')}}</el-dropdown-item>
+                                    <el-dropdown-item :class="{active: key === condition.status}"
+                                                      v-for="(value, key) in readMap" :command="[condition, {value: key, label: value}, 1]">{{value}}</el-dropdown-item>
+                                </el-dropdown-menu>
+                            </el-dropdown>
+                        </template>
+                        <template slot-scope="scope">
+								<span>
+									<i v-if="scope.row.status === 1" class="iconfont iconweidu"
+                                       style="color: #D81E06;"></i>
+									<i v-else class="iconfont iconyidu" style="color: #15C36F;"></i>
+								</span>
+                        </template>
+                    </el-table-column>-->
+                    <el-table-column
+                            width="160"
+                            :label="$t('operate')">
+                        <template slot-scope="scope">
+                            <div class="flex justify-end">
+                                <div @click="showDetail(scope.row.id)" class="font-btn">{{$t('look')}}</div>
+                                <div @click="showCheckInDialog(scope.row)" class="font-btn" :class="{'disabled': scope.row.status !== 2}">{{$t('p179')}}</div>
+                                <div @click="showFeedbackDialog(scope.row)" class="font-btn" :class="{'disabled': scope.row.status !== 3}">{{$t('p180')}}</div>
+<!--                                <div @click="showUpdateDialog(scope.row)" class="font-btn" :class="{'disabled': scope.row.status >= 3}">{{$t('edit')}}</div>-->
+<!--                                <div @click="showPrintDialog(scope.row.id)" class="font-btn">{{$t('p96')}}</div>-->
+                            </div>
+                        </template>
+                    </el-table-column>
+                </el-table>
+                <div class="flex table-bottom relative justify-center">
+                    <div class="absolute left-0">
+                        <!--							<div @click="multipleDelete" class="custom-button button-style2"><i class="el-icon-delete"></i>{{$tc('d', 2)}}</div>-->
+                    </div>
+                    <!-- <div>
+                        <el-pagination
+                                background
+                                layout="prev, pager, next"
+                                :current-page="page.pageNum"
+                                :page-size="page.pageSize"
+                                :total="page.count"
+                                @current-change="getList">
+                        </el-pagination>
+                    </div> -->
+                    <div class="common-page-wrapper">
+                        <span @click="toFirstPage">{{$t('page.f')}}</span>
+                        <el-pagination
+                                class="common-page"
+                                background
+                                layout="prev, pager, next"
+                                :current-page="page.pageNum"
+                                :page-size="page.pageSize"
+                                :total="page.count"
+                                @current-change="getList">
+                        </el-pagination>
+                        <span @click="toLastPage">{{$t('page.l')}}</span>
+                        <div class="common-page-input-wrapper">
+                            <span>{{$t('page.to')}}</span>
+                            <div><input @keyup.enter="toTargetPage" @input="handleAmountChange(page, 'target', 1)" type="text" v-model="page.target"/></div>
+                            <span>{{$t('page.p')}}</span>
+                            <div @click="toTargetPage" class="common-page-btn margin-l-10 custom-button button-style1 main-bg">{{$t('confirm')}}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- 新增模态框 -->
+    <div :class="{active: dialog.add.show}" class="right-modal">
+        <div class="modal-head">
+            <div class="modal-head-title">
+                <i @click="dialog.add.show=false" class="el-icon-close"></i>
+                <span>{{$t('p9')}}</span>
+            </div>
+            <div class="modal-head-button">
+                <div @click="dialog.add.show=false">{{$t('cancel')}}</div>
+                <div @click="addData" class="background-green" :class="{'disabled': !isCanAdd}">{{$t('end')}}</div>
+            </div>
+        </div>
+        <img src="/public/images/v3/modal-separation.png">
+        <div class="flex-grow-1 relative">
+            <div v-loading="dialog.add.loading" class="modal-form absolute-full">
+                <el-scrollbar style="height: 100%;">
+                    <div class="manage-collapse-content">
+                        <div class="ads-wrapper">
+                            <!-- 					地点 -->
+                            <div class="modal-form-item">
+                                <div class="modal-form-label need"><span>{{$t('local')}}</span></div>
+                                <div class="modal-form-wrapper">
+                                    <el-select class="ztree-select" :placeholder="$t('tipsText[5]')" popper-class="ztree-select">
+                                        <el-option
+                                                key="1"
+                                                :label="dialog.add.obj.placeName">
+                                            <el-scrollbar style="height: 250px;">
+                                                <el-tree :highlight-current="true" ref="place_add" node-key="id" :data="place" :props="defaultProps"
+                                                        @node-click="handleNodeClick($event, dialog.add.obj, 0, 'placeId', 'placeName')"></el-tree>
+                                            </el-scrollbar>
+                                            <!--											<div @click="cancelDep('dep_add', dialog.add)" class="ztree-cancle"><span>{{$t('cancel')}}</span></div>-->
+                                        </el-option>
+                                    </el-select>
+                                </div>
+                            </div>
+                            <!-- 					报修类型 -->
+                            <div class="modal-form-item">
+                                <div class="modal-form-label need"><span>{{$t('p11')}}</span></div>
+                                <div class="modal-form-wrapper">
+                                    <el-select v-model="dialog.add.obj.typeIdx"
+                                            ref="add_property_type"
+                                            filterable
+                                            allow-create
+                                            default-first-option
+                                            @change="repairTypeChange"
+                                            :placeholder="$t('p23')">
+                                        <el-option
+                                                v-for="(item, idx) in filterTypes"
+                                                :key="idx"
+                                                :label="item.name"
+                                                :value="idx">
+                                        </el-option>
+                                    </el-select>
+                                </div>
+                            </div>
+                            <!-- 					报修等级 -->
+                            <div class="modal-form-item">
+                                <div class="modal-form-label need"><span>{{$t('p24')}}</span></div>
+                                <div class="modal-form-wrapper">
+                                    <el-select size="small"
+                                            class="border-selected"
+                                            v-model="dialog.add.obj.level"
+                                            :placeholder="$t('p25')">
+                                        <el-option
+                                                v-for="(item, idx) in levels"
+                                                :key="idx"
+                                                :label="item.name"
+                                                :value="item.level">
+                                        </el-option>
+                                    </el-select>
+                                </div>
+                            </div>
+                            <!--					名称 -->
+                            <div v-if="isPropertyRepair" class="modal-form-item">
+                                <div class="modal-form-label"><span>{{$t('name')}}</span></div>
+                                <div class="modal-form-wrapper">
+                                    <el-select v-model="dialog.add.obj.property"
+                                            ref="add_property_type"
+                                            filterable
+                                            allow-create
+                                            default-first-option
+                                            @change="propertyNameChange"
+                                            :placeholder="$t('p26')">
+                                        <el-option
+                                                v-for="item in propertyArray"
+                                                :key="item.id"
+                                                :label="item.name"
+                                                :value="item.id">
+                                        </el-option>
+                                    </el-select>
+                                </div>
+                            </div>
+                            <!-- 					类型 -->
+                            <div v-if="isPropertyRepair" class="modal-form-item">
+                                <div class="modal-form-label"><span>{{$t('type')}}</span></div>
+                                <div class="modal-form-wrapper">
+                                    <el-input readonly v-model="dialog.add.obj.propertyTypeName" class="modal-form-input"
+                                            :placeholder="$t('p21')"></el-input>
+                                </div>
+                            </div>
+                            <!-- 					品牌 -->
+                            <div v-if="isPropertyRepair" class="modal-form-item">
+                                <div class="modal-form-label"><span>{{$t('p4')}}</span></div>
+                                <div class="modal-form-wrapper">
+                                    <el-input readonly v-model="dialog.add.obj.brand" class="modal-form-input"
+                                            :placeholder="$t('p22')"></el-input>
+                                </div>
+                            </div>
+                            <!-- 					上门时间 -->
+                            <div class="modal-form-item">
+                                <div class="modal-form-label need"><span>{{$t('p36')}}</span></div>
+                                <div class="modal-form-wrapper">
+                                    <el-date-picker
+                                            class="border-selected width-250"
+                                            type="datetime"
+                                            v-model="dialog.add.obj.bookTimeMillis"
+                                            value-format="timestamp"
+                                            :placeholder="$t('p37')"
+                                            format="yyyy-MM-dd HH:mm"
+                                            :picker-options="pickerOptions">
+                                    </el-date-picker>
+                                </div>
+                            </div>
+                            <!--					描述 -->
+                            <div class="modal-form-item">
+                                <div class="modal-form-label self-start"><span>{{$t('p38')}}</span></div>
+                                <div class="modal-form-wrapper">
+                                    <el-input type="textarea" resize="none" :placeholder="$t('tipsText[6]')" v-model="dialog.add.obj.description"
+                                            rows="4" maxlength="300" show-word-limit></el-input>
+                                </div>
+                            </div>
+
+                            <!-- 					图片和视频 -->
+                            <div class="modal-form-item">
+                                <div class="modal-form-label self-start"><span>{{$t('p39')}}</span></div>
+                                <div class="modal-form-wrapper">
+                                    <el-upload
+                                            accept="image/*,video/*"
+                                            ref="add-upload"
+                                            action="#"
+                                            list-type="picture-card"
+                                            :on-change="fileChange"
+                                            :auto-upload="false">
+                                        <i slot="default" class="el-icon-plus"></i>
+                                        <div slot="file" slot-scope="_obj" style="height: 100%">
+                                            <video class="el-upload-list__item-thumbnail" :src="_obj.file.url" v-if="/\.(swf|flv|mp4|rmvb|avi|mpeg|ra|ram|mov|wmv)$/.test(_obj.file.name.toLowerCase())"></video>
+                                            <img style="object-fit: cover" v-else class="el-upload-list__item-thumbnail" :src="_obj.file.url" alt="">
+                                            <span class="el-upload-list__item-actions">
+                                                <span class="el-upload-list__item-preview"
+                                                    v-if="/\.(swf|flv|mp4|rmvb|avi|mpeg|ra|ram|mov|wmv)$/.test(_obj.file.name.toLowerCase())"
+                                                    @click="handleVideoPreview(_obj.file.url)">
+                                                    <i class="el-icon-zoom-in"></i>
+                                                </span>
+                                                <span class="el-upload-list__item-preview"
+                                                    v-else
+                                                    @click="handlePicturePreview(_obj.file.url)">
+                                                    <i class="el-icon-zoom-in"></i>
+                                                </span>
+                                                <span class="el-upload-list__item-delete"
+                                                    @click="$refs['add-upload'].handleRemove(_obj.file)">
+                                                    <i class="el-icon-delete"></i>
+                                                </span>
+                                            </span>
+                                        </div>
+                                    </el-upload>
+                                </div>
+                            </div>
+
+                            <!-- 					报修人 -->
+                            <div class="modal-form-item">
+                                <div class="modal-form-label"><span>{{$t('p16')}}</span></div>
+                                <div class="modal-form-wrapper">
+                                    <el-input readonly v-model="dialog.add.obj.nickname" class="modal-form-input"
+                                            :placeholder="$t('p16')"></el-input>
+                                </div>
+                            </div>
+                            <!-- 					手机号码 -->
+                            <div class="modal-form-item">
+                                <div class="modal-form-label"><span>{{$t('p40')}}</span></div>
+                                <div class="modal-form-wrapper">
+                                    <el-input maxlength="11" v-model="dialog.add.obj.phone" class="modal-form-input"
+                                            :placeholder="$t('p41')"></el-input>
+                                </div>
+                            </div>
+                            <!-- 					上报时间 -->
+                            <!--<div class="modal-form-item">
+                                <div class="modal-form-label need"><span>{{$t('p42')}}</span></div>
+                                <div class="modal-form-wrapper">
+                                    <el-date-picker
+                                            class="flex-grow-1"
+                                            v-model="dialog.add.obj.createTimeMillis"
+                                            value-format="timestamp"
+                                            type="datetime"
+                                            format="yyyy-MM-dd HH:mm"
+                                            :placeholder="$t('p34')">
+                                    </el-date-picker>
+                                </div>
+                            </div>-->
+                            <!-- 					进度 -->
+                            <!--<div class="modal-form-item" v-if="isShowProgress">
+                                <div class="modal-form-label need"><span>{{$t('p43')}}</span></div>
+                                <div class="modal-form-wrapper">
+                                    <el-radio v-model="dialog.add.obj.status" :label="1">{{$t('p44')}}</el-radio>
+                                    <el-radio v-model="dialog.add.obj.status" :label="3">{{$t('p45')}}</el-radio>
+                                    <el-radio v-model="dialog.add.obj.status" :label="4">{{$t('p46')}}</el-radio>
+                                </div>
+                            </div>
+                            <div class="modal-form-item" v-if="isShowProgress && dialog.add.obj.status===4" >
+                                <div class="modal-form-label need"><span>{{$t('p47')}}</span></div>
+                                <div class="modal-form-wrapper">
+                                    <el-date-picker
+                                            style="width: auto;"
+                                            class="flex-grow-1"
+                                            v-model="dialog.add.obj.completeTimeMillis"
+                                            value-format="timestamp"
+                                            type="datetime"
+                                            format="yyyy-MM-dd HH:mm"
+                                            :placeholder="$t('p34')">
+                                    </el-date-picker>
+                                </div>
+                            </div>-->
+                        </div>
+
+                    </div>
+                </el-scrollbar>
+            </div>
+        </div>
+    </div>
+
+    <!-- 更新模态框 -->
+    <div :class="{active: false}" class="right-modal">
+        <div class="modal-head">
+            <div class="modal-head-title">
+                <i @click="dialog.update.show=false" class="el-icon-close"></i>
+                <span>{{$t('edit')}}</span>
+            </div>
+            <div class="modal-head-button">
+                <div @click="dialog.update.show=false">{{$t('cancel')}}</div>
+                <div @click="updateData" class="background-green">{{$t('end')}}</div>
+            </div>
+        </div>
+        <img src="/public/images/v3/modal-separation.png">
+        <div class="flex-grow-1 relative">
+            <div v-loading="dialog.add.loading" class="modal-form absolute-full">
+                <el-scrollbar style="height: 100%;">
+                    <el-collapse v-model="dialog.update.collapse" class="manage-collapse" accordion>
+                        <el-collapse-item :title="$t('p48')" name="1">
+                            <div class="manage-collapse-content">
+                                <!-- 					资产名称 -->
+                                <div class="modal-form-item">
+                                    <span class="modal-form-label need">{{$t('p49')}}</span>
+                                    <div class="modal-form-wrapper">
+                                        <el-input v-model="dialog.update.obj.name" class="modal-form-input"
+                                                  :placeholder="$t('p50')"></el-input>
+                                    </div>
+                                </div>
+                                <!-- 					唯一码 -->
+                                <div class="modal-form-item">
+                                    <span class="modal-form-label need">{{$t('p51')}}</span>
+                                    <div class="modal-form-wrapper flex relative">
+                                        <el-input v-model="dialog.update.obj.uniqueCode" maxlength="6"
+                                                  class="modal-form-input" :placeholder="$t('p52')"></el-input>
+                                        <div @click="autoCreateUniqueCode(dialog.update)"
+                                             class="custom-button button-style1 margin-l-5"
+                                             v-loading="dialog.update.uniqueBtnLoading">{{$t('p53')}}
+                                        </div>
+                                        <el-popover
+                                                class="msg-popover"
+                                                placement="bottom-end"
+                                                width="400"
+                                                trigger="click"
+                                                :content="uniqueCodeTip">
+                                            <span slot="reference">?</span>
+                                        </el-popover>
+                                    </div>
+                                </div>
+                                <!--							ip-->
+                                <div class="modal-form-item">
+                                    <span class="modal-form-label">{{$t('p54')}}</span>
+                                    <div class="modal-form-wrapper">
+                                        <el-input v-model="dialog.update.obj.ip" class="modal-form-input"
+                                                  :placeholder="$t('p55')"></el-input>
+                                    </div>
+                                </div>
+                                <!--							资产端口-->
+                                <div class="modal-form-item">
+                                    <span class="modal-form-label">{{$t('p56')}}</span>
+                                    <div class="modal-form-wrapper">
+                                        <el-input v-model="dialog.update.obj.port" class="modal-form-input"
+                                                  :placeholder="$t('p57')"></el-input>
+                                    </div>
+                                </div>
+                                <!--							资产类型-->
+                                <div class="modal-form-item">
+                                    <span class="modal-form-label need">{{$t('p58')}}</span>
+                                    <div class="modal-form-wrapper">
+                                        <el-select v-model="dialog.update.obj.propertyTypeId"
+                                                   ref="update_property_type"
+                                                   filterable
+                                                   allow-create
+                                                   default-first-option
+                                                   :placeholder="$t('tipsText[0]')">
+                                            <el-option
+                                                    v-for="item in propertyType"
+                                                    :key="item.id"
+                                                    :label="item.name"
+                                                    :value="item.id">
+                                            </el-option>
+                                        </el-select>
+                                    </div>
+                                </div>
+                                <!-- 					地点 -->
+                                <div class="modal-form-item">
+                                    <span class="modal-form-label">{{$t('p59')}}</span>
+                                    <div class="modal-form-wrapper">
+                                        <el-select :disabled="!dialog.update.allowEditPlace" class="ztree-select"
+                                                   :placeholder="$t('tipsText[5]')" popper-class="ztree-select">
+                                            <el-option
+                                                    key="1"
+                                                    :label="dialog.update.obj.placeName">
+                                                <el-scrollbar style="height: 250px;">
+                                                    <el-tree ref="place_update" node-key="id" :data="place"
+                                                             :props="defaultProps"
+                                                             @node-click="handleNodeClick($event, dialog.update.obj, 0, 'placeId', 'placeName')"></el-tree>
+                                                </el-scrollbar>
+                                                <div @click="cancelDep('dep_update', dialog.update)"
+                                                     class="ztree-cancle"><span>{{$t('cancel')}}</span></div>
+                                            </el-option>
+                                        </el-select>
+                                        <div @click="dialog.update.allowEditPlace = true"
+                                             class="custom-button button-style1 margin-l-5 height-auto">{{$t('p60')}}
+                                        </div>
+                                    </div>
+                                </div>
+                                <!--							安装位置-->
+                                <div class="modal-form-item">
+                                    <span class="modal-form-label">{{$t('p61')}}</span>
+                                    <div class="modal-form-wrapper">
+                                        <el-input v-model="dialog.update.obj.installLocation" class="modal-form-input"
+                                                  :placeholder="$t('p62')"></el-input>
+                                    </div>
+                                </div>
+                                <!--							报废年限-->
+                                <div class="modal-form-item">
+                                    <span class="modal-form-label">{{$t('p63')}}</span>
+                                    <div class="modal-form-wrapper">
+                                        <el-input v-model="dialog.update.obj.serviceLife"
+                                                  @input="handleAmountChange(dialog.update.obj, 'serviceLife')"
+                                                  class="modal-form-input" :placeholder="$t('p64')"></el-input>
+                                    </div>
+                                </div>
+                                <!--									检修周期-->
+                                <div class="modal-form-item">
+                                    <span class="modal-form-label">{{$t('p65')}}</span>
+                                    <div class="modal-form-wrapper">
+                                        <el-input v-model="dialog.update.obj.overhaul"
+                                                  @input="handleAmountChange(dialog.update.obj, 'overhaul', 1)"
+                                                  class="modal-form-input" :placeholder="$t('p66')"></el-input>
+                                    </div>
+                                </div>
+                                <!-- 					控制资产 -->
+                                <div class="modal-form-item">
+                                    <span :class="'modal-form-label ' + (dialog.update.isAddCustomizePropertyType ? '' : 'color-disabled')">{{$t('p67')}}</span>
+                                    <div class="modal-form-wrapper">
+                                        <el-radio :disabled="!dialog.update.isAddCustomizePropertyType"
+                                                  v-model="dialog.update.obj.control" label="0">{{$t('no')}}
+                                        </el-radio>
+                                        <el-radio :disabled="!dialog.update.isAddCustomizePropertyType"
+                                                  v-model="dialog.update.obj.control" label="1">{{$t('yes')}}
+                                        </el-radio>
+                                    </div>
+                                </div>
+                            </div>
+                        </el-collapse-item>
+                        <el-collapse-item :title="$t('p94')" name="2">
+                            <div class="manage-collapse-content">
+                                <!-- 					供应商 -->
+                                <div class="modal-form-item">
+                                    <span class="modal-form-label">{{$t('p68')}}</span>
+                                    <div class="modal-form-wrapper">
+                                        <el-input v-model="dialog.update.obj.supplier" class="modal-form-input"
+                                                  :placeholder="$t('p69')"></el-input>
+                                    </div>
+                                </div>
+                                <!--							联系人-->
+                                <div class="modal-form-item">
+                                    <span class="modal-form-label">{{$t('p70')}}</span>
+                                    <div class="modal-form-wrapper">
+                                        <el-input v-model="dialog.update.obj.supplierContacts" class="modal-form-input"
+                                                  :placeholder="$t('p71')"></el-input>
+                                    </div>
+                                </div>
+                                <!--							电话 -->
+                                <div class="modal-form-item">
+                                    <span class="modal-form-label">{{$t('p31')}}</span>
+                                    <div class="modal-form-wrapper">
+                                        <el-input v-model="dialog.update.obj.supplierPhone" class="modal-form-input"
+                                                  :placeholder="$t('p72')"></el-input>
+                                    </div>
+                                </div>
+                            </div>
+                        </el-collapse-item>
+                        <el-collapse-item :title="$t('p73')" name="3">
+                            <div class="manage-collapse-content">
+                                <div class="modal-form-item">
+                                    <span class="modal-form-label"></span>
+                                    <div class="modal-form-wrapper">
+                                        <div @click="showTemplateDialog(dialog.update)"
+                                             class="custom-button button-style3 flex-grow-1"><i
+                                                class="iconfont iconmoban main-color"></i>{{$t('p74')}}
+                                        </div>
+                                        <div @click="saveTemplate(dialog.update)"
+                                             class="custom-button button-style3 flex-grow-1 margin-l-5"><i
+                                                class="iconfont iconbaocun main-color"></i>{{$t('p75')}}
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- 					品牌 -->
+                                <div class="modal-form-item">
+                                    <span class="modal-form-label">{{$t('p4')}}</span>
+                                    <div class="modal-form-wrapper">
+                                        <el-input v-model="dialog.update.obj.brand" class="modal-form-input"
+                                                  :placeholder="$t('p22')"></el-input>
+                                    </div>
+                                </div>
+                                <!-- 					型号 -->
+                                <div class="modal-form-item">
+                                    <span class="modal-form-label">{{$t('p27')}}</span>
+                                    <div class="modal-form-wrapper flex">
+                                        <el-input v-model="dialog.update.obj.model" class="modal-form-input"
+                                                  :placeholder="$t('p28')"></el-input>
+                                    </div>
+                                </div>
+                                <!--							厂家 -->
+                                <div class="modal-form-item">
+                                    <span class="modal-form-label">{{$t('p29')}}</span>
+                                    <div class="modal-form-wrapper">
+                                        <el-input v-model="dialog.update.obj.manufacturer" class="modal-form-input"
+                                                  :placeholder="$t('p30')"></el-input>
+                                    </div>
+                                </div>
+                                <!--							电话 -->
+                                <div class="modal-form-item">
+                                    <span class="modal-form-label">{{$t('p31')}}</span>
+                                    <div class="modal-form-wrapper">
+                                        <el-input v-model="dialog.update.obj.manufacturerPhone" class="modal-form-input"
+                                                  :placeholder="$t('p32')"></el-input>
+                                    </div>
+                                </div>
+                                <!--									购买日期-->
+                                <div class="modal-form-item">
+                                    <span class="modal-form-label">{{$t('p33')}}</span>
+                                    <div class="modal-form-wrapper">
+                                        <el-date-picker
+                                                class="flex-grow-1"
+                                                v-model="dialog.update.obj.purchaseDateTS"
+                                                value-format="timestamp"
+                                                type="date"
+                                                :placeholder="$t('p34')">
+                                        </el-date-picker>
+                                    </div>
+                                </div>
+                                <!--									备注-->
+                                <div class="modal-form-item">
+                                    <span class="modal-form-label">{{$t('p35')}}</span>
+                                    <div class="modal-form-wrapper">
+                                        <el-input type="textarea" resize="none" :placeholder="$t('tipsText[6]')"
+                                                  v-model="dialog.update.obj.remarks"
+                                                  rows="4" maxlength="300" show-word-limit></el-input>
+                                    </div>
+                                </div>
+                            </div>
+                        </el-collapse-item>
+                        <el-collapse-item :title="$t('qr')" name="4">
+                            <div class="manage-collapse-content">
+                                <div class="flex flex-column align-center">
+                                    <div class="relative">
+                                        <img src="/public/images/v3/property/qrcode-wrapper.png">
+                                        <div class="qrcode-content">
+                                            <span>{{dialog.update.obj.name}}</span>
+                                            <div class="qrcode-wrapper relative">
+                                                <img src="/public/images/v3/property/qrcode-empity.png">
+                                                <div id="update_qrcode" class="absolute-full"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="flex justify-between" style="width: 291px;">
+                                        <div @click="createPropertyQrcode(dialog.update, 'update_qrcode')"
+                                             class="custom-button button-style4">{{$t('p76')}}
+                                        </div>
+                                        <div class="custom-button button-style4">{{$t('p77')}}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </el-collapse-item>
+                    </el-collapse>
+                </el-scrollbar>
+            </div>
+        </div>
+    </div>
+
+    <!-- 查看/修改模态框 -->
+    <el-dialog
+            :title="$t('p157')"
+            class="view-modal import-modal update-modal"
+            v-loading="dialog.update.loading"
+            :visible.sync="dialog.update.show"
+            width="768px"
+            center>
+
+        <div id="printUpdateDom">
+            <!-- 进度 -->
+            <div class="process-container">
+                <div class="modal-form-item" style="margin-bottom: 0">
+                    <span class="modal-form-label letter-spacing-1">{{$t('p78')}}</span>
+                    <div class="modal-form-wrapper process-bar-container">
+                        <div class="process-bar">
+                            <div class="process-bar-bg"></div>
+                            <div class="process-bar-node" :class="{'active': dialog.update.obj.status === 1}">
+                                <div class="node-label">{{$t('p79')}}</div>
+                                <div class="node-content">{{dialog.update.obj.createTime | formatDate("MM-DD HH:mm")}}</div>
+                            </div>
+                            <div class="process-bar-node" :class="{'active': dialog.update.obj.status === 2}">
+                                <div class="node-label">{{$t('p80')}}</div>
+                                <div class="node-content" v-show="dialog.update.obj.status >= 2">{{dialog.update.obj.assignTime | formatDate("MM-DD HH:mm")}}</div>
+                                <!--               <div class="node-content">
+                                                   &lt;!&ndash;                                <div v-if="dialog.update.obj.status === 1" class="mid-btn touch-fb" @click="doAssign">分配工单</div>&ndash;&gt;
+                                                   <div v-if="dialog.update.obj.status < 3" class="mid-btn touch-fb" @click="doAssign">分配工单</div>
+                                                   <div v-else class="assign-persons" :title="dialog.update.assignList | formatUserList">{{dialog.update.assignList | formatUserList}}</div>
+                                               </div>-->
+                            </div>
+                            <template v-if="dialog.update.obj.status === 8">
+                                <div class="process-bar-node active">
+                                    <div class="node-label">{{$t('p81')}}</div>
+                                    <div class="node-content">{{dialog.update.obj.updateTime | formatDate("MM-DD HH:mm")}}</div>
+                                </div>
+                            </template>
+                            <template v-else>
+                                <div class="process-bar-node" :class="{'active': dialog.update.obj.status === 3}">
+                                    <div class="node-label">{{$t('p45')}}</div>
+                                    <div class="node-content" v-show="dialog.update.obj.status >= 3">{{dialog.update.obj.checkInTime | formatDate("MM-DD HH:mm")}}</div>
+                                </div>
+                                <div class="process-bar-node" :class="{'active': dialog.update.obj.status === 4}">
+                                    <div class="node-label">{{$t('p46')}}</div>
+                                    <div class="node-content" v-show="dialog.update.obj.status >= 4">{{dialog.update.obj.completeTime | formatDate("MM-DD HH:mm")}}</div>
+                                    <!--                                <div class="node-content">
+                                                                        <el-date-picker
+                                                                                :readonly="dialog.update.obj.isCompleted"
+                                                                                class="flex-grow-1 complete-date-picker"
+                                                                                v-model="dialog.update.obj.completeTimeMillis"
+                                                                                value-format="timestamp"
+                                                                                type="datetime"
+                                                                                format="yyyy-MM-dd HH:mm"
+                                                                                :placeholder="$t('p34')">
+                                                                        </el-date-picker>
+                                                                    </div>
+                                                                    <div class="node-content complete-btn flex" style="min-width: 140px">
+                                                                        <div style="width: 61px" class="mid-btn touch-fb" @click="processComplete">{{$t('end')}}</div>
+                                                                        <el-tooltip placement="right" effect="light">
+                                                                            <div class="process-tip-text" slot="content">不选择时间点击“完成”<br/>按钮，系统自动选择当<br/>前时间，或者选择时间<br/>后点击“完成”按钮。</div>
+                                                                            <i class="iconfont iconwenhao process-tip"></i>
+                                                                        </el-tooltip>
+                                                                    </div>-->
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 表单 -->
+            <div class="modal-update-form">
+                <div class="left">
+                    <div class="modal-form-item">
+                        <span class="modal-form-label letter-spacing-1">{{$t('p82')}}</span>
+                        <div class="modal-form-wrapper">
+                            <!--                        <el-input readonly v-model="dialog.update.obj.placeName" class="modal-form-input"-->
+                            <!--                                  placeholder=""></el-input>-->
+                            <span>{{dialog.update.obj.placeName | text}}</span>
+                        </div>
+                    </div>
+                    <div class="modal-form-item">
+                        <span class="modal-form-label letter-spacing-1">{{$t('p83')}}</span>
+                        <div class="modal-form-wrapper">
+                            <!--                        <el-input readonly v-model="dialog.update.obj.name" class="modal-form-input"-->
+                            <!--                                  placeholder=""></el-input>-->
+                            <span>{{dialog.update.obj.name | text}}</span>
+                        </div>
+                    </div>
+                    <div class="modal-form-item">
+                        <span class="modal-form-label need letter-spacing-1">{{$t('p36')}}</span>
+                        <div class="modal-form-wrapper">
+                            <el-date-picker
+                                    class="border-selected"
+                                    type="datetime"
+                                    v-model="dialog.update.obj.bookTimeMillis"
+                                    value-format="timestamp"
+                                    :placeholder="$t('p37')"
+                                    format="yyyy-MM-dd HH:mm"
+                                    :picker-options="pickerOptions">
+                            </el-date-picker>
+                        </div>
+                    </div>
+                    <div class="modal-form-item">
+                        <span class="modal-form-label self-start">{{$t('p39')}}</span>
+                        <div class="modal-form-wrapper self-start" style="flex-wrap: wrap;min-height: 75px;">
+                            <!--<template v-if="dialog.update.obj.fileList && dialog.update.obj.fileList.length > 0">
+                                <div class="file-wrapper" v-for="f in dialog.update.obj.fileList" :key="f.id">
+                                    <div @click="handleVideoPreview(staticPath + f)"
+                                         v-if="/\.(swf|flv|mp4|rmvb|avi|mpeg|ra|ram|mov|wmv)$/.test(f.toLowerCase())" class="video-item">
+                                        <i class="el-icon-video-play"></i>
+                                    </div>
+                                    &lt;!&ndash; TODO &ndash;&gt;
+                                    <img v-else :src="staticPath + f" @click="handlePicturePreview(staticPath + f)">
+                                </div>
+                            </template>-->
+                            <!--<el-upload
+                                    v-if="isShowEditUpload"
+                                    accept="image/*,video/*"
+                                    ref="edit-upload"
+                                    action="#"
+                                    list-type="picture-card"
+                                    :on-change="fileChangeForEdit"
+                                    :file-list="dialog.update.fileList"
+                                    :auto-upload="false">
+                                <i slot="default" class="el-icon-plus"></i>
+                                <div slot="file" slot-scope="_obj" style="height: 100%">
+                                    <video class="el-upload-list__item-thumbnail" :src="_obj.file.url" v-if="/\.(swf|flv|mp4|rmvb|avi|mpeg|ra|ram|mov|wmv)$/.test(_obj.file.name.toLowerCase())"></video>
+                                    <img style="object-fit: cover" v-else class="el-upload-list__item-thumbnail" :src="_obj.file.url" alt="">
+                                    <span class="el-upload-list__item-actions">
+                                        <span class="el-upload-list__item-preview"
+                                              v-if="/\.(swf|flv|mp4|rmvb|avi|mpeg|ra|ram|mov|wmv)$/.test(_obj.file.name.toLowerCase())"
+                                              @click="handleVideoPreview(_obj.file.url)">
+                                            <i class="el-icon-zoom-in"></i>
+                                        </span>
+                                        <span class="el-upload-list__item-preview"
+                                              v-else
+                                              @click="handlePicturePreview(_obj.file.url)">
+                                            <i class="el-icon-zoom-in"></i>
+                                        </span>
+                                        <span class="el-upload-list__item-delete"
+                                              @click="fileRemoveForEdit(_obj.file)">
+                                            <i class="el-icon-delete"></i>
+                                        </span>
+                                    </span>
+                                </div>
+                            </el-upload>-->
+                        </div>
+                    </div>
+                </div>
+                <div class="right">
+                    <div class="modal-form-item">
+                        <span class="modal-form-label letter-spacing-1">{{$t('p42')}}</span>
+                        <div class="modal-form-wrapper">
+                            <!--                        <el-input readonly v-model="dialog.update.obj.createTime" class="modal-form-input"-->
+                            <!--                                  placeholder=""></el-input>-->
+                            <span>{{dialog.update.obj.createTime | text}}</span>
+                        </div>
+                    </div>
+                    <div class="modal-form-item">
+                        <span class="modal-form-label letter-spacing-1">{{$t('p84')}}</span>
+                        <div class="modal-form-wrapper">
+                            <!--     <el-input readonly v-model="dialog.update.obj.spend" class="modal-form-input"
+                                           placeholder=""></el-input>-->
+                            <span>{{dialog.update.obj.spend}}</span>
+                        </div>
+                    </div>
+                    <div class="modal-form-item">
+                        <span class="modal-form-label letter-spacing-1">{{$t('p40')}}</span>
+                        <div class="modal-form-wrapper">
+                        <el-input v-model="dialog.update.obj.phone" class="modal-form-input"
+                                  :placeholder="$t('p41')"></el-input>
+<!--                            <span>{{dialog.update.obj.phone | text}}</span>-->
+                        </div>
+                    </div>
+                    <div class="modal-form-item">
+                        <span class="modal-form-label self-start letter-spacing-1">{{$t('p85')}}</span>
+                        <div class="modal-form-wrapper">
+                            <el-input type="textarea" :placeholder="$t('tipsText[6]')" v-model="dialog.update.obj.description"
+                                      rows="3" maxlength="300" show-word-limit resize="none" style="height: 75px"></el-input>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+
+        <div slot="footer" class="footer-center">
+            <!-- <span @click="dialog.update.show = false" class="custom-button button-style5">{{$t('cancel')}}</span> -->
+<!--            <span @click="showPrintDialog(dialog.update.obj)" class="custom-button button-style6 margin-l-10">{{$t('p96')}}</span>-->
+            <span @click="update" class="custom-button button-style1 margin-l-10">{{$t('end')}}</span>
+        </div>
+    </el-dialog>
+
+    <!--		视频预览-->
+    <el-dialog :visible.sync="previewVideoVisible" width="640px" top="20vh">
+        <div class="preview-title">{{$t('p93')}}</div>
+        <div class="flex" style="padding: 0 10px 10px">
+            <video width="100%" :src="previewVideoVisible ? previewVideoUrl : ''" autoplay controls></video>
+        </div>
+    </el-dialog>
+    <!--		图片预览-->
+    <el-dialog :visible.sync="previewImageVisible">
+        <div class="flex">
+            <img width="100%" :src="previewImageUrl" alt="">
+        </div>
+    </el-dialog>
+
+    <!--		厂家模板选择-->
+    <el-dialog
+            :title="$t('p100')"
+            class="view-modal import-modal"
+            v-loading="dialog.template.loading"
+            :visible.sync="dialog.template.show"
+            width="1127px"
+            center>
+        <div>
+            <div class="flex justify-end">
+                <div>
+                    <el-input
+                            v-model="dialog.template.like"
+                            class="search-input"
+                            :placeholder="$t('tipsText[1]')"
+                            @keyup.enter.native="getPropertyTemplate">
+                        <i @click="getPropertyTemplate" slot="suffix" class="el-input__icon el-icon-search"></i>
+                    </el-input>
+                </div>
+            </div>
+            <div class="property-template-wrapper">
+                <el-scrollbar style="height: 100%;">
+                    <div class="property-template-space">
+                        <div v-for="template in PropertyTemplate"
+                             @click="chooseTemplate(template)"
+                             :class="{active: template.id == dialog.template.chooseObj.id}"
+                             class="property-template-item">
+                            <div>
+                                <span>{{$t('p101')}}{{template.brand}}</span>
+                                <span>{{$t('p102')}}{{template.manufacturer}}</span>
+                                <span>{{$t('p103')}}{{template.purchaseDate | formatDate('YYYY-MM-DD')}}</span>
+                                <span>{{$t('p104')}}{{template.remarks}}</span>
+                            </div>
+                            <div>
+                                <span>{{$t('p105')}}{{template.model}}</span>
+                                <span>{{$t('p106')}}{{template.manufacturerPhone}}</span>
+                            </div>
+                        </div>
+                    </div>
+                </el-scrollbar>
+            </div>
+        </div>
+        <div slot="footer" class="footer-center">
+            <span @click="dialog.template.show = false" class="custom-button button-style5">{{$t('cancel')}}</span>
+            <span @click="submitTemplateChoose" class="custom-button button-style1 margin-l-10">{{$t('end')}}</span>
+        </div>
+    </el-dialog>
+    <!--			删除模态框-->
+    <el-dialog
+            class="view-modal confirm-modal"
+            :visible.sync="dialog.del.show"
+            width="500px"
+            center>
+        <div class="body-wrapper">
+            <div class="flex align-center flex-column">
+                <img src="/public/images/v3/danger.png">
+                <span class="del-msg">{{dialog.del.msg}}</span>
+            </div>
+        </div>
+        <div slot="footer" class="double-footer">
+            <span @click="dialog.del.show = false">{{$t('cancel')}}</span>
+            <span @click="doDelete">{{$t('confirm')}}</span>
+        </div>
+    </el-dialog>
+    <!--			签到模态框-->
+    <el-dialog
+            class="view-modal confirm-modal"
+            :visible.sync="dialog.checkIn.show"
+            width="500px"
+            center>
+        <div class="body-wrapper">
+            <div class="flex align-center flex-column">
+                <img src="/public/images/v3/danger.png">
+                <span class="del-msg">{{dialog.checkIn.msg}}</span>
+            </div>
+        </div>
+        <div slot="footer" class="double-footer">
+            <span @click="dialog.checkIn.show = false">{{$t('cancel')}}</span>
+            <span @click="doCheckIn">{{$t('confirm')}}</span>
+        </div>
+    </el-dialog>
+
+    <!-- TODO 改为部门树？-->
+    <!-- 分配工单 -->
+<!--    <el-dialog
+            title="选择用户"
+            class="view-modal import-modal update-modal"
+            :visible.sync="dialog.selectUser.show"
+            width="768px"
+            center>
+
+        &lt;!&ndash; body &ndash;&gt;
+        <div class="detail-dialog-body">
+            <div class="flex justift-between align-center margin-bottom-20">
+                <div class="flex align-center">
+                    <div @click="_clearSelectUserDialog" class="custom-button xs button-style6">{{$t('clear')}}</div>
+                    <div class="margin-l-20 font-bold">{{$t('setupA.s1')}}&nbsp;{{dialog.selectUser.multipleSelection.length}}&nbsp;{{$t('setupA.s2')}}</div>
+                </div>
+                &lt;!&ndash; 搜索框 &ndash;&gt;
+                <div class="flex justify-end">
+                    <el-input
+                            v-model="dialog.selectUser.like"
+                            class="search-input"
+                            :placeholder="$t('tipsText[1]')"
+                            @keyup.enter.native="toFirstUserPage">
+                        <i @click="toFirstUserPage" slot="suffix" class="el-input__icon el-icon-search"></i>
+                    </el-input>
+                </div>
+            </div>
+            <el-table
+                    v-loading="dialog.selectUser.loading"
+                    ref="userListTable"
+                    class="custom-table"
+                    :data="dialog.selectUser.list"
+                    tooltip-effect="dark"
+                    @selection-change="userListSelectionChange"
+                    max-height="380"
+                    row-key="id"
+                    border
+            >
+                <el-table-column
+                        :reserve-selection="true"
+                        type="selection"
+                        width="55">
+                </el-table-column>
+                <el-table-column
+                        prop="nickname"
+                        label="姓名"
+                        width="100">
+                </el-table-column>
+                <el-table-column
+                        prop="sex"
+                        label="性别"
+                        width="100">
+                    <template slot-scope="scope">
+                        <span>{{scope.row.sex === 0 ? $t('male') : $t('female')}}</span>
+                    </template>
+                </el-table-column>
+                <el-table-column
+                        prop="card_number"
+                        label="卡号"
+                        width="200">
+                    <template slot-scope="scope">
+                        <span>{{scope.row.card_number | text}}</span>
+                    </template>
+                </el-table-column>
+                <el-table-column
+                        label="照片">
+                    <template slot-scope="scope">
+                        <el-image
+                                v-if="scope.row.photo_url"
+                                style="height: 48px"
+                                :src="scope.row.photo_url"
+                                fit="contain">
+                            <div slot="error" class="height-full flex align-center">
+                                <i class="el-icon-picture-outline" style="font-size: 30px"></i>
+                            </div>
+                        </el-image>
+                        <span v-else>——</span>
+                    </template>
+                </el-table-column>
+            </el-table>
+
+            &lt;!&ndash; 分页 &ndash;&gt;
+            <div class="flex table-bottom relative justify-center" style="margin-bottom: 0;">
+                <div class="absolute left-0">
+                </div>
+                <div>
+                    <el-pagination
+                            background
+                            layout="prev, pager, next"
+                            :current-page="dialog.selectUser.page.pageNum"
+                            :page-size="dialog.selectUser.page.pageSize"
+                            :total="dialog.selectUser.page.count"
+                            @current-change="getUserList">
+                    </el-pagination>
+                </div>
+            </div>
+        </div>
+
+
+        <div slot="footer" class="footer-center">
+            <span @click="assignDialogCallback" class="custom-button button-style1 margin-l-10">{{$t('confirm')}}</span>
+        </div>
+    </el-dialog>-->
+    <choose-dialog
+            :loading="dialog.update.assignLoading"
+            :visiable.sync="dialog.update.assignVisible"
+            :place-data="placeData"
+            :user-list="cdUserList"
+            :dep-list="cdDepList"
+            :type="isAdminMode ? 'assign' : 'assignDep'"
+            :complete="assignDialogCallback"
+    ></choose-dialog>
+
+    <!-- 报修详情模态框开始 -->
+    <el-dialog
+            custom-class="custom-dialog view-dialog"
+            :title="$t('p97')"
+            :visible.sync="detailDialogVisible"
+            width="820px">
+            
+       	<div slot="title" class="el-dialog__title">
+            <span>{{$t('p97')}}</span>
+<!--            <span @click="showPrintDialog(detailData)" class="el-icon-printer printer-button click-fb" :title="$t('p96')"></span>-->
+        </div>
+
+
+        <div id="printDom">
+
+        <!-- body -->
+        <div class="modal-body-container">
+            <!-- 1. -->
+            <div class="top-status-wrapper">
+                <span>{{$t('p107')}}{{processMap[detailData.status]}}</span>
+                <span>{{$t('p108')}}{{detailData.createTime | dateFull}}</span>
+                <span v-if="detailData.status === 4">{{$t('p109')}}{{detailData.completeTime | dateFull}}</span>
+            </div>
+            <!-- 2. -->
+            <div class="flex flex-column margin-lr-50 bold-title margin-bottom-25">
+                <div class="flex align-center margin-top-15">
+                    <span class="orange-icon icon-fix-4 iconfont icondidian2"></span>
+                    <span>{{detailData.placeName}}</span>
+                </div>
+            </div>
+
+            <!-- 3.基本信息&设备信息 -->
+            <div class="flex justify-between margin-lr-50 margin-bottom-25">
+                <!-- left -->
+                <div style="width: 48%">
+                    <div class="side-title-wrapper">{{$t('p98')}}</div>
+                    <!-- 3.1 编号 -->
+                    <div class="form-item">
+                        <span class="title">{{$t('p110')}}</span>
+                        <span class="content" :title="detailData.number">{{detailData.number}}</span>
+                    </div>
+                    <!-- 3.2 报修类型 -->
+                    <div class="form-item">
+                        <span class="title">{{$t('p111')}}</span>
+                        <span class="content">{{detailData.typeName || DEFAULT_TYPE_NAME}}</span>
+                    </div>
+                    <!-- 3.3 上门时间 -->
+                    <div class="form-item">
+                        <span class="title">{{$t('p112')}}</span>
+                        <span class="content">{{detailData.bookTime | dateFull}}</span>
+                    </div>
+                    <!-- 3.4 故障描述 -->
+                    <div class="form-item">
+                        <span class="title">{{$t('p113')}}</span>
+                        <span style="white-space: normal" class="content" :title="detailData.description">{{detailData.description | text}}</span>
+                    </div>
+                    <!-- 3.5 维修负责人 -->
+                    <div class="form-item">
+                        <span class="title">{{$t('p114')}}</span>
+                        <span class="content" :title="assignList | formatUserList">{{assignList | formatUserList}}</span>
+                    </div>
+                    <!-- 3.5.1 分配部门 -->
+                    <div class="form-item">
+                        <span class="title">{{$t('p115')}}</span>
+                        <span class="content" :title="depAssignList | formatUserList">{{depAssignList | formatUserList}}</span>
+                    </div>
+                    <!-- 3.8 照片/视频 -->
+                    <div class="form-item">
+                        <span class="title">{{$t('p116')}}</span>
+                        <template v-if="detailData.fileList && detailData.fileList.length > 0">
+                            <div style="flex-wrap: wrap" class="flex">
+                                <div class="file-wrapper" v-for="(f, fIdx) in detailData.fileList" :key="fIdx">
+                                    <div @click="handleVideoPreview(staticPath + f)"
+                                         v-if="/\.(swf|flv|mp4|rmvb|avi|mpeg|ra|ram|mov|wmv)$/.test(f.toLowerCase())" class="video-item">
+                                        <i class="el-icon-video-play"></i>
+                                    </div>
+                                    <img v-else :src="staticPath + f" @click="handlePicturePreview(staticPath + f)">
+                                </div>
+                            </div>
+                        </template>
+                        <div v-else>——</div>
+                    </div>
+                </div>
+
+                <!-- right -->
+                <div style="width: 48%" v-if="detailData.type === 1">
+                    <div class="side-title-wrapper">{{$t('p99')}}</div>
+                    <!-- 3.6 设备名称 -->
+                    <div class="form-item">
+                        <span class="title">{{$t('p117')}}</span>
+                        <span class="content" :title="detailData.name | text">{{detailData.name | text}}</span>
+                    </div>
+                    <!-- 3.7 设备类型 -->
+                    <div class="form-item">
+                        <span class="title">{{$t('p118')}}</span>
+                        <span class="content">{{propertyTypeMap[detailData.propertyType] ? propertyTypeMap[detailData.propertyType].name : '——'}}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 4.报修结果 -->
+            <el-collapse v-model="detailCollapse1" class="modal-collapse" v-if="detailResult">
+                <el-collapse-item name="1">
+                    <template slot="title">
+                        <div class="side-title-wrapper">{{$t('p119')}}</div>
+                    </template>
+                    <div class="flex justify-between">
+                        <div style="width: 48%">
+                            <!-- 3.9 维修结果 -->
+                            <div class="form-item">
+                                <span class="title">{{$t('p120')}}</span>
+                                <span class="content">{{detailResult.status === 1 ? $t('p121') : $t('p122')}}</span>
+                            </div>
+                            <!-- 3.10 描述 -->
+                            <div class="form-item">
+                                <span class="title">{{$t('p123')}}</span>
+                                <span style="white-space: normal" class="content" :title="detailResult.description">{{detailResult.description | text}}</span>
+                            </div>
+                            <!-- 3.11 照片/视频 -->
+                            <div class="form-item">
+                                <span class="title">{{$t('p116')}}</span>
+                                <template v-if="detailResult.fileList && detailResult.fileList.length > 0">
+                                    <div style="flex-wrap: wrap" class="flex">
+                                        <div class="file-wrapper" v-for="(f, fIdx) in detailResult.fileList" :key="fIdx">
+                                            <div @click="handleVideoPreview(staticPath + f)"
+                                                 v-if="/\.(swf|flv|mp4|rmvb|avi|mpeg|ra|ram|mov|wmv)$/.test(f.toLowerCase())" class="video-item">
+                                                <i class="el-icon-video-play"></i>
+                                            </div>
+                                            <img v-else :src="staticPath + f" @click="handlePicturePreview(staticPath + f)">
+                                        </div>
+                                    </div>
+                                </template>
+                                <div v-else>——</div>
+                            </div>
+                            <!-- 3.14 用时 -->
+                            <div class="form-item">
+                                <span class="title">{{$t('p124')}}</span>
+                                <span class="content">{{detailData.spend | spendFormat(detailData.status)}}</span>
+                            </div>
+                        </div>
+
+                        <div style="width: 48%">
+
+                        </div>
+                    </div>
+                </el-collapse-item>
+            </el-collapse>
+
+            <!-- 5.评价 -->
+            <el-collapse v-model="detailCollapse2" class="modal-collapse" v-if="detailData.status === 4 && detailEval">
+                <el-collapse-item name="1">
+                    <template slot="title">
+                        <div class="side-title-wrapper">{{$t('p125')}}</div>
+                    </template>
+                    <template>
+                        <!-- 3.12 评分 -->
+                        <div class="form-item">
+                            <span class="title">{{$t('p126')}}</span>
+                            <div style="height: 24px" class="flex align-center">
+                                <el-rate disabled :value="detailEval.score / 10" show-score allow-half text-color="#ff9900"></el-rate>
+                            </div>
+                        </div>
+                        <!-- 3.13 评语 -->
+                        <div class="form-item">
+                            <span class="title">{{$t('p127')}}</span>
+                            <span style="white-space: normal" class="content" :title="detailEval.content">{{detailEval.content | text}}</span>
+                        </div>
+                    </template>
+                </el-collapse-item>
+            </el-collapse>
+        </div>
+
+        <!-- footer -->
+        <div slot="footer" class="dialog-footer el-dialog__footer">
+<!--            <span v-t="'viewM.mt5'"></span>-->
+            <!--            <span class="color-primary-blue font-bold">维修中</span>-->
+            <span class="color-primary-blue font-20 font-bold">{{$t('p128')}}{{levelMapping[detailData.level || 1] | text}}</span>
+        </div>
+        
+        </div>
+        
+    </el-dialog>
+    <!-- 报修详情模态框结束 -->
+
+    <!-- 打印预览模态框开始 -->
+    <el-dialog
+            :title="$t('printPreview')"
+            class="view-modal import-modal update-modal"
+            v-loading="dialog.print.loading"
+            :visible.sync="dialog.print.show"
+            width="868px"
+            center>
+
+        <div id="printTable">
+            <div class="print-table-title">{{$t('p173')}}</div>
+            <table class="print-table" border="1px solid #ccc" cellspacing="0" cellpadding="0">
+                <tbody>
+                    <tr style="height: 40px;">
+                        <td class="print-table-top" colspan="6">{{$t('p172')}}{{dialog.print.time | dateFull2}}</td>
+                    </tr>
+                    <tr>
+                        <td>{{$t('p159')}}</td>
+                        <td class="print-table-content">{{dialog.print.obj.number}}</td>
+                        <td>{{$t('p108')}}</td>
+                        <td class="print-table-content">{{dialog.print.obj.createTime | dateFull2}}</td>
+                        <td>{{$t('p160')}}</td>
+                        <td class="print-table-content">{{processMap[dialog.print.obj.status]}}</td>
+                    </tr>
+                    <tr>
+                        <td>{{$t('p16')}}</td>
+                        <td class="print-table-content">{{dialog.print.obj.nickname}}</td>
+                        <td>{{$t('p161')}}</td>
+                        <td class="print-table-content" style="max-width: 140px;">{{dialog.print.obj.placeName}}</td>
+                        <td>{{$t('p162')}}</td>
+                        <td class="print-table-content">{{levelMapping[dialog.print.obj.level || 1]}}</td>
+                    </tr>
+                    <tr>
+                        <td>{{$t('p163')}}</td>
+                        <td colspan="3" class="print-table-content">{{dialog.print.obj.name}}</td>
+                        <td>{{$t('p174')}}</td>
+                        <td class="print-table-content">{{propertyTypeMap[dialog.print.obj.propertyType] ? propertyTypeMap[dialog.print.obj.propertyType].name : ''}}</td>
+                    </tr>
+                    <tr>
+                        <td>{{$t('p113')}}</td>
+                        <td colspan="5" class="print-table-content">{{dialog.print.obj.description}}</td>
+                    </tr>
+                    <tr>
+                        <td>{{$t('p164')}}</td>
+                        <td colspan="5" class="print-table-file-wrapper">
+                            <template v-if="dialog.print.obj.fileList && dialog.print.obj.fileList.length > 0">
+                                <div style="flex-wrap: wrap" class="flex">
+                                    <div class="file-wrapper" v-for="(f, fIdx) in dialog.print.obj.fileList" :key="fIdx">
+                                        <div v-if="/\.(swf|flv|mp4|rmvb|avi|mpeg|ra|ram|mov|wmv)$/.test(f.toLowerCase())" class="video-item">
+                                            <i class="el-icon-video-play"></i>
+                                        </div>
+                                        <img v-else :src="staticPath + f">
+                                    </div>
+                                </div>
+                            </template>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>{{$t('p165')}}</td>
+                        <td class="print-table-content">
+                            <div>{{dialog.print.assignList | formatUserList2}}</div>
+                            <div>{{dialog.print.depAssignList | formatUserList2}}</div>
+                        </td>
+                        <td>{{$t('p88')}}</td>
+                        <td v-if="dialog.print.detailResult" class="print-table-content">{{dialog.print.detailResult.status === 1 ? $t('p121') : $t('p122')}}</td>
+                        <td v-else></td>
+                        <td>{{$t('p166')}}</td>
+                        <td class="print-table-content" v-if="dialog.print.obj.assignType">{{$t('assignTypeMap[' + dialog.print.obj.assignType + ']')}}</td>
+                        <td v-else></td>
+                    </tr>
+                    <tr>
+                        <td>{{$t('p167')}}</td>
+                        <td class="print-table-content" style="max-width: 140px;">{{dialog.print.obj.assignTime | dateFull2}}</td>
+                        <td>{{$t('p168')}}</td>
+                        <td class="print-table-content">{{dialog.print.obj.checkInTime | dateFull2}}</td>
+                        <td>{{$t('p47')}}</td>
+                        <td class="print-table-content">{{dialog.print.obj.completeTime | dateFull2}}</td>
+                    </tr>
+                    <tr>
+                        <td>{{$t('p169')}}</td>
+                        <td v-if="dialog.print.detailResult" colspan="5" class="print-table-content">{{dialog.print.detailResult.description}}</td>
+                        <td v-else colspan="5"></td>
+                    </tr>
+                    <tr>
+                        <td>{{$t('p164')}}</td>
+                        <td colspan="5" class="print-table-file-wrapper">
+                            <template v-if="dialog.print.detailResult && dialog.print.detailResult.fileList && dialog.print.detailResult.fileList.length > 0">
+                                <div style="flex-wrap: wrap" class="flex">
+                                    <div class="file-wrapper" v-for="(f, fIdx) in dialog.print.detailResult.fileList" :key="fIdx">
+                                        <div v-if="/\.(swf|flv|mp4|rmvb|avi|mpeg|ra|ram|mov|wmv)$/.test(f.toLowerCase())" class="video-item">
+                                            <i class="el-icon-video-play"></i>
+                                        </div>
+                                        <img v-else :src="staticPath + f">
+                                    </div>
+                                </div>
+                            </template>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>{{$t('p170')}}</td>
+                        <td style="max-width: 400px;" v-if="dialog.print.detailEval" colspan="3" class="print-table-content">{{dialog.print.detailEval.content}}</td>
+                        <td v-else colspan="3"></td>
+                        <td>{{$t('p171')}}</td>
+                        <td class="print-table-content">
+                            <el-rate v-if="dialog.print.detailEval" disabled :value="dialog.print.detailEval.score / 10" show-score allow-half text-color="#ff9900"></el-rate>
+                            <td v-else></td>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div slot="footer" class="footer-center">
+            <!-- <span @click="dialog.update.show = false" class="custom-button button-style5">{{$t('cancel')}}</span> -->
+            <span @click="doPrint('printTable')" class="custom-button button-style6 margin-l-10">{{$t('p96')}}</span>
+        </div>
+    </el-dialog>
+    <!-- 打印预览模态框结束 -->
+
+    <!-- 反馈模态框 -->
+    <el-dialog
+            :title="$t('p119')"
+            class="view-modal import-modal update-modal"
+            v-loading="dialog.feedback.loading"
+            :visible.sync="dialog.feedback.show"
+            width="468px"
+            center>
+
+        <div>
+            <!-- 评分 -->
+            <div class="modal-form-item">
+                <span class="modal-form-label need letter-spacing-1">{{$t('p107')}}</span>
+                <div class="modal-form-wrapper">
+                    <el-radio v-model="dialog.feedback.result.status" :label="1">{{$t('p89')}}</el-radio>
+                    <el-radio v-model="dialog.feedback.result.status" :label="2">{{$t('p90')}}</el-radio>
+                </div>
+            </div>
+            <!-- 描述 -->
+            <div class="modal-form-item">
+                <span class="modal-form-label self-start letter-spacing-1">{{$t('p123')}}</span>
+                <el-input class="border-selected" type="textarea"
+                          :placeholder="$t('tipsText[6]')" v-model="dialog.feedback.result.description"
+                          rows="4" maxlength="300" show-word-limit></el-input>
+            </div>
+            <!-- 附件 -->
+            <div class="modal-form-item" style="margin-bottom: 0">
+                <span class="modal-form-label self-start letter-spacing-1">{{$t('p182')}}</span>
+                <el-upload
+                        v-if="isShowFeedbackUpload"
+                        accept="image/*,video/*"
+                        ref="feedback-upload"
+                        action="#"
+                        list-type="picture-card"
+                        :on-change="fileChangeForFeedback"
+                        :auto-upload="false">
+                    <i slot="default" class="el-icon-plus"></i>
+                    <div slot="file" slot-scope="_obj" style="height: 100%">
+                        <video class="el-upload-list__item-thumbnail" :src="_obj.file.url" v-if="/\.(swf|flv|mp4|rmvb|avi|mpeg|ra|ram|mov|wmv)$/.test(_obj.file.name.toLowerCase())"></video>
+                        <img style="object-fit: cover" v-else class="el-upload-list__item-thumbnail" :src="_obj.file.url" alt="">
+                        <span class="el-upload-list__item-actions">
+                            <span class="el-upload-list__item-preview"
+                                  v-if="/\.(swf|flv|mp4|rmvb|avi|mpeg|ra|ram|mov|wmv)$/.test(_obj.file.name.toLowerCase())"
+                                  @click="handleVideoPreview(_obj.file.url)">
+                                <i class="el-icon-zoom-in"></i>
+                            </span>
+                            <span class="el-upload-list__item-preview"
+                                  v-else
+                                  @click="handlePicturePreview(_obj.file.url)">
+                                <i class="el-icon-zoom-in"></i>
+                            </span>
+                            <span class="el-upload-list__item-delete"
+                                  @click="$refs['feedback-upload'].handleRemove(_obj.file)">
+                                <i class="el-icon-delete"></i>
+                            </span>
+                        </span>
+                    </div>
+                </el-upload>
+            </div>
+        </div>
+
+        <div slot="footer" class="footer-center">
+            <span @click="doFeedback" class="custom-button button-style1 margin-l-10">{{$t('end')}}</span>
+        </div>
+    </el-dialog>
+</div>
+</body>
+<script src="/public/js/vue.min.js"></script>
+<script src="/public/elementui/element-ui.js"></script>
+<script src="/public/js/jquery-3.3.1.min.js"></script>
+<script src="/public/js/config/config.js"></script>
+
+<script src="/public/locales/vue-i18n.js"></script>
+<script src="/public/elementui/locale/lang/zh-CN.js"></script>
+<script src="/public/elementui/locale/lang/en.js"></script>
+<script src="/public/locales/i18n-config.js"></script>
+<script src="/public/locales/i18n-all.js"></script>
+
+<script src="/public/js/date.js"></script>
+<script src="/public/js/ajax.js"></script>
+<script src="/public/js/image-compress.js"></script>
+<script src="/public/js/moment.min.js"></script>
+<script src="/public/js/common/iframe.js"></script>
+<script src="/public/js/common/constants.js"></script>
+<script src="/public/js/common/import-tip.js"></script>
+<script src="/public/js/common/common-util.js"></script>
+<script src="/public/js/echarts.min.js"></script>
+<script src="/public/js/qrcode.min.js"></script>
+<script src="/public/js/bluebird.min.js"></script>
+<script src="/public/js/html2canvas.min.js"></script>
+<script src="/public/js/print2img.js"></script>
+<script src="/public/js/repair/WebSocket.js"></script>
+<script src="/public/js/repair/maintainerManage.js"></script>
+<script src="/public/js/components/ChooseDialog.js"></script>
+</html>

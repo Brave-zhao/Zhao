@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+	<meta name="renderer" content="webkit">
+	<meta name="viewport"
+		content="width=device-width, initial-scale=1.0, minimum-scale=0.5, maximum-scale=2.0, user-scalable=yes" />
+	<title>首页</title>
+    <link rel="stylesheet" href="/public/element-ui-2.15.9/theme/index.css">
+	<link rel="stylesheet" href="/public/css/components/common.css">
+	<link rel="stylesheet" href="/public/css/common/admin-common.css">
+	<link rel="stylesheet" href="/public/font-awesome/css/font-awesome.min.css">
+	<link rel="stylesheet" href="/public/ali-icon/control/iconfont.css">
+	<link rel="stylesheet" href="/public/css/common/custom-element.css">
+
+	<link rel="stylesheet" href="/public/css/admin/v2/home/index.css">
+	<style type="text/css">
+		[v-cloak] {
+			display: none;
+		}
+	</style>
+</head>
+
+<body>
+	<div id="app" class="main-container" v-cloak>
+		<div class="app-home">
+			<div class="app-home-title flex flex-center">
+				<div><span>{{ $t("v2himl1") }}</span></div>
+			</div>
+			<div class="w100 home-container">
+				<div class="flex data-content">
+					<!-- left -->
+					<div class="data-wrapper data-left shrink-0">
+						<!-- 课室使用情况 -->
+						<div class="shrink-0 classroom">
+							<my-v2-title class="shrink-0" :text="$t('v2himl2')"></my-v2-title>
+							<my-v2-date class="date-component shrink-0" @change="changeClassroom"
+								:active.sync="classroomParams.type">
+							</my-v2-date>
+							<div class="chart-wrapper shrink-0" v-loading="echarLoading.classroom">
+								<div class="shrink-0 total-num-title">{{ $t("v2himl3") }}</div>
+								<div class="w100 flex chart-container">
+									<!-- 饼状图 -->
+									<div id="rate" class="rate"></div>
+									<div id="total-num" class="total-num"></div>
+									<!-- 柱状图 -->
+									<!-- <div></div> -->
+								</div>
+							</div>
+							<div class="relative">
+								<div class="floor shrink-0">
+									<div id="floor" class="wh100"></div>
+									<div class="total-num-title floor-unit absolute"><span>{{ $t("v2himl3") }}</span></div>
+								</div>
+							</div>
+							<div class="time-container shrink-0">
+								<div class="flex items-center flex-between">
+									<div class="flex items-center">
+										<div class="relative time-length">
+											<img class="wh100"
+												src="/public/images/admin/control/length.png">
+											<div class="absolute time-data-wrapper">
+												<div class="num ellipsis">{{ Number(totalTime.toFixed(2)) }}</div>
+												<div class="text">{{ $t("v2himl4") }}</div>
+											</div>
+										</div>
+										<div class="relative time-length">
+											<img class="wh100"
+												src="/public/images/admin/control/length.png">
+											<div class="absolute time-data-wrapper">
+												<div class="num ellipsis">{{ Number(averageTime.toFixed(2)) }}</div>
+												<div class="text">{{ $t("v2himl5") }}</div>
+											</div>
+										</div>
+									</div>
+									<div class="classroom-time">
+										<el-date-picker v-model="classroomParams.date" @change="changeClassroomTime"
+											type="daterange" :clearable="false" :range-separator="$t('v2himl14')"
+											:start-placeholder="$t('setupB.s2')"  popper-class="classroom-time__popper"
+											:end-placeholder="$t('setupB.s3')">
+										</el-date-picker>
+									</div>
+									<div class="time-unit shrink-0">
+										<span>{{ $t("v2himl6") }}</span>
+									</div>
+								</div>
+								<div class="time-num relative">
+									<div id="time-num" class="wh100"></div>
+								</div>
+							</div>
+						</div>
+						<!-- 课程数据 -->
+						<div class="shrink-0 course">
+							<my-v2-title class="shrink-0 course-title" :text="$t('v2himl7')"></my-v2-title>
+							<my-v2-date class="curse-component shrink-0" :active.sync="courseParams.type"
+								@change="changeCourseTotal"></my-v2-date>
+							<div class="course-total flex">
+								<div class="course-total-item" v-for="(item, index) in courseTotalData">
+									<div class="flex column items-center">
+										<div class="course-total__image relative flex flex-center" :title="item.value">
+											<div>
+												<img :src="$global.fullStaticUrl('/public/images/admin/control/course-' + (index * 1 + 1) + '.png')"
+													alt="">
+											</div>
+											<div class="absolute course-total__value ellipsis"
+												:style="{color: item.color}"><span>{{ item.value }}</span></div>
+										</div>
+
+										<div class="course-total__name"><span>{{ $t("courseTotalDataName")[index] }}</span></div>
+									</div>
+								</div>
+							</div>
+							<div class="course-rate" v-loading="echarLoading.courseTotal" id="course-rate"></div>
+						</div>
+					</div>
+
+					<!-- center -->
+					<div class="data-wrapper data-center shrink-0">
+						<!-- 地图 -->
+						<div class="center-map relative">
+							<div class="map-container flex column" v-loading="mapLoading">
+								<!-- 真实地图容器 -->
+								<!-- <div v-if="showTrueMap" id="map-content" class="map-content"></div>
+								<div class="map-image" v-if="!showTrueMap">
+									<tr-image-viewer :always-inside="true" :wheel-scale-rate="0.1" :max-scale="2"
+										:url="$global.fullStaticUrl('/public/images/admin/control/bg-1.jpg')">
+									</tr-image-viewer>
+								</div> -->
+								<div class="map-course-container shrink-0">
+									<div class="flex flex-center">
+										<div class="relative map-course__item flex flex-center"
+											v-for="(item, index) in mapClassroomData" :key="index">
+											<div class="map-course__text absolute" :style="{color: item.color}">
+												<span>{{ item.name }}：{{ item.value }}</span>
+											</div>
+										</div>
+									</div>
+								</div>
+								<div class="meeting-list-container h100 flex column">
+									<div class="meeting-header shrink-0 flex items-center">
+										<div class="meeting-header-item" :style="{width: el.width}" v-for="el in meetingHeader" :key="el.value">
+											<div class="ellipsis" :title="el.name"><span>{{ el.name }}</span></div>
+										</div>
+									</div>
+									<div class="meeting-list">
+										<step-scroll-v2 :data="meetingList" :single-height="50" :limit-move-num="10" :auto-cal-size="true" :is-single-rem-unit="false" v-if="meetingList.length > 0">
+											<div class="meeting-item-scope flex h100 items-center" slot-scope="scope">
+												<div class="meeting-item" :style="{width: el.width}" v-for="(el, key) in meetingHeader"
+													:key="el.value">
+													<div class="ellipsis" :style="key == 'myStatus' ? {color: meetingStatusColor[scope.row[key]]} : {}" :title="meetingItemText(scope.row, key)"><span>{{ meetingItemText(scope.row, key) }}</span></div>
+												</div>
+											</div>
+										</step-scroll-v2>
+										<div class="meeting-placeholder" v-else>{{ $t("v2himl18") }}</div>
+									</div>
+								</div>
+							</div>
+						</div>
+						<div class="center-echart-container flex">
+							<!-- 服务器运行状态 -->
+							<div class="status-wrapper" v-loading="echarLoading.systemInfo">
+								<my-v2-title class="shrink-0 status-title" :text="$t('v2himl19')"></my-v2-title>
+								<div class="flex items-center status-top">
+									<!-- 时长 -->
+									<div class="relative status__container">
+										<img
+											src="/public/images/admin/control/status-time.png">
+										<div class="status-time-title absolute"><span>{{ $t("v2himl8") }}</span></div>
+										<div class="status-time-value absolute ellipsis" :title="normalTime"><span>{{
+												normalTime }}</span></div>
+									</div>
+									<!-- 网速 -->
+									<div class="internet-speed" id="internet-speed"></div>
+								</div>
+								<div class="status-bottom flex">
+									<div class="status-bottom-item flex column items-center"
+										v-for="(item, index) in statusRateData" :key="item.id">
+										<div class="status-bottom-item__image">
+											<img class="wh100" :src="statusImage(item)">
+										</div>
+										<div class="status-bottom-item__name"><span>{{ $t("statusRateDataName")[index] }}</span></div>
+										<div class="status-bottom-item__value"><span>{{ statusValue(item) }}</span>
+										</div>
+									</div>
+								</div>
+							</div>
+							<!-- 环境监测 -->
+							<div class="env-wrapper flex column">
+								<my-v2-title class="shrink-0 env-title" :text="$t('v2himl9')"></my-v2-title>
+								<div class="flex air-quality-top flex-between">
+									<!-- 空气质量 -->
+									<div class="air-quality shrink-0" id="air-quality"></div>
+									<!-- co2 光照 -->
+									<!-- <div class="flex"> -->
+									<div class="flex column items-center air-quality-item" v-for="(air, airIndex) in airQualityData"
+										:key="air.type">
+										<div>
+											<img :src="airQualityImage(air)">
+										</div>
+										<div class="air-quality-item__value w100">
+											<div class="w100 ellipsis" :title="air.value + air.unit">
+												<span>{{ air.value }}</span><span class="company">{{ air.unit }}</span>
+											</div>
+										</div>
+										<div class="air-qualityitem__name"><span>{{ $t("airQualityDataName")[airIndex] }}</span></div>
+									</div>
+									<!-- </div> -->
+								</div>
+							</div>
+							<!-- Ip对讲 -->
+							<div v-show="openIpIntercom" class="ip-wrapper" v-loading="ip.isLoading">
+								<my-v2-title class="shrink-0 ip-title" :text="$t('v2himl20')"></my-v2-title>
+								<div class="ip-container" style="margin-top: 23px">
+									<!-- 左（统计） -->
+									<div class="ip-count-wrapper">
+										<div class="relative" v-for="(count, countType) in ip.countInfo"
+											:key="countType">
+											<img
+												:src="$global.fullStaticUrl('/public/images/admin/control/ip/ip-border-' + countType + '.png')">
+											<div class="status-time-title absolute">
+												<span>{{countType2Text[countType]}}</span>
+											</div>
+											<div class="status-time-value absolute ellipsis" :title="count"
+												:count-type="countType">
+												<span>{{count}}</span>
+											</div>
+										</div>
+									</div>
+									<!-- 右（正在通话中的列表） -->
+									<div class="ip-list-wrapper">
+										<div class="relative ip-list-wrapper__image-content">
+											<img class="wh100"
+												src="/public/images/admin/control/ip/list-border.png">
+											<div class="status-time-title absolute" style="margin-top: 8px">
+												<span>{{ $t("v2himl10") }}</span>
+											</div>
+											<div class="ip-busying-list-container">
+												<step-scroll-v2 :data="ip.callBusyingList" :single-height="30"
+													:limit-move-num="8" :auto-cal-size="true"
+													:is-single-rem-unit="false" v-if="ip.callBusyingList.length > 0">
+													<div class="ip-busying-item" slot-scope="scope">
+														<span style="color: white">{{scope.row.time |
+															millis2Str}}</span>
+														<span class="color-cyan"
+															style="margin-left: 10px">{{scope.row.fromNumber}}</span>
+														<span class="color-cyan"
+															style="margin-left: 10px">{{scope.row.toNumber}}</span>
+													</div>
+												</step-scroll-v2>
+												<div class="warning-table__tooltip"
+													v-if="ip.callBusyingList.length <= 0">
+													{{ $t("v2himl11") }}
+												</div>
+											</div>
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+
+					</div>
+
+					<!-- right -->
+					<div class="data-wrapper data-right shrink-0">
+						<!-- 资产分布 -->
+						<div v-loading="echarLoading.assets">
+							<my-v2-title :text="$t('v2himl21')"></my-v2-title>
+							<!-- 资产总和 -->
+							<div class="flex assets-list">
+								<div class="assets-item-container relative" v-for="(item, index) in assetsData" :key="item.id">
+									<div class="assets-item flex items-center">
+										<div class="flex column items-center">
+											<div class="assets-item__name"><span>{{ $t("assetsDataName")[index] }}</span></div>
+											<div class="assets-item__value" :style="{color: item.color}"><span>{{
+													item.value }}</span></div>
+										</div>
+										<div class="assets-item__icon">
+											<img
+												:src="$global.fullStaticUrl('/public/images/admin/control/' + item.icon + '.png')">
+										</div>
+									</div>
+								</div>
+							</div>
+							<!-- 地点资产统计 -->
+							<div class="assets-place">
+								<div class="wh100" id="assets-place"></div>
+							</div>
+						</div>
+						<div class="shrink-0 repair-wrapper" v-loading="repair.isLoading">
+							<my-v2-title :text="$t('v2himl12')"></my-v2-title>
+							<my-v2-date class="curse-component shrink-0" :active.sync="repair.type"
+								@change="changeRepair"></my-v2-date>
+							<div class="repair-chart-wrapper">
+								<!-- 左 -->
+								<div style="width:45%;height:100%;" id="repairPie"></div>
+								<!-- 右 -->
+								<div style="width:55%;height:100%;" id="repairLine"></div>
+							</div>
+
+						</div>
+
+						<!-- 智能预警 -->
+						<div class="warning-wrapper" v-loading="alertLog.loading"
+							element-loading-background="rgba(0, 0, 0, 0.4)">
+							<my-v2-title :text="$t('v2himl13')"></my-v2-title>
+							<div class="warning-header">
+								<img alt=""
+									src="/public/images/admin/control/icon-warning.png">
+								<div class="warning-header__text">
+									<div>
+										<span class="warning-header__text--num">{{alertLog.data.length}}</span>
+										<span>{{ $t("v2himl15") }}</span>
+									</div>
+									<div>{{ $t("v2himl16") }}</div>
+								</div>
+							</div>
+							<div class="warning-table">
+								<step-scroll-v2 :data="alertLog.data" :single-height="44" :limit-move-num="5"
+									:auto-cal-size="true" :is-single-rem-unit="false" v-if="alertLog.data.length > 0">
+									<div class="warning-table__row" slot-scope="scope"
+										:class="{'even': scope.row.index % 2 != 0}">
+										<div class="warning-table__row--content" :title="scope.row.fullContent">
+											<div class="warning-table_row--icon"></div>
+											<div class="warning-table__row--text">
+												{{scope.row.fullContent}}
+											</div>
+										</div>
+
+										<div class="warning-table__row--time">
+											{{$global.formatDate(scope.row.createTime, "HH:mm:ss")}}
+										</div>
+									</div>
+								</step-scroll-v2>
+
+								<div class="warning-table__tooltip" v-if="alertLog.data.length <= 0">
+									{{ $t("v2himl17") }}
+								</div>
+							</div>
+							<div></div>
+						</div>
+					</div>
+
+				</div>
+			</div>
+		</div>
+	</div>
+</body>
+<!-- 基础 -->
+<script src="/public/js/bluebird.min.js"></script>
+<script src="/public/js/vue.min.js"></script>
+<script src="/public/element-ui-2.15.9/index.js"></script>
+<script src="/public/js/jquery-3.3.1.min.js"></script>
+<script src="/public/js/moment.min.js"></script>
+<script src="/public/js/config/config.js"></script>
+<script src="/public/js/common/vue-common-util.js"></script>
+<script src="/public/js/common/vue-ajax.js"></script>
+<script src="/public/js/common/iframe.js"></script>
+
+<!-- 翻译 -->
+<script src="/public/locales/vue-i18n.js"></script>
+<script src="/public/element-ui-2.15.9/locale/lang/zh-CN.js"></script>
+<script src="/public/element-ui-2.15.9/locale/lang/en.js"></script>
+<script src="/public/locales/i18n-config.js"></script>
+<script src="/public/locales/i18n-all.js"></script>
+
+<script src="/public/js/components/common.js"></script>
+<script src="/public/js/echarts-5.3.2.min.js"></script>
+<script src="/public/js/echarts-liquidfill.min.js"></script>
+
+<script src="/public/js/swiper.min.js"></script>
+<script src="/public/js/components/template/DragDrop.js"></script>
+<script type="text/javascript"
+	src="https://api.map.baidu.com/api?v=1.0&type=webgl&ak=yKl3dvlCmSta6dbzr4LVyjyeeTU5SCzH"></script>
+<script src="/public/js/components/template/ComponentList.js"></script>
+<script src="/public/js/admin/v2/home/index.js"></script>
+
+</html>

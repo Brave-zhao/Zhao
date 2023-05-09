@@ -1,0 +1,821 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="renderer" content="webkit">
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, minimum-scale=0.5, maximum-scale=2.0, user-scalable=yes" />
+    <title>控制中心模板</title>
+    <link rel="stylesheet" href="/public/element-ui-2.15.9/theme/index.css">
+	<link rel="stylesheet" href="/public/css/components/common.css">
+    <link rel="stylesheet" href="/public/css/common/admin-common.css">
+	<link rel="stylesheet" href="/public/font-awesome/css/font-awesome.min.css">
+	<link rel="stylesheet" href="/public/ali-icon/control/iconfont.css">
+    <link rel="stylesheet" href="/public/css/common/custom-element.css">
+
+    <link rel="stylesheet" href="/public/css/admin/control/template.css">
+</head>
+
+<body>
+    <div class="main-container custom-container" id="app" v-cloak>
+        <div class="breadcrumbs mb-1">
+            <span>{{ $t('cctml13') }}</span>
+            <span>/</span>
+            <span class="cr-green">{{ $t('cctml14') }}</span>
+        </div>
+        <div class="body">
+            <div class="publish-header custom-justify-between">
+                <div></div>
+                <div class="publish-step custom-items-center">
+                    <div class="pointer previous" @click="changePrevious">
+                        <i class="iconfont icon-shangyibu"></i>
+                        <span>{{ $t('pre') }}</span>
+                    </div>
+                    <div class="pointer next-step" v-if="componentData.length>0" @click="changeNextStep">
+                        <span>{{ $t('next') }}</span>
+                        <i class="iconfont icon-xiayibu"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="custom-components-body custom-justify-between">
+                <!-- 组件列表 -->
+                <div class="components-left">
+                    <div class="component-title list custom-success-bgcolor">{{ $t('cctml11') }}</div>
+                    <div style="height: 700px;">
+                        <el-scrollbar class="custom-scrollbar">
+                            <div class="pointer list-item" v-for="(item,index) in computedLeftModule" :key="index"
+                                :title="$i.t('componentText')[item.type]" @dragstart="handleDragStart"
+                                @click="dropConfirm($event, item)" :class="{'com-disable': item.disabled}"
+                                :data-item="JSON.stringify(item)" :data-index="index" :draggable="!item.disabled">
+                                <i class="iconfont module-icon" :class="lefticonList[item.type]"></i>
+                                <span class="text">{{ $i.t('componentText')[item.type] }}</span>
+                            </div>
+                        </el-scrollbar>
+                    </div>
+                </div>
+                <!-- 组件画布 -->
+                <div class="components-center" @click="clickNotActive">
+                    <div class="component-title canvas">{{ $t('edit') }}</div>
+                    <div class="editor-icon custom-justify-between custom-items-center">
+                        <div class="custom-items-center">
+                            <div v-if="currActiveComponent[0]"
+                                @click="currActiveComponent[0].lock = !currActiveComponent[0].lock "
+                                class="pointer component-lock custom-items-center custom-column">
+                                <i class="iconfont custom-success-color"
+                                    :class="currActiveComponent[0].lock?'iconsuoding':'iconjiesuo'"></i>
+                                <span class="custom-success-color">{{ !currActiveComponent[0].lock ? $t('cctml2') :
+                                    $t('cctml3') }}</span>
+                            </div>
+                            <div v-if="componentData.length > 0" @click="clearComponentData"
+                                class="pointer component-clear custom-items-center custom-column">
+                                <i class="iconfont iconqingkong"></i>
+                                <span>{{ $t('clear') }}</span>
+                            </div>
+                        </div>
+                        <div class="edit-button">
+
+                            <!-- 导出 -->
+                            <el-button class="ter-btn ter-btn--success" @click="exportTemplate">{{ $t('export') }}
+                            </el-button>
+
+                            <el-button class="ter-btn ter-btn--success" @click="saveAs">{{ $t('cctml25') }}</el-button>
+                            <el-button class="ter-btn ter-btn--success" @click="save(0)">{{ $t('save') }}</el-button>
+                            <el-button class="ter-btn ter-btn--success" @click="clickUndo">{{ $t('cctml1') }}
+                            </el-button>
+                        </div>
+                    </div>
+                    <div class="custom-justify-center components-canvas-bottom">
+                        <div class="components-border custom-relative" ref="domtoimage">
+                            <div class="bg-opactiy custom-absolute wh100" :style="canvasBgStyle"></div>
+                            <drag-drop-group :data="componentData" :active.sync="activeComponent" ref="drag"
+                                :min-style="minStyleMethods"
+                                :is-lock="currActiveComponent[0] && currActiveComponent[0].lock" :trans-form="transForm"
+                                :dynamic-size="dynamicSize" :component-w-h-l-t="componentWHLT"
+                                @dragover.native="handleDragOver" @drop.native="handleDrop" :width="canvasStyle.width"
+                                :height="canvasStyle.height" :is-conflict-ids="isConflictIds" :com-min="comMin"
+                                :com-type-min="comTypeMin" @delete="deleteComponent">
+                                <!-- <button class="component-edit" @click="editDisoption">编辑</button> -->
+                                <i class="iconfont iconOAkaoqin-quxiao-1 delete-component custom-absolute pointer"></i>
+                            </drag-drop-group>
+                        </div>
+                    </div>
+                </div>
+                <!-- 组件样式 -->
+                <div class="component-right custom-column">
+                    <div class="component-title style">{{ $t('cctml12') }}</div>
+                    <el-scrollbar class="custom-scrollbar right-scrollbar">
+                        <div class="set_up-style">
+                            <!-- 画布样式 -->
+                            <div class="canvas-style" v-show="!currActiveComponent.length">
+                                <el-form ref="form">
+                                    <el-form-item :label="$t('cctml26')">
+                                        <el-input v-model.trim="globalModulePage.name" :placeholder="$t('tipsText[2]')">
+                                        </el-input>
+                                    </el-form-item>
+                                    <el-form-item :label="$t('set.set4')">
+                                        <el-radio v-model="globalModule[0].radio" label="1">{{ $t('set.set10') }}
+                                        </el-radio>
+                                        <el-radio v-model="globalModule[0].radio" label="2">{{ $t('set.set12') }}
+                                        </el-radio>
+                                    </el-form-item>
+                                    <el-form-item :label="canvasBgRadioLabel">
+                                        <el-button v-if="globalModule[0].radio == 2 && !pagesStyle.backgroundImage"
+                                            class="ter-btn ter-btn--success" @click="uploadShowBgDialog">
+                                            {{ $t('set.set11') }}
+                                        </el-button>
+                                        <div class="active-bg_img custom-relative" @click="uploadShowBgDialog"
+                                            v-if="pagesStyle.backgroundImage && globalModule[0].radio == 2">
+                                            <el-image :src="minBgImg(pagesStyle.backgroundImage)" fit="contain">
+                                            </el-image>
+                                            <i class="iconfont iconqingkong l-bg-icon custom-absolute"
+                                                @click="deleteActiveImg('',$event)"></i>
+                                        </div>
+                                        <el-color-picker size="mini" color-format="hex"
+                                            @change="changeColor($event,pagesStyle,'backgroundColor')"
+                                            v-if="globalModule[0].radio == 1" class="noborder-color-picker l-border"
+                                            v-model="pagesStyle.backgroundColor">
+                                        </el-color-picker>
+                                    </el-form-item>
+                                    <el-form-item class="backgroundOpacity" :label="$t('cctml23')">
+                                        <el-slider v-model="pagesStyle.backgroundOpacity"></el-slider>
+                                    </el-form-item>
+                                </el-form>
+                            </div>
+                            <!-- 组件样式 -->
+                            <div class="component-style" v-if="currActiveComponent.length">
+                                <!-- 样式类型 -->
+                                <el-form class="right-style-w-h-x-y custom-items-center"
+                                    v-if="componentStyleOption[currActiveComponent[0].type]">
+                                    <!-- <el-form-item v-for="(s,si) in styleKey" :key="si" :label="styleLabelKey[si]">
+                                        <el-input v-model="currActiveComponent[0][s]" @change="componentStyleWHXY(s,$event)"
+                                            type="number">
+                                        </el-input>
+                                    </el-form-item> -->
+                                    <!-- 组件样式选择 -->
+                                    <div class="w100 other-style-select">
+                                        <el-form-item :label="$t('set.set6')" :class="" class="style-select">
+                                            <el-select v-model="currActiveComponent[0].styleOption"
+                                                @change="UndoSaveDebouncer(componentData)"
+                                                :placeholder="$t('tipsText[0]')">
+                                                <el-option
+                                                    v-for="opt in componentStyleOption[currActiveComponent[0].type]"
+                                                    :key="opt" :label="$t('set.set6') + opt" :value="opt">
+                                                </el-option>
+                                            </el-select>
+                                        </el-form-item>
+                                    </div>
+
+                                </el-form>
+                                <!-- 字体样式 功能选择 -->
+                                <el-form ref="form"
+                                    v-if="currActiveComponent[0].type != 'attendance' && currActiveComponent[0].type != 'rectangle'">
+                                    <!-- 字号、字体 -->
+                                    <div class="size-family custom-items-center"
+                                        v-if="currActiveComponent[0].type != 'rectangle' && showFontAlignStyle">
+                                        <el-form-item :label="$i.t('set.set5')" v-if="!showAlignAndColor">
+                                            <el-color-picker v-model="currActiveComponent[0].style.color"
+                                                @change="changeColor($event,currActiveComponent[0].style,'color')"
+                                                size="mini">
+                                            </el-color-picker>
+                                        </el-form-item>
+                                        <el-form-item v-for="(style,key) in label" :class="key" :key="'f' + key"
+                                            :label="style">
+                                            <el-select v-model="currActiveComponent[0].style[key]" filterable
+                                                @change="UndoSaveDebouncer(componentData)"
+                                                :allow-create="key == 'fontSize'" :placeholder="$t('tipsText[0]')"
+                                                v-show="showFormSelect(key)">
+                                                <template v-if="key == 'fontFamily'">
+                                                    <el-option :label="fontFamilyList[fIndex]" :value="family"
+                                                        v-for="(family,fIndex) in fontFamilyListText" :key="fIndex">
+                                                    </el-option>
+                                                </template>
+
+                                                <template v-if="key == 'fontSize'">
+                                                    <el-option :label="size * 10" :value="size * 10"
+                                                        v-for="(size,sIndex) in 20" :key="'size' + sIndex">
+                                                    </el-option>
+                                                </template>
+                                            </el-select>
+                                        </el-form-item>
+                                    </div>
+                                    <!-- 课程信息、传感器 -->
+                                    <el-form-item v-show="showCheckboxGroup(key)" :label="$t('cctml6')"
+                                        v-for="key in checkboxGroup" :key="key">
+                                        <el-checkbox-group v-model="currActiveComponent[0].displayOptions"
+                                            @change="UndoSaveDebouncer(componentData)" :class="key">
+                                            <el-checkbox :label="item" v-for="item in checkboxGroupList(key)"
+                                                :key="item">
+                                                {{ courseText[item] || sensorText[item] }}</el-checkbox>
+                                        </el-checkbox-group>
+                                    </el-form-item>
+                                    <!-- 功能按钮 -->
+                                    <el-form-item v-show="showRadio(key)" :label="$t('cctml6')"
+                                        v-for="key in componentRadio" :key="key">
+                                        <el-radio v-model="currActiveComponent[0].radio" :label="Number(ftk)"
+                                            v-for="(ft,ftk) in radioComponentData[key]">
+                                            {{ ft }}
+                                        </el-radio>
+                                    </el-form-item>
+                                    <!-- 背景 -->
+                                    <div class="bg-opactiy-color-form"
+                                        v-if="currActiveComponent[0].type != 'button' && currActiveComponent[0].type != 'line'">
+                                        <el-form-item v-for="(bg,key) in bgLabel" :class="key" :key="key" :label="bg">
+                                            <el-color-picker v-if="key == 'backgroundColor'"
+                                                @change="changeColor($event,currActiveComponent[0].style,'backgroundColor')"
+                                                v-model="currActiveComponent[0].style[key]" size="mini">
+                                            </el-color-picker>
+                                            <el-slider v-if="key == 'backgroundOpacity'"
+                                                @change="UndoSaveDebouncer(componentData)"
+                                                v-model="currActiveComponent[0].style[key]"></el-slider>
+                                        </el-form-item>
+                                    </div>
+                                    <!-- 对齐 -->
+                                    <el-form-item label=" " v-show="showFontAlignStyle">
+                                        <div class="font-style custom-justify-between custom-items-center">
+                                            <el-tooltip class="item" effect="dark" :content="$t('cctml5')"
+                                                v-if="showAlignAndColor" placement="top">
+                                                <el-color-picker v-model="currActiveComponent[0].style.color"
+                                                    @change="changeColor($event,currActiveComponent[0].style,'color')"
+                                                    size="mini">
+                                                </el-color-picker>
+                                            </el-tooltip>
+                                            <div v-for="font in fontStyleHtml" v-show="showSpaceAround(font.value)"
+                                                :key="font.icon" @click="setUpfontStyle(font)"
+                                                :class="['font-style-item',{'custom-success-bgcolor': currActiveComponent[0].style[font.model] == font.value}]">
+                                                <el-tooltip class="item" effect="dark" :content="font.tip"
+                                                    placement="top">
+                                                    <i :class="['iconfont',font.icon]"></i>
+                                                </el-tooltip>
+                                            </div>
+                                        </div>
+                                    </el-form-item>
+
+                                    <template v-if="currActiveComponent[0].type == 'button'">
+                                        <el-form-item :label="$t('set.set9')">
+                                            <el-radio-group v-model="currActiveComponent[0].backgroundRadio">
+                                                <el-radio :label="1">{{ $i.t("set.set10") }}</el-radio>
+                                                <el-radio :label="2">{{ $i.t("cctml50") }}</el-radio>
+                                            </el-radio-group>
+                                        </el-form-item>
+
+                                        <!-- 纯色 -->
+                                        <div class="bg-opactiy-color-form"
+                                            v-if="currActiveComponent[0].backgroundRadio == 1">
+                                            <el-form-item :label="$t('set.set9')" class="backgroundColor">
+                                                <el-color-picker
+                                                    @change="changeColor($event,currActiveComponent[0].style,'backgroundColor')"
+                                                    v-model="currActiveComponent[0].style.backgroundColor" size="mini">
+                                                </el-color-picker>
+                                            </el-form-item>
+                                            <el-form-item :label="$t('transparency')" class="backgroundOpacity">
+                                                <el-slider @change="UndoSaveDebouncer(componentData)"
+                                                    v-model="currActiveComponent[0].style.backgroundOpacity">
+                                                </el-slider>
+                                            </el-form-item>
+                                        </div>
+                                        <!-- 渐变色 -->
+                                        <div class="gradient-comtainer custom-items-center" v-else>
+                                            <!-- 起始 -->
+                                            <el-form-item :label="$t('cctml48')" class="backgroundColor">
+                                                <el-color-picker @change="gradientBgColor"
+                                                    v-model="componentBuackgroundImageData[currActiveComponent[0].type].start"
+                                                    size="mini">
+                                                </el-color-picker>
+                                            </el-form-item>
+                                            <!-- 结束 -->
+                                            <el-form-item :label="$t('cctml49')" class="backgroundColor">
+                                                <el-color-picker @change="gradientBgColor"
+                                                    v-model="componentBuackgroundImageData[currActiveComponent[0].type].end"
+                                                    size="mini">
+                                                </el-color-picker>
+                                            </el-form-item>
+                                        </div>
+                                    </template>
+
+                                </el-form>
+                                <!-- 视频 -->
+                                <el-form v-show="currActiveComponent[0].type == 'video-display'">
+                                    <el-form-item :label="$t('cctml16')">
+                                        <ul class="custom-flex-center custom-justify-between video_pro-content">
+                                            <li class="pointer video_pro-item" v-for="(item,index) in videoPro"
+                                                :key="index" @click="switchVideoPro(currActiveComponent[0],index)"
+                                                :class="{'custom-success-bgcolor': index == currActiveComponent[0].scale}">
+                                                {{item == '自定义'? $t('set.set2') : item}}
+                                            </li>
+                                        </ul>
+                                    </el-form-item>
+                                </el-form>
+
+                                <el-form v-if="currActiveComponent[0].type != 'line'">
+                                    <!-- 边框、圆角 -->
+                                    <el-form-item :label="$t('cctml20')">
+                                        <div class="font-style radius-style custom-justify-between custom-items-center">
+                                            <!-- 颜色 -->
+                                            <el-tooltip class="item" effect="dark" :content="$t('cctml18')"
+                                                placement="top">
+                                                <el-color-picker v-model="currActiveComponent[0].style.borderColor"
+                                                    size="mini"
+                                                    @change="changeColor($event,currActiveComponent[0].style,'borderColor')">
+                                                </el-color-picker>
+                                            </el-tooltip>
+                                            <!-- 边框大小 -->
+                                            <el-select v-model="currActiveComponent[0].style.borderWidth"
+                                                class="borderWidth" allow-create filterable
+                                                @change="changeBorderWidth($event,currActiveComponent[0])"
+                                                :placeholder="$t('tipsText[0]')">
+                                                <el-option v-for="item in 11" :key="item" :label="item - 1"
+                                                    :value="item - 1">
+                                                </el-option>
+                                            </el-select>
+                                        </div>
+                                    </el-form-item>
+                                    <el-form-item :label="$t('cctml17')">
+                                        <!-- 圆角 -->
+                                        <div class="font-style radius-style custom-justify-between custom-items-center">
+                                            <i class="iconfont iconyuanjiaojuxing yuanjiao custom-l15 font-style-item"
+                                                @click="changeRadiusType(currActiveComponent[0].style,'radio',1)"
+                                                :class="{'custom-success-bgcolor':currActiveComponent[0].style.radio == 1}"></i>
+                                            <i class="iconfont iconyuanjiao banyuanjiao custom-l5 font-style-item"
+                                                @click="changeRadiusType(currActiveComponent[0].style,'radio',2)"
+                                                :class="{'custom-success-bgcolor':currActiveComponent[0].style.radio == 2}"></i>
+                                            <template v-if="currActiveComponent[0].style.radio == 2">
+                                                <div v-for="(ra,key) in currActiveComponent[0].style.borderRadius"
+                                                    :key="key" class="custom-relative custom-l5">
+                                                    <el-input type="number"
+                                                        v-model="currActiveComponent[0].style.borderRadius[key]"
+                                                        @input="setRadiusSize(currActiveComponent[0].style.borderRadius,key,$event,true)"
+                                                        :min="0">
+                                                    </el-input>
+                                                    <div class="custom-absolute radius-size">
+                                                        <div class="el-icon-caret-top add"
+                                                            @mousedown="setRadiusSize(currActiveComponent[0].style.borderRadius,key,1)"
+                                                            @mouseup="moveStop" @mouseout="moveStop">
+                                                        </div>
+                                                        <div class="el-icon-caret-bottom reduce"
+                                                            @mousedown="setRadiusSize(currActiveComponent[0].style.borderRadius,key,-1)"
+                                                            @mouseup="moveStop" @mouseout="moveStop">
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </template>
+                                            <template v-else>
+                                                <div class="custom-relative custom-l5">
+                                                    <el-input type="number" v-model="currActiveComponent[0].style.borderRadius.top" :min="0"
+                                                        @input="setRadiusSize(null,'borderRadius',$event,true)">
+                                                    </el-input>
+                                                    <div class="custom-absolute radius-size">
+                                                        <div class="el-icon-caret-top add"
+                                                            @mousedown="setRadiusSize(null,'borderRadius',1)"
+                                                            @mouseup="moveStop" @mouseout="moveStop">
+                                                        </div>
+                                                        <div class="el-icon-caret-bottom reduce"
+                                                            @mousedown="setRadiusSize(null,'borderRadius',-1)"
+                                                            @mouseup="moveStop" @mouseout="moveStop">
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </template>
+                                        </div>
+                                    </el-form-item>
+                                    <!-- 静态文本 || 按钮 -->
+                                    <el-form-item :label="$t('typeNames[3]')"
+                                        :class="{'static-text-form': currActiveComponent[0].type == 'static-text'}"
+                                        v-if="isTextComponent[currActiveComponent[0].type]">
+                                        <el-input type="textarea" resize="none"
+                                            :rows="isTextComponent[currActiveComponent[0].type]"
+                                            :placeholder="$t('tipsText[5]')"
+                                            v-model="currActiveComponent[0].style.text">
+                                        </el-input>
+                                    </el-form-item>
+
+                                    <!-- 按钮组件 -->
+                                    <template v-if="currActiveComponent[0].type == 'button'">
+                                        <el-form-item :label="$t('cctml39')">
+                                            <el-radio v-model="currActiveComponent[0].function" :label="ftk"
+                                                v-for="(ft,ftk) in myButtonText">
+                                                {{ ft }}
+                                            </el-radio>
+                                        </el-form-item>
+
+                                        <!-- 按钮组件选择显示 -->
+                                        <template v-if="currActiveComponent[0].function == 'jumpPage'">
+                                            <!-- 跳转类型 后台 自定义 -->
+                                            <el-form-item :label="$t('type')">
+                                                <el-radio v-model="currActiveComponent[0].router.type" :label="jdk"
+                                                    v-for="(jd,jdk) in buttonJumpRadioData">
+                                                    {{ jd }}
+                                                </el-radio>
+                                            </el-form-item>
+                                            <!-- 打开方式 -->
+                                            <el-form-item :label="$t('cctml38')">
+                                                <el-select v-model="currActiveComponent[0].router.openType"
+                                                    :placeholder="$t('tipsText[0]')">
+                                                    <el-option v-for="(bo, bok) in buttonOpenRadioData" :key="bok"
+                                                        :label="bo" :value="bok">
+                                                    </el-option>
+                                                </el-select>
+                                            </el-form-item>
+                                            <!-- 跳转链接 -->
+                                            <el-form-item :label="$t('link')">
+                                                <el-input resize="none" type="textarea" :rows="2"
+                                                    v-show="currActiveComponent[0].router.type == 'custom'"
+                                                    :placeholder="$t('tipsText[14]')"
+                                                    v-model="currActiveComponent[0].router.url">
+                                                </el-input>
+
+                                                <!-- 后台页面 -->
+                                                <el-cascader v-show="currActiveComponent[0].router.type == 'backstage'"
+                                                    v-model="currActiveComponent[0].router.menuFlag"
+                                                    :placeholder="$t('tipsText[0]')" :options="backstagePageData"
+                                                    :props="menuProps" clearable>
+                                                </el-cascader>
+                                                <!-- <el-select 
+                                                    v-model="currActiveComponent[0].router.menuFlag"
+                                                    :placeholder="$t('tipsText[0]')">
+                                                    <el-option v-for="item in backstagePageData" :key="item.id"
+                                                        :label="item.name" :value="item.flag">
+                                                    </el-option>
+                                                </el-select> -->
+                                            </el-form-item>
+                                        </template>
+                                    </template>
+                                </el-form>
+
+                                <el-form v-if="currActiveComponent[0].type == 'line'">
+                                    <!-- 线条宽度 -->
+                                    <el-form-item :label="$t('cctml53')">
+                                        <div class="font-style radius-style custom-justify-between custom-items-center">
+                                            <!-- 颜色 -->
+                                            <el-tooltip class="item" effect="dark" :content="$t('cctml54')"
+                                                placement="top">
+                                                <el-color-picker v-model="currActiveComponent[0].style.borderColor"
+                                                    size="mini"
+                                                    @change="changeColor($event,currActiveComponent[0].style,'borderColor')">
+                                                </el-color-picker>
+                                            </el-tooltip>
+                                            <!-- 边框大小 -->
+                                            <el-select v-model="currActiveComponent[0].style.borderWidth"
+                                                class="borderWidth" allow-create filterable
+                                                @change="changeBorderWidth($event,currActiveComponent[0])"
+                                                :placeholder="$t('tipsText[0]')">
+                                                <el-option v-for="item in 11" :key="item" :label="item - 1"
+                                                    :value="item - 1">
+                                                </el-option>
+                                            </el-select>
+                                        </div>
+                                    </el-form-item>
+                                    <!-- 线条样式 -->
+                                    <el-form-item :label="$t('set.set6')">
+                                        <!-- 边框大小 -->
+                                        <el-select popper-class="border-style-popper"
+                                            @change="changeBorderStyle($event,currActiveComponent[0])"
+                                            v-model="currActiveComponent[0].style.borderStyle"
+                                            :placeholder="$t('input.i3')" class="border-style">
+                                            <el-option v-for="(item, key) in borderStyle" :key="key" :label="item"
+                                                :value="key">
+                                            </el-option>
+                                        </el-select>
+                                    </el-form-item>
+                                </el-form>
+
+                                <!-- 
+								----------------------
+								----------------------
+								----------------------
+										矩形样式有点区别 写太多判断不宜阅读代码 所以单独写一个矩形的样式控制
+								----------------------
+								----------------------
+								----------------------
+							 -->
+                                <el-form v-if=" currActiveComponent[0].type == 'rectangle'">
+                                    <!-- 矩形背景图 -->
+                                    <el-form-item :label="$t('set.set4')">
+                                        <el-radio v-model="currActiveComponent[0].radio" label="1">{{ $t('set.set10') }}
+                                        </el-radio>
+                                        <el-radio v-model="currActiveComponent[0].radio" label="2">{{ $t('set.set12') }}
+                                        </el-radio>
+                                    </el-form-item>
+                                    <el-form-item
+                                        :label="$t(currActiveComponent[0].radio == '1' ? 'set.set9' : 'set.set12')">
+                                        <el-button
+                                            v-if="currActiveComponent[0].radio == '2' && !currActiveComponent[0].style.backgroundImage"
+                                            class="ter-btn ter-btn--success" @click="uploadShowBgDialog('rectangle')">
+                                            {{ $t('set.set11') }}
+                                        </el-button>
+                                        <div class="active-bg_img custom-relative"
+                                            @click="uploadShowBgDialog('rectangle')"
+                                            v-if="currActiveComponent[0].radio == '2' && currActiveComponent[0].style.backgroundImage">
+                                            <el-image :src="minBgImg(currActiveComponent[0].style.backgroundImage)"
+                                                fit="contain">
+                                            </el-image>
+                                            <i class="iconfont iconqingkong l-bg-icon custom-absolute"
+                                                @click="deleteActiveImg('rectangle',$event)"></i>
+                                        </div>
+
+                                        <el-color-picker size="mini" color-format="hex"
+                                            @change="changeColor($event,currActiveComponent[0].style,'backgroundColor')"
+                                            v-if="currActiveComponent[0].radio == '1'"
+                                            class="noborder-color-picker l-border"
+                                            v-model="currActiveComponent[0].style.backgroundColor">
+                                        </el-color-picker>
+                                    </el-form-item>
+                                    <el-form-item class="backgroundOpacity" :label="$t('cctml23')">
+                                        <el-slider v-model="currActiveComponent[0].style.backgroundOpacity"></el-slider>
+                                    </el-form-item>
+                                </el-form>
+
+                                <!-- 
+								----------------------
+								----------------------
+								----------------------
+										考勤样式有点区别 写太多判断不宜阅读代码 所以单独写一个考勤的样式控制
+								----------------------
+								----------------------
+								----------------------
+							 -->
+                                <el-form ref="form1" v-if="currActiveComponent[0].type == 'attendance'">
+                                    <!-- 对齐、字体样式 -->
+                                    <el-form-item label=" "
+                                        v-if="!isIncludeStyleOption(showBgComponent, currActiveComponent[0].type, currActiveComponent[0].styleOption)">
+                                        <div class="font-style custom-justify-between custom-items-center">
+                                            <!-- <el-tooltip class="item" effect="dark" :content="$t('cctml7')"
+                                                placement="top">
+                                                <el-color-picker v-model="currActiveComponent[0].style.backgroundColor"
+                                                    @change="UndoSaveDebouncer(componentData)" size="mini">
+                                                </el-color-picker>
+                                            </el-tooltip> -->
+                                            <div v-for="font in attFontStyleTextAlign"
+                                                v-show="showSpaceAround(font.value)" :key="font.icon"
+                                                @click="setUpfontStyle(font)"
+                                                :class="['font-style-item',{'custom-success-bgcolor': currActiveComponent[0].style[font.model] == font.value}]">
+                                                <el-tooltip class="item" effect="dark" :content="font.tip"
+                                                    placement="top">
+                                                    <i :class="['iconfont',font.icon]"></i>
+                                                </el-tooltip>
+                                            </div>
+                                        </div>
+                                    </el-form-item>
+                                    <div class="bg-opactiy-color-form">
+                                        <el-form-item v-for="(bg,key) in bgLabel" :class="key" :key="key" :label="bg">
+                                            <el-color-picker v-if="key == 'backgroundColor'"
+                                                @change="changeColor($event,currActiveComponent[0].style,'backgroundColor')"
+                                                v-model="currActiveComponent[0].style[key]" size="mini">
+                                            </el-color-picker>
+                                            <el-slider v-if="key == 'backgroundOpacity'"
+                                                @change="UndoSaveDebouncer(componentData)"
+                                                v-model="currActiveComponent[0].style[key]"></el-slider>
+                                        </el-form-item>
+                                    </div>
+                                    <div>
+                                        <div class="att-children" v-for="att in currActiveComponent[0].children"
+                                            :key="'att' + att.type">
+                                            <div class="att-classify">
+                                                <span>{{ attLabel(att) }}</span>
+                                            </div>
+                                            <div class="custom-items-center">
+                                                <!-- 字体、 字号 -->
+                                                <el-form-item v-for="(la, key) in label" :key="'att' + la" :label="la"
+                                                    :class="key">
+                                                    <el-select v-model="att.style[key]" filterable
+                                                        :allow-create="key == 'fontSize'"
+                                                        @change="UndoSaveDebouncer(componentData)"
+                                                        :placeholder="$t('tipsText[0]')">
+                                                        <template v-if="key == 'fontFamily'">
+                                                            <el-option :label="fontFamilyList[fIndex]" :value="family"
+                                                                v-for="(family,fIndex) in fontFamilyListText"
+                                                                :key="'family' + fIndex">
+                                                            </el-option>
+                                                        </template>
+
+                                                        <template v-if="key == 'fontSize'">
+                                                            <el-option :label="size * 10" :value="size * 10"
+                                                                v-for="(size,sIndex) in 20" :key="'att' + sIndex">
+                                                            </el-option>
+                                                        </template>
+                                                    </el-select>
+                                                </el-form-item>
+                                            </div>
+
+                                            <el-form-item class="att-font-style" label=" ">
+                                                <div class="font-style custom-justify-between custom-items-center">
+                                                    <el-tooltip class="item" effect="dark" :content="$t('cctml5')"
+                                                        placement="top">
+                                                        <el-color-picker v-model="att.style.color" size="mini"
+                                                            @change="changeColor($event,att.style,'color')"
+                                                            @active-change="UndoSaveDebouncer(componentData)">
+                                                        </el-color-picker>
+                                                    </el-tooltip>
+                                                    <div v-for="font in attFontStyleFontStyle"
+                                                        v-show="showSpaceAround(font.value)" :key="'att' + font.icon"
+                                                        @click="setUpAttFontStyle(font, att)"
+                                                        :class="['font-style-item',{'custom-success-bgcolor': att.style[font.model] == font.value}]">
+                                                        <el-tooltip class="item" effect="dark" :content="font.tip"
+                                                            placement="top">
+                                                            <i :class="['iconfont',font.icon]"></i>
+                                                        </el-tooltip>
+                                                    </div>
+                                                </div>
+                                                <div></div>
+
+                                            </el-form-item>
+                                        </div>
+                                    </div>
+
+                                </el-form>
+
+                                <!-- 
+                                    2022-10-17
+                                    新增标题样式修改
+                                 -->
+                                <div class="att-classify">
+                                    <span>{{ $t("titleList[1]") }}</span>
+                                </div>
+                                <el-form v-if="currActiveComponent[0].title">
+                                    <!-- 是否显示 -->
+                                    <el-form-item :label="$t('cctml6')">
+                                        <el-radio v-model="currActiveComponent[0].title.show" :label="true">{{
+                                            $t('cctml6') }}</el-radio>
+                                        <el-radio v-model="currActiveComponent[0].title.show" :label="false">{{
+                                            $t('cctml55') }}</el-radio>
+                                    </el-form-item>
+                                    <template v-if="currActiveComponent[0].title.show">
+                                        <!-- 对齐 -->
+                                        <el-form-item label=" ">
+                                            <div class="font-style custom-justify-between custom-items-center">
+                                                <el-tooltip class="item" effect="dark" :content="$t('cctml5')"
+                                                    placement="top">
+                                                    <el-color-picker v-model="currActiveComponent[0].title.style.color"
+                                                        @change="changeColor($event,currActiveComponent[0].title.style,'color')"
+                                                        size="mini">
+                                                    </el-color-picker>
+                                                </el-tooltip>
+                                                <div v-for="font in fontStyleHtml" v-show="font.value != 'space-around'"
+                                                    :key="font.icon"
+                                                    @click="setUpfontStyle(font, currActiveComponent[0])"
+                                                    :class="['font-style-item',{'custom-success-bgcolor': currActiveComponent[0].title.style[font.model] == font.value}]">
+                                                    <el-tooltip class="item" effect="dark" :content="font.tip"
+                                                        placement="top">
+                                                        <i :class="['iconfont',font.icon]"></i>
+                                                    </el-tooltip>
+                                                </div>
+                                            </div>
+                                        </el-form-item>
+                                        <!-- 字号、字体 -->
+                                        <div class="size-family custom-items-center">
+                                            <el-form-item v-for="(style,key) in label" :class="key" :key="'f' + key"
+                                                :label="style">
+                                                <el-select v-model="currActiveComponent[0].title.style[key]" filterable
+                                                    @change="UndoSaveDebouncer(componentData)"
+                                                    :allow-create="key == 'fontSize'" :placeholder="$t('tipsText[0]')">
+                                                    <template v-if="key == 'fontFamily'">
+                                                        <el-option :label="fontFamilyList[fIndex]" :value="family"
+                                                            v-for="(family,fIndex) in fontFamilyListText" :key="fIndex">
+                                                        </el-option>
+                                                    </template>
+
+                                                    <template v-if="key == 'fontSize'">
+                                                        <el-option :label="size * 10" :value="size * 10"
+                                                            v-for="(size,sIndex) in 20" :key="'size' + sIndex">
+                                                        </el-option>
+                                                    </template>
+                                                </el-select>
+                                            </el-form-item>
+                                        </div>
+                                        <!-- 文本 -->
+                                        <el-form-item :label="$t('typeNames[3]')">
+                                            <el-input v-model="currActiveComponent[0].title.text"
+                                                :placeholder="$t('tipsText[11]')" type="text" class="editor-input">
+                                            </el-input>
+                                        </el-form-item>
+                                    </template>
+
+                                </el-form>
+
+                            </div>
+                        </div>
+                    </el-scrollbar>
+
+
+                    <!-- 组件 -->
+                    <div class="component-right-list">
+                        <div class="component-title right">{{ $t('cctml8') }}</div>
+                        <div class="data" style="height: 250px;">
+                            <el-scrollbar class="custom-scrollbar" ref="rightScroll">
+                                <div v-for="item in componentData" ref="rightList" @click="activeComponent = item.id"
+                                    :key="'right' + item.id"
+                                    :class="['right-item pointer',{'custom-success-bgcolor': activeComponent == item.id}]">
+                                    {{ $i.t('componentText')[item.type] }}
+                                </div>
+                            </el-scrollbar>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 上传背景 -->
+        <tr-dialog class="module-border" :title="$t('set.set12')" :visible.sync="showBgDialog" width="1047px"
+            :with-cancel="true" @confirm="confirmSelectBg" top="8vh">
+            <div class="dialog-header custom-items-center custom-justify-between">
+                <el-upload class="upload-demo" :accept="upload.imageAccept" multiple
+                    :action="$global.fullServerUrl('api/background/add/layout')" :show-file-list="false"
+                    list-type="picture" :on-success="changeBgImg" :auto-upload="true" :on-progress="uploadBgProgress"
+                    :on-error="uploadBgError">
+                    <el-button size="small" type="primary">{{ $t('cctml9') }}</el-button>
+                </el-upload>
+                <div class="search-group">
+                    <input :placeholder="$t('cctml10')" v-model.trim="bgPage.search" />
+                </div>
+            </div>
+
+            <div class="dialog-content">
+                <el-scrollbar>
+                    <!-- bgImg -->
+                    <div class="body-img custom-relative pointer" @click="activeImg(imgIndex)"
+                        v-for="(bgItem,imgIndex) in bgImgList" :key="imgIndex">
+                        <div class="img-size">
+                            <el-image :src="$global.fullServerUrl(bgItem.url)" fit="contain" class="bg-border wh100"
+                                :class="{'l-active-img': bgActiveIndex==bgItem.id}"></el-image>
+                        </div>
+                        <p :title="bgItem.originalName">{{bgItem.originalName}}</p>
+                        <span class="custom-absolute iconfont iconOAkaoqin-quxiao- delete-bg_img"
+                            @click.stop="clickImgDelete(bgItem)"></span>
+                    </div>
+                </el-scrollbar>
+            </div>
+
+            <div class="dialog-footer">
+                <el-pagination class="custom-page" background layout="prev, pager, next" :current-page="bgPage.pageNum"
+                    :page-size="bgPage.pageSize" :total="bgPage.count" @current-change="changeBgPage">
+                </el-pagination>
+            </div>
+        </tr-dialog>
+
+        <!-- 另存 -->
+        <tr-dialog :title="$t('cctml25')" top="25vh" center :confirm-text="$t('confirm')" :cancel-text="$t('cancel')"
+            :visible.sync="showSaveAs" @confirm="save(1)">
+            <el-form label-width="0.8rem" @submit.native.prevent>
+                <el-form-item :label="$t('cctml26')" class="module-name" style="margin-left: -0.15rem">
+                    <el-input v-model.trim="saveAsText" :placeholder="$t('tipsText[11]')" type="text"
+                        class="editor-input">
+                    </el-input>
+                </el-form-item>
+            </el-form>
+        </tr-dialog>
+
+        <!-- 发布 -->
+        <tr-dialog :title="$tc('publish')" class="publish-dialog" top="25vh" center :confirm-text="$t('confirm')"
+            :cancel-text="$t('cancel')" :visible.sync="showPublish" @confirm="confirmPublish">
+            <div class="tr-brand-dialog__box--body">
+                <el-tabs v-model="activeTab">
+                    <el-tab-pane :label="$t('cctml27')" name="first">
+                        <el-scrollbar class="tr-brand-dialog__scrollbar custom-scrollbar">
+                            <div class="tr-brand-dialog__pane">
+                                <el-tree :data="placeData" node-key="id" :props="treeProps" :show-checkbox="true"
+                                    class="tr-select--tree tr-select--tree__check" :default-checked-keys="placeId"
+                                    :default-expand-all="true" @check="handlePlaceCheck">
+                                </el-tree>
+                            </div>
+                        </el-scrollbar>
+                    </el-tab-pane>
+                </el-tabs>
+
+            </div>
+        </tr-dialog>
+
+    </div>
+
+    <!-- 基础 -->
+    <script src="/public/js/bluebird.min.js"></script>
+    <script src="/public/js/vue.min.js"></script>
+    <script src="/public/element-ui-2.15.9/index.js"></script>
+    <script src="/public/js/jquery-3.3.1.min.js"></script>
+    <script src="/public/js/moment.min.js"></script>
+    <script src="/public/js/config/config.js"></script>
+    <script src="/public/js/common/vue-common-util.js"></script>
+    <script src="/public/js/common/vue-ajax.js"></script>
+    <script src="/public/js/common/iframe.js"></script>
+
+    <!-- 翻译 -->
+    <script src="/public/locales/vue-i18n.js"></script>
+    <script src="/public/element-ui-2.15.9/locale/lang/zh-CN.js" ></script>
+    <script src="/public/element-ui-2.15.9/locale/lang/en.js" ></script>
+    <script src="/public/locales/i18n-config.js" ></script>
+    <script src="/public/locales/i18n-all.js" ></script>
+
+    <script src="/public/js/components/common.js"></script>
+    <script src="/public/js/echarts.min.js"></script>
+    <script src="/public/js/websocket/sockjs.min.js"></script>
+    <script src="/public/js/websocket/stomp.min.js"></script>
+ 
+
+    <!-- 当前 -->
+    <script src="/public/js/dom-to-image.js"></script>
+    <script src="/public/js/components/template/ComponentList.js"></script>
+    <script src="/public/js/components/template/DragDrop.js"></script>
+    <script src="/public/js/admin/control/template.js"></script>
+</body>
+
+</html>

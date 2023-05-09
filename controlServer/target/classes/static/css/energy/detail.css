@@ -1,0 +1,460 @@
+.screen-item .el-input__inner {
+    border-radius: 17px;
+    font-size: 14px;
+    font-family: PingFang SC;
+    font-weight: bold;
+    color: #666666;
+}
+
+.screen-item+.screen-item {
+    margin-left: 38px;
+}
+
+.screen-item.back i {
+    font-size: 13px;
+}
+
+.screen-item span {
+    color: #333;
+}
+
+.screen-item span+span {
+    color: #666;
+}
+
+.screen-status {
+    width: 10px;
+    height: 10px;
+    background: #CCCCCC;
+    border-radius: 50%;
+    margin-right: 4px;
+}
+
+.screen-status.active {
+    background: #43B498;
+}
+
+.screen-item-label {
+    font-size: 16px;
+    font-family: PingFang SC;
+    font-weight: bold;
+    color: #333333;
+}
+
+.screen-item .header-select {
+    width: 130px;
+}
+
+.energy-container {
+    min-height: 690px;
+    height: 100%;
+    background: #FFFFFF;
+    box-shadow: 0px 5px 9px 1px rgb(210 210 210 / 21%);
+    border-radius: 16px;
+    margin: 0 30px 0 20px;
+    /* padding: 10px; */
+    border: 1px solid #f1f1f1;
+    overflow: hidden;
+}
+
+.fa {
+    font-weight: 500;
+    color: #666;
+    margin-left: 2px;
+}
+
+.screen-info {
+    width: 102px;
+    height: 30px;
+    box-shadow: 0px 2px 5px 0px rgba(0, 0, 0, 0.06);
+    border-radius: 15px;
+}
+
+.screen-info span,
+.screen-info i {
+    font-size: 14px;
+    font-family: PingFang SC;
+    font-weight: 500;
+    color: #FFFFFF;
+}
+
+.screen-info i {
+    font-size: 17px;
+}
+
+.screen-info.warning-info {
+    background-color: #F6494A;
+}
+
+.screen-info.model-info {
+    margin-left: 25px;
+    background-color: #72BEFF;
+}
+
+.screen-info.timing-info {
+    background-color: #43B498;
+}
+
+.screen-info+.screen-info {
+    margin-left: 15px;
+}
+
+/* 表格 */
+
+.el-table .cell {
+    position: relative;
+    text-align: center;
+    font-size: 14px;
+    font-family: PingFang SC;
+    font-weight: 500;
+    color: #666666;
+}
+
+
+
+
+/* 操作 */
+.table-handle span:nth-of-type(even) {
+    margin-left: 6px;
+}
+
+.table-handle span:nth-of-type(even)::before {
+    content: '';
+    position: absolute;
+    width: 1px;
+    height: 60%;
+    background: #DEDEDE;
+    left: -3px;
+    top: 5px;
+}
+
+.table-handle span.warning {
+    color: #F6494A;
+}
+
+.table-handle span {
+    display: inline-block;
+    width: 35%;
+    position: relative;
+    color: #72BEFF;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.table-control-box {
+    transition: all 0.2s;
+}
+
+.table-handle span:hover,
+.table-control-box:hover,
+.screen-info:hover {
+    opacity: 0.8;
+}
+
+
+/* 控制 */
+.table-control {
+    width: 50px;
+    height: 30px;
+    color: #fff;
+}
+
+.table-control.ON {
+    background-color: #43B498;
+    box-shadow: 0px 0px 10px 0px rgba(67, 180, 152, 0.4);
+}
+
+.table-control.OFF {
+    background-color: #F29134;
+    box-shadow: 0px 0px 10px 0px rgba(242, 145, 52, 0.4);
+}
+
+
+
+/* 底部 */
+.energy-footer {
+    bottom: 20px;
+    height: 50px;
+    width: 100%;
+    /* padding: 0 48px; */
+}
+
+.page .number,
+.page .btn-prev,
+.page .btn-next {
+    width: 34px;
+    height: 34px;
+    border: 1px solid #DEDEDE;
+}
+
+.page .number {
+    line-height: 32px;
+}
+
+.page .number.active {
+    background-color: #43B498;
+    color: #fff;
+    border: 1px solid #43B498;
+}
+
+.page .btn-prev {
+    border-right: none;
+}
+
+.page .btn-next {
+    border-left: none;
+}
+
+.el-pager li:hover {
+    color: #43B498;
+}
+
+.el-pagination button:hover {
+    color: #43B498;
+}
+
+.page .number+.number {
+    border-left: none;
+}
+
+.el-dialog__title {
+    font-size: 26px;
+    font-family: PingFang SC;
+    font-weight: bold;
+    color: #333333;
+}
+
+.el-dialog__header {
+    border-bottom: 1px solid #DEDEDE;
+}
+
+.el-dialog__headerbtn {
+    width: 29px;
+    height: 29px;
+    background: #CBC8CB;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.el-dialog__headerbtn .el-dialog__close {
+    color: #fff;
+}
+
+.el-dialog {
+    border-radius: 14px;
+}
+
+.tr-dialog__footer-btn {
+    width: 180px;
+    height: 34px;
+    background: #43B498;
+    border-radius: 6px;
+    border: none;
+    outline: none;
+    color: #fff;
+    margin: 20px auto 0;
+    display: block;
+    font-size: 18px;
+    font-family: PingFang SC;
+    font-weight: 500;
+}
+
+/* 安全弹窗 */
+.security-dailog .el-dialog__body {
+    padding: 17px 0 30px;
+}
+
+.security-setting-item {
+    margin: 0 45px 0 25px;
+    height: 37px;
+    font-size: 16px;
+    font-family: PingFang SC;
+    font-weight: 400;
+    color: #333333;
+}
+
+.border-bottom {
+    border-bottom: 1px solid #DEDEDE;
+}
+
+.security-setting-item:nth-child(3n + 4) {
+    margin-top: 10px;
+}
+
+.security-dailog .placeholder {
+    height: 6px;
+    background: #43B498;
+    opacity: 0.4;
+}
+
+.security-setting-item .el-checkbox__inner {
+    border-radius: 50%;
+    width: 22px;
+    height: 22px;
+    /* background-color: #9A9A9A;
+    border-color: #9A9A9A; */
+}
+
+.security-dailog .el-checkbox__inner::after {
+    top: 2px;
+    left: 6px;
+    width: 5px;
+    height: 10px;
+}
+
+.security-setting-item input {
+    border: none;
+    outline: none;
+    background-color: transparent;
+    font-size: 16px;
+    font-family: PingFang SC;
+    font-weight: 400;
+    color: #333333;
+}
+
+.security-string {
+    width: 20%;
+}
+
+.security-number {
+    border-left: 1px solid #DEDEDE;
+    padding-left: 10px;
+}
+
+/* 定时 */
+.timing-item-box+.timing-item-box {
+    margin-top: 27px;
+}
+
+.timing-dialog .el-checkbox {
+    margin-right: 20px;
+}
+
+.timing-dialog .el-checkbox__inner {
+    background-color: #DCDFE6;
+    border-color: #DCDFE6;
+}
+
+.checkbox-content {
+    padding-left: 5px;
+    margin-top: 19px;
+}
+
+.timing-dialog .timing-time input,
+.date-checkbox input,
+.updateName-body input {
+    border: none;
+    background-color: transparent;
+    padding: 0;
+}
+
+.timing-item {
+    margin-top: 8px;
+    background: #F8F9FA;
+    border-radius: 6px;
+    padding: 10px;
+    font-size: 14px;
+    font-family: PingFang SC;
+    font-weight: 400;
+    color: #333333;
+}
+
+.timing-time.timing-item {
+    padding: 0 10px;
+}
+
+.date-checkbox .el-date-editor--date {
+    left: 0;
+    opacity: 0;
+    width: 100%;
+}
+
+.date-checkbox .el-date-editor--date input {
+    padding: 0;
+}
+
+.timing-item-name {
+    border: none;
+    outline: none;
+    background-color: transparent;
+    font-size: 14px;
+}
+
+/* 更改名称 */
+.update-name-active {
+    width: 14px;
+    height: 14px;
+    background: #43B498;
+    border-radius: 3px;
+}
+
+.updateName-body input,
+.updateName-body .el-input {
+    background: #F5F7FC;
+    border-radius: 3px;
+    font-size: 14px;
+    font-family: PingFang SC;
+    font-weight: 400;
+    color: #666666;
+    width: 50%;
+    padding: 0 5px;
+}
+
+.updateName-body input {
+    width: 100%;
+}
+
+.update-name-dialog .el-button {
+    width: 141px;
+    height: 45px;
+    border-radius: 3px;
+    font-size: 18px;
+    font-family: PingFang SC;
+    font-weight: 500;
+    color: #FFFFFF;
+}
+
+.update-name-dialog .el-button--default {
+    background: #78838F;
+    color: #fff;
+}
+
+.update-name-dialog .tr-dialog__footer-wrapper {
+    text-align: center;
+    margin-top: 35px;
+}
+
+.updateName-body span {
+    margin-left: 10px;
+    margin-right: 28px;
+}
+
+/* 预警信息 */
+.warning-operation {
+    background-color: #43B498;
+    color: #fff;
+    width: 78px;
+    height: 29px;
+    border-radius: 5px;
+    border: none;
+    outline: none;
+}
+
+.warning-dialog .tr-dialog__footer-btn {
+    display: none;
+}
+
+/* 预警样式 */
+.showpolice {
+    background-color: rgba(242, 145, 52, 0.2);
+    opacity: 0.8;
+    color: #F29134;
+}
+
+.showpolice-off {
+    background-color: rgba(246, 73, 74, 0.2);
+    opacity: 0.8;
+    color: #F6494A;
+}

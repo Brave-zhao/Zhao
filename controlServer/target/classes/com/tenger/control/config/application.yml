@@ -1,0 +1,67 @@
+# shiro
+shiro:
+  # 过滤器链配置在这里
+  filters:
+    chains[0]: "/callback:callbackFilter"
+    chains[1]: "/logout:logoutFilter"
+    chains[2]: "/api/**:securityFilter,userInfoFilter"
+    chains[3]: "/release/**:anon"
+    chains[4]: "/public/**:anon"
+    chains[5]: "/upload/**:anon"
+    chains[6]: "/app/**:anon"
+    chains[7]: "/websocket/**:anon"
+    chains[8]: "/creator/release/**:anon"
+    chains[9]: "/favicon.ico:anon"
+    chains[10]: "/docking/**:anon"
+    chains[11]: "/**:securityFilter"
+
+spring:
+  application:
+    name: controlServer
+  jmx:
+    default-domain: controlServer
+  cloud:
+    nacos:
+      discovery:
+        # 配置Nacos地址
+        server-addr: http://192.168.2.200:8848
+management:
+  endpoints:
+    web:
+      exposure:
+        include: '*'
+        
+feign:
+  hystrix:
+    enabled: true
+  client:
+    config:
+      default:
+        connectTimeout: 10000   # Feign连接建立的超时时间
+        readTimeout: 60000      # Feign请求处理的超时时间
+    
+hystrix:
+  command:
+    default:
+      execution:
+        isolation:
+          strategy: SEMAPHORE
+          thread:
+            timeoutInMilliseconds: 10000   # 超时时间，默认为1000
+            
+ribbon:
+  ReadTimeout: 10000      # 请求的超时时间
+  ConnectTimeout: 10000   # 连接建立的超时时间                  
+
+
+# openfeign应用名称配置
+feign-custom:
+  client:
+    centralServer: centralServer-jerry1
+    appointment: appointment-jerry1
+    publish: publish
+    ipIntercom: ipIntercom
+  path:
+    centralServer: /centralServer/api
+    appointment: /release
+    ipIntercom: release

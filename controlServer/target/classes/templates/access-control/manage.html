@@ -1,0 +1,1254 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>门禁管理</title>
+    <link rel="stylesheet" href="/public/css/v3/common/common.css">
+    <link rel="stylesheet" href="/public/css/v3/common/modal.css">
+    <link rel="stylesheet" href="/public/elementui/element-ui.css">
+    <link rel="stylesheet" href="/public/ali-icon/iconfont.css">
+    <link rel="stylesheet" href="/public/css/v3/common/el-custom.css">
+    <link rel="stylesheet" href="/public/css/v3/common/progress.css">
+    <link rel="stylesheet" href="/public/css/access-control/manage.css">
+</head>
+<body>
+<div id="app" v-cloak>
+    <div>
+        <div class="head-wrapper">
+            <div class="head">
+                <span></span><span v-t="'head'"></span>
+            </div>
+        </div>
+
+        <div class="content-wrapper" style="margin-bottom: 0;">
+            <div class="screen">
+                <div class="flex">
+                    <div class="screen-item">
+                       <div @click="showAddModal" class="custom-button xs button-style1" v-t="'btns.b1'"></div>
+                    </div>
+                    <div class="screen-item">
+                        <div @click="refreshStatus" class="custom-button button-style6" v-t="'btns.b2'"></div>
+                    </div>
+                    <div class="screen-item">
+                        <div @click="multiOperate('open')" class="custom-button button-style1" v-t="'btns.b3'"></div>
+                    </div>
+                    <div class="screen-item">
+                        <div @click="multiOperate('restart')" class="custom-button button-style1" v-t="'btns.b4'"></div>
+                    </div>
+                    <div class="screen-item">
+                        <div @click="multiSync" class="custom-button button-style1" v-t="'btns.b5'"></div>
+                    </div>
+<!--                    <div class="screen-item">
+                        <div @click="showSetStatusSelected" class="custom-button button-style1">状态设置</div>
+                    </div>-->
+                    <div class="screen-item">
+                        <div @click="multipleDelete" class="custom-button button-style2"><i class="el-icon-delete" v-t="'btns.b6'"></i>
+                        </div>
+                    </div>
+                    <div class="screen-item">
+                        <div @click="emergencyOpen" class="custom-button button-style2" v-t="'btns.b7'"></div>
+                    </div>
+                </div>
+                <div class="margin-l-20">
+                    <div class="screen-item">
+                        <el-input
+                                v-model="condition.like"
+                                class="search-input"
+                                :placeholder="_i18n.t('search')"
+                                @keyup.enter.native="toFirstPage">
+                            <i @click="toFirstPage" slot="suffix" class="el-input__icon el-icon-search"></i>
+                        </el-input>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="content-wrapper flex" style="margin: 0 30px">
+            <div class="width-full">
+                <el-table
+                        class="custom-table border-table"
+                        ref="multipleTable"
+                        v-loading="mainLoading"
+                        :data="filterList"
+                        tooltip-effect="dark"
+                        style="width: 100%"
+                        @selection-change="handleSelectionChange">
+                    <el-table-column
+                            type="selection"
+                            width="55">
+                    </el-table-column>
+                    <el-table-column
+                            prop="number"
+                            :label="_i18n.t('table.h1')">
+                        <template slot-scope="scope">
+                            <span @click="showViewModal(scope.row)" class="clickable">{{scope.row.name}}</span>
+                        </template>
+                    </el-table-column>
+                    <el-table-column>
+                        <template scope="scope" slot="header">
+                            <el-dropdown :hide-on-click="false" trigger="click" placement="bottom-start">
+                                <span class="custom-table-th pointer">{{$t('table.h2')}}<i class="el-icon-caret-bottom margin-l-5"></i></span>
+                                <el-dropdown-menu class="table-select check" slot="dropdown">
+                                    <el-dropdown-item>
+                                        <el-checkbox-group v-model="condition.names" class="relative">
+                                            <div class="search-check-input-wrapper">
+                                                <el-input v-model="condition.placeLike" class="search-input"
+                                                          :placeholder="_i18n.t('table.ph2')">
+                                                    <i slot="suffix" class="el-input__icon el-icon-search"></i>
+                                                </el-input>
+                                            </div>
+                                            <div class="search-check-space" v-loading="condition.loading.place">
+                                                <div v-if="place && place.length" @click="cancelNodeSelect('condition', condition, 1, 'placeId', 'placeName')" class="relative ztree-cancle font-14 ads"><span>{{ $t('all') }}</span></div>
+                                                <el-scrollbar style="height: 100%;">
+                                                    <el-tree class="custom-tree" default-expand-all="true"
+                                                             ref="condition" node-key="id"
+                                                             :data="place" :props="defaultProps"
+                                                             highlight-current="true"
+                                                             :filter-node-method="placeFilter"
+                                                             @node-click="handleNodeClick($event, condition, 1, 'placeId', 'placeName')">
+                                                        <div class="custom-tree-label" slot-scope="scope">
+                                                            <span class="tree-label">{{ scope.node.label }}</span>
+                                                        </div>
+                                                    </el-tree>
+                                                </el-scrollbar>
+<!--                                                <div @click="cancelNodeSelect('condition', condition, 1, 'placeId', 'placeName')" class="relative ztree-cancle font-14"><span v-t="'cancel'"></span></div>-->
+                                            </div>
+                                        </el-checkbox-group>
+                                    </el-dropdown-item>
+                                </el-dropdown-menu>
+                            </el-dropdown>
+                        </template>
+                        <template slot-scope="scope">
+<!--                            <span v-if="scope.row.placeName" class="clickable" @click="showSetStatus(scope.row)">{{scope.row.placeName}}</span>-->
+                            <span v-if="scope.row.placeName">{{scope.row.placeName||"——"}}</span>
+                            <span v-else>——</span>
+                        </template>
+                    </el-table-column>
+
+                    <el-table-column
+                            label="类型">
+                        <template scope="scope" slot="header">
+                            <el-dropdown @command="selectType" trigger="click" placement="bottom-start">
+                                <span class="custom-table-th pointer">{{$t('table.h3')}}<i class="el-icon-caret-bottom margin-l-5"></i></span>
+                                <el-dropdown-menu class="table-select" slot="dropdown">
+                                    <el-dropdown-item :class="{active: null == condition.type}" :command="[condition, {}, 1]">{{$t('all')}}</el-dropdown-item>
+                                    <el-dropdown-item :class="{active: key === condition.type}"
+                                                      v-for="(value, key) in _i18n.t('acType')" :command="[condition, {value: key, label: value}, 1]">{{value}}</el-dropdown-item>
+                                </el-dropdown-menu>
+                            </el-dropdown>
+                        </template>
+                        <template slot-scope="scope">
+                            <span>{{_i18n.t('acType[' + scope.row.accessControlType + ']') | text}}</span>
+                        </template>
+                    </el-table-column>
+
+                    <el-table-column
+                            width="140"
+                            :label="_i18n.t('table.h4')">
+                        <template slot-scope="scope">
+                            <span v-if="scope.row.accessControlType === 1">{{snDeviceMap[scope.row.uniqueCode] | byKey("ip") ||"——"}}</span>
+                            <span v-else>{{scope.row.equipmentIp||"——"}}</span>
+                        </template>
+                    </el-table-column>
+
+                    <el-table-column
+                            width="110"
+                            :label="_i18n.t('table.h5')">
+                        <template slot-scope="scope">
+                            <span>{{snDeviceMap[scope.row.uniqueCode] | byKey("version")}}</span>
+                        </template>
+                    </el-table-column>
+
+                    <!-- 在线状态 -->
+                    <el-table-column>
+                        <template scope="scope" slot="header">
+                            <el-dropdown @command="selectOnlineStatus" trigger="click" placement="bottom-start">
+                                <span class="custom-table-th pointer">{{$t('table.h6')}}<i class="el-icon-caret-bottom margin-l-5"></i></span>
+                                <el-dropdown-menu class="table-select" slot="dropdown">
+                                    <el-dropdown-item :class="{active: null == condition.onlineStatus}" :command="[condition, {}, 1]">{{$t('all')}}</el-dropdown-item>
+                                    <el-dropdown-item :class="{active: key === condition.onlineStatus}"
+                                                      v-for="(value, key) in _i18n.t('onlineStatuses')" :command="[condition, {value: key, label: value}, 1]">{{value}}</el-dropdown-item>
+                                </el-dropdown-menu>
+                            </el-dropdown>
+                        </template>
+                        <template slot-scope="scope">
+                            <div class="flex align-center justify-center">
+
+<!--                                <template v-if="flashingUuidMap[scope.row.uniqueCode] === true">-->
+
+                             <span :class="snDeviceMap[scope.row.uniqueCode] ? 'online' : (flashingUuidMap[scope.row.uniqueCode] === true ? 'flashing' : '')"
+                                   class="control-status">{{snDeviceMap[scope.row.uniqueCode] ? _i18n.t('online') : _i18n.t('offline')}}</span>
+
+<!--                                    <span class="status-item online" v-if="snDeviceMap[scope.row.uniqueCode]"></span>
+                                    <span class="status-item offline" v-else></span>
+                                    <span>{{snDeviceMap[scope.row.uniqueCode] ? '在线' : '离线'}}</span>-->
+
+
+                            </div>
+                        </template>
+                    </el-table-column>
+
+                    <!-- TODO，这里注释掉了 -->
+<!--                    <el-table-column
+                            label="状态">
+                        <template slot-scope="scope">
+                            <span>{{scope.row.abnormalStatus === null ? '正常' : acStatusOptions[scope.row.abnormalStatus].label}}</span>
+                        </template>
+                    </el-table-column>-->
+
+                    <el-table-column
+                            width="110"
+                            :label="_i18n.t('table.h7')"
+                            :show-overflow-tooltip="true">
+                        <template slot-scope="scope">
+<!--                            <span @click="showEditModal(scope.row)" class="clickable">{{scope.row.uniqueCode | text}}</span>-->
+                            <span>{{scope.row.uniqueCode | text}}</span>
+                        </template>
+                    </el-table-column>
+
+
+                    <el-table-column
+                        :label="_i18n.t('table.h8')"
+                        align="center"
+                        width="230">
+                        <template slot-scope="scope">
+                            <div class="flex justify-end">
+<!--                            <div @click="open(scope.row)" class="custom-button xs button-style1"><i class="iconfont iconkaimen"></i>开门</div>-->
+<!--                            <div @click="showWhiteList(scope.row.uniqueCode)" class="custom-button xs button-style1 margin-l-10"><i class="iconfont icontianjiarenyuanx" style="margin-left: -5px;margin-right: 0;"></i>白名单</div>                            -->
+<!--                                <div @click="showExportDialog(scope.row.uniqueCode)" class="font-btn">导出</div>-->
+                                <div @click="showLogDialog(scope.row)" class="font-btn">{{ $t('log') }}</div>
+                                <div @click="operate(scope.row,'open')" class="font-btn" v-t="'table.b2'"></div>
+                                <div @click="operate(scope.row,'restart',scope.row.accessControlType === 2)" class="font-btn" :class="{'disabled': scope.row.accessControlType === 2}" v-t="'table.b3'"></div>
+<!--                                <div @click="operate(scope.row,'sync-config', scope.row.accessControlType === 2)" class="font-btn" :class="{'disabled': scope.row.accessControlType === 2}">同步设备</div>-->
+                                <div @click="singleSync(scope.row, scope.row.accessControlType !== 1)" class="font-btn" :class="{'disabled': scope.row.accessControlType !== 1}" v-t="'table.b4'"></div>
+                             </div>
+                            <div class="flex justify-end">
+                                <div @click="showWhiteList(scope.row.uniqueCode)" class="font-btn" v-t="'table.b5'"></div>
+                                <div @click="showEditModal(scope.row)" class="font-btn" v-t="'table.b6'"></div>
+<!--                                <div @click="showUpdateSK87Modal(scope.row,scope.row.accessControlType === 2)" class="font-btn" :class="{'disabled': scope.row.accessControlType === 2}">升级固件</div>-->
+                                <div @click="clickUpdateInput(scope.row, scope.row.accessControlType !== 1)" class="font-btn" :class="{'disabled': scope.row.accessControlType !== 1}" v-t="'table.b7'"></div>
+                            </div>
+                        </template>
+                    </el-table-column>
+                </el-table>
+                <!-- 分页 -->
+                <div class="flex table-bottom relative justify-center">
+                    <div class="absolute left-0">
+                        <!--							<div @click="multipleDelete" class="custom-button button-style2"><i class="el-icon-delete"></i>删除选中</div>-->
+                    </div>
+                    <div class="common-page-wrapper">
+                        <template v-if="condition.onlineStatus === null">
+                            <span @click="toFirstPage" v-t="'page.home'"></span>
+                            <el-pagination
+                                    class="common-page"
+                                    background
+                                    layout="prev, pager, next"
+                                    :current-page="page.pageNum"
+                                    :page-size="page.pageSize"
+                                    :total="page.count"
+                                    @current-change="getList">
+                            </el-pagination>
+                        </template>
+                        <template v-else>
+                            <span @click="page.pageNum = 1" v-t="'page.home'"></span>
+                            <el-pagination
+                                    class="common-page"
+                                    background
+                                    layout="prev, pager, next"
+                                    :current-page="page.pageNum"
+                                    :page-size="page.pageSize"
+                                    :total="page.count"
+                                    @current-change="updatePage">
+                            </el-pagination>
+                        </template>
+
+
+                        <span @click="toLastPage" v-t="'page.tail'"></span>
+                        <div class="common-page-input-wrapper">
+                            <span v-t="'page.t1'"></span>
+                            <div><input @keyup.enter="toTargetPage" @input="handleAmountChange(page, 'target', 1)" type="text" v-model="page.target"/></div>
+                            <span v-t="'page.t2'"></span>
+                            <div @click="toTargetPage" class="common-page-btn margin-l-10 custom-button button-style1 main-bg" v-t="'page.ok'"></div>
+                        </div>
+                    </div>
+                </div>
+                <!-- 升级固件的选择文件input -->
+                <input id="updateInput" ref="updateInput" @change="afterSelectUpdateFile" type="file" style="opacity: 0;width: 1px;height: 0;overflow:hidden;">
+            </div>
+        </div>
+    </div>
+    <!-- 新增/编辑模态框 -->
+    <div :class="{active: dialog.add.show}" class="right-modal">
+        <div class="modal-head">
+            <div class="modal-head-title">
+                <i @click="dialog.add.show=false" class="el-icon-close"></i>
+                <span>{{dialog.add.isEdit ? _i18n.t('dialog.add.t2') : _i18n.t('dialog.add.t1')}}</span>
+            </div>
+            <div class="modal-head-button">
+                <div @click="dialog.add.show=false" v-t="'cancel'"></div>
+                <div @click="addData" class="background-green" :class="{'disabled': !isCanAdd}" v-t="'ok'"></div>
+            </div>
+        </div>
+        <img src="/public/images/v3/modal-separation.png">
+        <div class="flex-grow-1 relative">
+            <div v-loading="dialog.add.loading" class="modal-form absolute-full">
+                <el-scrollbar style="height: 100%;">
+                    <div class="manage-collapse-content">
+                        <div class="ads-wrapper">
+                            <!--					名称 -->
+                            <div class="modal-form-item">
+                                <div class="modal-form-label need"><span v-t="'dialog.add.l1'"></span></div>
+                                <div class="modal-form-wrapper">
+                                    <el-input v-model="dialog.add.obj.name" class="modal-form-input"
+                                              :placeholder="_i18n.t('dialog.add.ph1')"></el-input>
+                                </div>
+                            </div>
+                            <!-- 					IP -->
+                            <div class="modal-form-item" v-if="dialog.add.obj.accessControlType === 2">
+                                <div class="modal-form-label need"><span v-t="'dialog.add.l2'"></span></div>
+                                <div class="modal-form-wrapper">
+                                    <el-input v-model="dialog.add.obj.equipmentIp" class="modal-form-input"
+                                              :placeholder="_i18n.t('dialog.add.ph2')"></el-input>
+                                </div>
+                            </div>
+                            <!-- 					端口 -->
+                            <div class="modal-form-item" v-if="dialog.add.obj.accessControlType === 2">
+                                <div class="modal-form-label need"><span v-t="'dialog.add.l3'"></span></div>
+                                <div class="modal-form-wrapper">
+                                    <el-input v-model="dialog.add.obj.equipmentPort" class="modal-form-input"
+                                              :placeholder="_i18n.t('dialog.add.ph3')"></el-input>
+                                </div>
+                            </div>
+                            <!-- 					UUID -->
+                            <div class="modal-form-item">
+                                <div class="modal-form-label need"><span style="letter-spacing: 10px;" v-t="'dialog.add.l4'"></span></div>
+                                <div class="modal-form-wrapper">
+                                    <el-input v-model="dialog.add.obj.uniqueCode" class="modal-form-input"
+                                              :placeholder="_i18n.t('dialog.add.ph4')"></el-input>
+                                    <el-button class="margin-l-10" v-if="dialog.add.obj.accessControlType === 2"  @click="getFaceEquipmentUUID" round size="small" v-t="'dialog.add.l4b1'"></el-button>
+                                    <el-tooltip class="tip-item" v-if="dialog.add.obj.accessControlType === 2" effect="dark" placement="top" popper-class="tooltip-popper">
+                                        <div slot="content">
+                                            {{$t('dialog.add.l4t1')}}<br>
+                                            {{$t('dialog.add.l4t2')}}
+                                        </div>
+                                        <div class="flex align-center">
+                                            <i class="el-icon-question"></i>
+                                        </div>
+                                    </el-tooltip>
+                                </div>
+                            </div>
+                            <!-- 					地点 -->
+                            <div class="modal-form-item">
+                                <div class="modal-form-label"><span v-t="'dialog.add.l5'"></span></div>
+                                <div class="modal-form-wrapper">
+                                    <el-select class="ztree-select" :placeholder="_i18n.t('dialog.add.ph5')" popper-class="ztree-select">
+                                        <el-option
+                                                key="1"
+                                                :label="dialog.add.obj.placeName">
+                                                <el-scrollbar style="height: 250px;">
+                                                    <el-tree :highlight-current="true" ref="dep_add" node-key="id" :data="place" :props="defaultProps"
+                                                            @node-click="handleNodeClick($event, dialog.add.obj, 0, 'placeId', 'placeName')"></el-tree>
+                                                </el-scrollbar>
+                                                <div @click="cancelPlace('dep_add', dialog.add.obj)" class="ztree-cancle"><span>{{ $t('clear') }}</span></div>
+                                        </el-option>
+                                    </el-select>
+                                </div>
+                            </div>
+                            <!-- 					离线报警等级 -->
+<!--                            <div class="modal-form-item">
+                                <div class="modal-form-label need"><span>离线报警</span></div>
+                                <div class="modal-form-wrapper">
+                                    <el-select v-model="alarmLevel" placeholder="请选择">
+										<el-option
+												v-for="item in alertStrategy"
+												:key="item.id"
+												:label="item.name"
+												:value="item.id">
+										</el-option>
+									</el-select>
+                                </div>
+                            </div>-->
+                            <!-- 					类型 -->
+                            <div class="modal-form-item" >
+                                <div class="modal-form-label"><span v-t="'dialog.add.l6'"></span></div>
+                                <div class="modal-form-wrapper" style="margin-top: 5px">
+                                    <el-radio v-model="dialog.add.obj.accessControlType" :label="1" style="margin-right: 10px;">{{$t('dialog.add.l6r2')}}</el-radio>
+                                    <el-radio v-model="dialog.add.obj.accessControlType" :label="2" style="margin-right: 10px;">{{$t('dialog.add.l6r1')}}</el-radio>
+                                    <el-radio v-model="dialog.add.obj.accessControlType" :label="3">{{$t('dialog.add.l6r3')}}</el-radio>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </el-scrollbar>
+            </div>
+        </div>
+    </div>
+
+    <!-- 状态设置模态框 -->
+    <tr-dialog
+            :title="_i18n.t('dialog.status.t')"
+            :width="isSingleAc ? '441px' : '703px'"
+            :with-cancel="true"
+            center
+            @confirm="setStatus"
+            :visible.sync="statusDialogVisible">
+        <div class="dialog-wrapper flex-column flex-center">
+            <div class="status-dialog__box" v-if="!isSingleAc">
+                <div class="status-dialog__box--row" v-for="value in statusPlaces">
+                    <brand-tree :data="value.data">
+                        <span slot="title">{{$t('dialog.status.h1', {place: value.place})}}</span>
+                    </brand-tree>
+                </div>
+            </div>
+
+            <div class="status-dialog__group mt-3" :style="{'paddingBottom': (isSingleAc ? '20px' : 0 )}">
+                <div class="status-dialog__switch" v-for="(option, index) in acStatusOptions" :key="index">
+                    <div class="label">{{option.label}}</div>
+                    <el-switch v-model="option.checked" @change="uncheckOtherSwitch(index)"></el-switch>
+                </div>
+            </div>
+        </div>
+    </tr-dialog>
+
+    <!-- 白名单管理模态框 -->
+    <el-dialog
+            :title="_i18n.t('dialog.whiteList.t')"
+            class="view-modal import-modal update-modal"
+            :visible.sync="dialog.whiteList.show"
+            width="870px"
+            center>
+
+        <!-- body -->
+        <div class="detail-dialog-body">
+            <div class="flex justify-between align-center margin-bottom-20">
+                <div class="flex align-center">
+<!--                    <label class="margin-r-10 font-bold">自动刷新</label>
+                    <el-switch
+                            v-model="dialog.whiteList.autoRefresh"
+                            active-color="#52A3FD"
+                            inactive-color="#f1f1f1">
+                    </el-switch>-->
+<!--                    <div class="screen-item margin-l-10">
+                        <div @click="refreshWhiteList" class="custom-button xs button-style6">刷新</div>
+                    </div>-->
+                    <div class="screen-item">
+                        <div @click="showAddWhiteList" class="custom-button xs button-style1" v-t="'dialog.whiteList.b1'"></div>
+                        <div @click="showBatchApply" class="custom-button button-style1 margin-l-10" v-t="'dialog.whiteList.b2'"></div>
+                        <div @click="forceMultiDeleteWhiteList" class="custom-button button-style8 margin-l-10" v-t="'dialog.whiteList.b3'"></div>
+                    </div>
+                    <div class="margin-l-20 font-bold">{{$t('dialog.whiteList.h1', {num: dialog.whiteList.multipleSelection.length})}}</div>
+                </div>
+                <!-- 搜索框 -->
+                <div class="flex justify-end">
+                    <el-select
+                            @change="selectSearchChange"
+                            v-loadmore="getUserListForSearch"
+                            class="search-input select-search-input"
+                            v-model="dialog.whiteList.searchUser"
+                            filterable
+                            remote
+                            reserve-keyword
+                            :placeholder="_i18n.t('dialog.whiteList.ph1')"
+                            :remote-method="searchUser"
+                            clearable
+                            :loading="dialog.whiteList.userLoading">
+                        <el-option
+                                v-for="item in dialog.whiteList.userList"
+                                :key="item.id"
+                                :label="item.nickname"
+                                :value="item.id">
+                            <span style="float: left">{{ item.nickname }}</span>
+                            <span style="float: right; color: #8492a6; font-size: 13px">{{ item.username }}</span>
+                        </el-option>
+                    </el-select>
+                </div>
+            </div>
+            <el-table
+                    v-loading="dialog.whiteList.loading"
+                    ref="whiteListTable"
+                    class="custom-table"
+                    :data="dialog.whiteList.list"
+                    tooltip-effect="dark"
+                    @selection-change="whiteListSelectionChange"
+                    max-height="380"
+                    row-key="id"
+                    border
+            >
+                <el-table-column
+                        type="selection"
+                        :selectable="whiteListSelectable"
+                        :reserve-selection="true"
+                        align="center"
+                        width="55">
+                </el-table-column>
+                <el-table-column
+                        :label="_i18n.t('dialog.whiteList.table.h1')"
+                        align="center"
+                        :show-overflow-tooltip="true"
+                >
+                    <template slot-scope="scope"><span>{{ dialog.whiteList.idNicknameMap[scope.row.value] | textShort }}</span></template>
+                </el-table-column>
+<!--                <el-table-column
+                        label="类型"
+                        align="center"
+                >
+                    <template slot-scope="scope">{{ dialog.whiteList.typeTextMapping[scope.row.type] }}</template>
+                </el-table-column>-->
+                <el-table-column
+                        :label="_i18n.t('dialog.whiteList.table.h2')"
+                        align="center"
+                        width="120"
+                >
+                    <template slot-scope="scope">
+                        <span>{{scope.row.startTime}}~{{scope.row.endTime}}</span>
+                    </template>
+                </el-table-column>
+                <el-table-column
+                        :label="_i18n.t('dialog.whiteList.table.h3')"
+                        align="center"
+                        width="120"
+                >
+                    <template slot-scope="scope">
+                        <span>{{scope.row.end | date}}</span>
+                    </template>
+                </el-table-column>
+                <el-table-column
+                        :label="_i18n.t('dialog.whiteList.table.h4')"
+                        align="center"
+                        width="100"
+                >
+                    <template slot-scope="scope">
+                        <span>{{_i18n.t('dialog.whiteList.table.repeatTypeMapping[' + scope.row.repeatType + ']')}}</span>
+                    </template>
+                </el-table-column>
+                <el-table-column
+                        :label="_i18n.t('dialog.whiteList.table.h5')"
+                        align="center"
+                        width="150"
+                >
+                    <template slot-scope="scope">
+                        <span>{{scope.row.repeat | weekRepeat}}</span>
+                    </template>
+                </el-table-column>
+                <el-table-column
+                        :label="_i18n.t('dialog.whiteList.table.h6')"
+                        align="center"
+                >
+                    <template slot-scope="scope">
+                        <span v-if="dialog.whiteList.now && scope.row.status === 2 && scope.row.end < dialog.whiteList.now" class="status-card" style="background: #9B9B9B" v-t="'dialog.whiteList.table.h6t1'"></span>
+                        <span v-else class="status-card" :style="{'background': dialog.whiteList.statusColorMapping[scope.row.status]}">{{ _i18n.t('dialog.whiteList.table.statusTextMapping[' + scope.row.status + ']') }}</span>
+                    </template>
+                </el-table-column>
+                <el-table-column
+                        :label="_i18n.t('dialog.whiteList.table.h7')"
+                        align="center"
+                >
+                    <template slot-scope="scope">
+                        <div v-if="scope.row.status === 2">
+                            <button @click="editWhiteList(scope.row)" class="text-button" style="color: #2E8BF2" v-t="'dialog.whiteList.table.b1'"></button>
+                        </div>
+                        <div v-if="scope.row.status === 4 || scope.row.status === 16">
+                            <button @click="retryWhiteList(scope.row.id)" class="text-button" style="color: #2FC284" v-t="'dialog.whiteList.table.b2'"></button>
+                        </div>
+                        <div v-if="scope.row.status === 2">
+                            <button @click="forceDeleteWhiteList(scope.row.id)" class="text-button" style="color: #EC5643" v-t="'dialog.whiteList.table.b3'"></button>
+                        </div>
+<!--                        <div>
+                            <button @click="forceDeleteWhiteList(scope.row.id)" class="text-button" style="color: #F0871F">强制删除</button>
+                        </div>-->
+                    </template>
+                </el-table-column>
+            </el-table>
+
+            <!-- 分页 -->
+            <div class="flex table-bottom relative justify-center" style="margin-bottom: 0;">
+                <div class="absolute left-0">
+                </div>
+<!--                <div>
+                    <el-pagination
+                            background
+                            layout="prev, pager, next"
+                            :current-page="dialog.whiteList.page.pageNum"
+                            :page-size="dialog.whiteList.page.pageSize"
+                            :total="dialog.whiteList.page.count"
+                            @current-change="getWLList">
+                    </el-pagination>
+                </div>-->
+                <div class="common-page-wrapper">
+                    <span @click="toFirstWLPage" v-t="'page.home'"></span>
+                    <el-pagination
+                            class="common-page"
+                            background
+                            layout="prev, pager, next"
+                            :current-page="dialog.whiteList.page.pageNum"
+                            :page-size="dialog.whiteList.page.pageSize"
+                            :total="dialog.whiteList.page.count"
+                            @current-change="getWLList">
+                    </el-pagination>
+                    <span @click="toLastWLPage" v-t="'page.tail'"></span>
+                    <div class="common-page-input-wrapper">
+                        <span v-t="'page.t1'"></span>
+                        <div><input @keyup.enter="toTargetWLPage" @input="handleAmountChange(dialog.whiteList.page, 'target', 1)" type="text" v-model="dialog.whiteList.page.target"/></div>
+                        <span v-t="'page.t2'"></span>
+                        <div @click="toTargetWLPage" class="common-page-btn margin-l-10 custom-button button-style1 main-bg" v-t="'page.ok'"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+<!--
+        <div slot="footer" class="footer-center">
+            <span @click="dialog.whiteList.show = false" class="custom-button button-style5">取消</span>
+            <span @click="showBatchApply" class="custom-button button-style1 margin-l-10">应用到其他门禁</span>
+        </div>-->
+    </el-dialog>
+
+    <!-- 新增白名单模态框 -->
+    <el-dialog
+            :title="dialog.addWhiteList.isEdit ? _i18n.t('dialog.addWL.t1') : _i18n.t('dialog.addWL.t2')"
+            class="view-modal"
+            :visible.sync="dialog.addWhiteList.show"
+            center
+            top="25vh">
+        <div class="body-wrapper small">
+            <!-- 		  	用户   -->
+            <template v-if="!dialog.addWhiteList.isEdit">
+                <div class="flex view-form-wrapper">
+                    <div class="flex align-center view-form-item full">
+                        <span v-t="'dialog.addWL.h1'"></span>
+                        <el-button type="primary" size="small" @click="showSelectUser">{{$t('dialog.addWL.h1t1')}}{{dialog.selectUser.multipleSelection.length === 0 ? '' : (' (' + dialog.selectUser.multipleSelection.length + ')')}}</el-button>
+                        <el-tooltip class="item" effect="dark" :content="_i18n.t('dialog.addWL.h1t2')" placement="right">
+                            <i class="tip-icon el-icon-warning-outline"></i>
+                        </el-tooltip>
+    <!--                    <el-input :disabled="dialog.addWhiteList.isEdit" v-model="dialog.addWhiteList.value" placeholder="请输入号码"></el-input>-->
+                    </div>
+                </div>
+                <div class="flex view-form-wrapper flex-column" v-if="dialog.selectUser.multipleSelection.length > 0">
+                    <div class="flex align-center view-form-item full">
+                        <span></span>
+                        <el-scrollbar class="custom-scb">
+                            <div style="white-space: normal;padding-bottom: 17px;">
+                                  <span v-for="item in dialog.selectUser.multipleSelection" :key="item.id" class="person-item">
+                                    {{item.nickname}}
+                                </span>
+                            </div>
+                        </el-scrollbar>
+                    </div>
+                </div>
+            </template>
+            <!-- 		  	类型 -->
+<!--            <div class="flex view-form-wrapper">
+                <div class="flex align-center view-form-item full">
+                    <span>类型：</span>
+                    <el-select :disabled="dialog.addWhiteList.isEdit" v-model="dialog.addWhiteList.type" class="width-full" placeholder="请选择">
+                        <el-option
+                                v-for="item in dialog.addWhiteList.typeList"
+                                :key="item.value"
+                                :label="item.name"
+                                :value="item.value">
+                        </el-option>
+                    </el-select>
+                </div>
+            </div>-->
+            <!-- 		  	开始时间 -->
+<!--            <div class="flex view-form-wrapper">
+                <div class="flex align-center view-form-item full">
+                    <span>开始时间：</span>
+                    <el-date-picker
+                            v-model="dialog.addWhiteList.start"
+                            type="datetime"
+                            placeholder="选择开始时间">
+                    </el-date-picker>
+                </div>
+            </div>-->
+
+
+            <!-- TODO这里加时间范围和重复策略 -->
+            <div class="flex view-form-wrapper">
+                <div class="flex align-center view-form-item full">
+                    <span v-t="'dialog.addWL.h2'"></span>
+                    <el-time-select
+                            class="tiny-time-select"
+                            popper-class="fix-el-scroll"
+                            :placeholder="_i18n.t('dialog.addWL.h2ph1')"
+                            v-model="dialog.addWhiteList.startTime"
+                            :picker-options="{
+                                start: '00:00',
+                                step: '00:15',
+                                end: '24:00'
+                            }">
+                    </el-time-select>
+                    <span class="margin-lr-5">~</span>
+                    <el-time-select
+                            class="tiny-time-select"
+                            popper-class="fix-el-scroll"
+                            :placeholder="_i18n.t('dialog.addWL.h2ph2')"
+                            v-model="dialog.addWhiteList.endTime"
+                            :picker-options="{
+                                start: '00:00',
+                                step: '00:15',
+                                end: '24:00',
+                                minTime: dialog.addWhiteList.startTime
+                            }">
+                    </el-time-select>
+                </div>
+            </div>
+
+            <div class="flex view-form-wrapper">
+                <div class="flex align-center view-form-item full">
+                    <span v-t="'dialog.addWL.h3'"></span>
+                    <el-radio-group v-model="dialog.addWhiteList.repeat">
+                        <el-radio :label="0">{{$t('dialog.addWL.h3r1')}}</el-radio>
+                        <el-radio :label="1">{{$t('dialog.addWL.h3r2')}}</el-radio>
+                    </el-radio-group>
+                </div>
+            </div>
+
+            <div class="flex view-form-wrapper" v-if="dialog.addWhiteList.repeat === 1">
+                <div class="flex align-center view-form-item full">
+                    <span v-t="'dialog.addWL.h4'"></span>
+                    <el-select v-model="dialog.addWhiteList.repeatDayArray" multiple :placeholder="_i18n.t('dialog.addWL.h4ph1')">
+                        <el-option
+                                v-for="item in _i18n.t('dayArray')"
+                                :key="item.value"
+                                :label="item.label"
+                                :value="item.value">
+                        </el-option>
+                    </el-select>
+                </div>
+            </div>
+
+
+            <!-- 		  	结束时间 -->
+            <div class="flex view-form-wrapper">
+                <div class="flex align-center view-form-item full">
+                    <span v-t="'dialog.addWL.h5'"></span>
+                    <el-date-picker
+                            v-if="dialog.addWhiteList.show"
+                            v-model="dialog.addWhiteList.end"
+                            type="date"
+                            :placeholder="_i18n.t('dialog.addWL.h5ph1')"
+                            :picker-options="pickerOptions"
+                    >
+                    </el-date-picker>
+                </div>
+            </div>
+        </div>
+        <div slot="footer" class="footer-center">
+            <span @click="dialog.addWhiteList.show = false" class="custom-button button-style5" v-t="'cancel'"></span>
+            <span @click="addWhiteList" class="custom-button button-style1 margin-l-10" v-t="'yes'"></span>
+        </div>
+    </el-dialog>
+
+    <!-- 门禁列表模态框 -->
+    <tr-dialog
+            :title="_i18n.t('dialog.acList.t')"
+            width="441px"
+            :with-cancel="true"
+            center
+            @confirm="batchApply"
+            :visible.sync="dialog.acList.show">
+        <div class="dialog-wrapper flex-column flex-center" v-loading="dialog.acList.loading">
+            <div class="status-dialog__box">
+                <div class="status-dialog__box--row" v-for="value in dialog.acList.list">
+                    <brand-tree :data="value.data">
+                        <span slot="title">{{$t('dialog.acList.h1', {place: value.place})}}</span>
+                    </brand-tree>
+                </div>
+            </div>
+        </div>
+    </tr-dialog>
+
+    <!-- 查看门禁详情模态框 -->
+    <el-dialog
+            :title="_i18n.t('dialog.view.t')"
+            v-loading="dialog.view.loading"
+            class="view-modal"
+            :visible.sync="dialog.view.show"
+            center>
+        <div class="body-wrapper">
+            <div class="flex view-form-wrapper">
+                <div class="flex align-center view-form-item full">
+                    <span v-t="'dialog.view.h1'"></span>
+                    <span>{{dialog.view.obj.name||"——"}}</span>
+                </div>
+            </div>
+            <div class="flex view-form-wrapper">
+                <div class="flex align-center view-form-item full">
+                    <span v-t="'dialog.view.h2'"></span>
+                    <span>{{dialog.view.obj.placeName}}</span>
+                </div>
+            </div>
+            <div class="flex view-form-wrapper">
+                <div class="flex align-center view-form-item full">
+                    <span v-t="'dialog.view.h3'"></span>
+                    <span>{{$t('acType[' + dialog.view.obj.accessControlType + ']')}}</span>
+                </div>
+            </div>
+<!--            <div class="flex view-form-wrapper">
+                <div class="flex align-center view-form-item full">
+                    <span>状态：</span>
+                    <span>{{dialog.view.obj.abnormalStatus === null ? '正常' : acStatusOptions[dialog.view.obj.abnormalStatus] ? acStatusOptions[dialog.view.obj.abnormalStatus].label : '——'}}</span>
+                </div>
+            </div>-->
+            <div class="flex view-form-wrapper">
+                <div class="flex align-center view-form-item full">
+                    <span style="letter-spacing: 3px;">{{$t('dialog.view.h4')}}</span>
+                    <span v-if="dialog.view.obj.accessControlType === 1">{{snDeviceMap[dialog.view.obj.uniqueCode] | byKey("ip")}}</span>
+                    <span v-else>{{dialog.view.obj.equipmentIp}}</span>
+                </div>
+            </div>
+            <div class="flex view-form-wrapper" v-if="dialog.view.obj.accessControlType === 2">
+                <div class="flex align-center view-form-item full">
+                    <span v-t="'dialog.view.h5'"></span>
+                    <span>{{dialog.view.obj.equipmentPort}}</span>
+                </div>
+            </div>
+            <div class="flex view-form-wrapper" v-if="dialog.view.obj.accessControlType === 1">
+                <div class="flex align-center view-form-item full">
+                    <span v-t="'dialog.view.h6'"></span>
+                    <span>{{snDeviceMap[dialog.view.obj.uniqueCode] | byKey("version")}}</span>
+                </div>
+            </div>
+            <div class="flex view-form-wrapper">
+                <div class="flex align-center view-form-item full">
+                    <span v-t="'dialog.view.h7'"></span>
+                    <span class="status-item online" v-if="snDeviceMap[dialog.view.obj.uniqueCode]"></span>
+                    <span class="status-item offline" v-else></span>
+                    <span>{{snDeviceMap[dialog.view.obj.uniqueCode] ? _i18n.t('online') : _i18n.t('offline')}}</span>
+                </div>
+            </div>
+            <div class="flex view-form-wrapper">
+                <div class="flex align-center view-form-item full">
+                    <span style="letter-spacing: 5px;margin-left: 4px;" v-t="'dialog.view.h8'"></span>
+                    <span>{{dialog.view.obj.uniqueCode}}</span>
+                </div>
+            </div>
+            <div class="flex view-form-wrapper" v-if="dialog.view.obj.accessControlType === 1">
+                <div class="flex align-center view-form-item full">
+                    <span>{{$t('dialog.view.h11')}}</span>
+<!--                    <span v-t="'dialog.view.h9'"></span>-->
+                    <span>{{snDeviceMap[dialog.view.obj.uniqueCode] | byKey("time")}}</span>
+                </div>
+            </div>
+            <div class="flex view-form-wrapper" v-if="dialog.view.obj.accessControlType === 1">
+                <div class="flex align-center view-form-item full">
+                    <span>{{$t('dialog.view.h12')}}</span>
+<!--                    <span v-t="'dialog.view.h10'"></span>-->
+                    <span>{{snDeviceMap[dialog.view.obj.uniqueCode] | byKey("uptime")}}</span>
+                </div>
+            </div>
+        </div>
+    </el-dialog>
+
+    <!-- 选择升级固件模态框（已弃用） -->
+    <el-dialog
+            :title="$t('dialog.bios.t')"
+            class="view-modal"
+            :visible.sync="dialog.updateSK87.show"
+            center>
+        <div class="body-wrapper" v-loading="dialog.updateSK87.loading">
+            <div class="important-tip-info flex justift-between align-center">
+                <div>
+                    <i class="el-icon-warning-outline">{{ $t('dialog.bios.h1') }}</i>
+                </div>
+                <div>
+                    <input id="updateFileInput" @change="uploadUpdateFile" type="file" style="opacity: 0;width: 1px;height: 0;overflow:hidden;">
+                    <label for="updateFileInput" @click="" class="text-button" style="color: #2E8BF2;padding: 0 6px;">{{ $t('dialog.bios.h2') }}</label>
+                </div>
+            </div>
+            <div class="margin-bottom-20 flex space-between align-center" v-for="(u, index) in dialog.updateSK87.list" :key="index">
+                <el-radio :title="getFileNameFromUrl(u)" class="limit-300-radio" v-model="dialog.updateSK87.selected" :label="index">{{u | url2FileName}}</el-radio>
+                <!-- TODO -->
+                <button @click="delUpdateFile(u)" class="text-button" style="color: #EC5643">{{ $t('dialog.bios.h3') }}</button>
+            </div>
+        </div>
+
+        <div slot="footer" class="footer-center">
+            <span @click="dialog.updateSK87.show = false" class="custom-button button-style5">{{ $t('cancel') }}</span>
+            <span @click="doSK87Update" class="custom-button button-style1 margin-l-10">{{ $t('yes') }}</span>
+        </div>
+    </el-dialog>
+
+    <!-- 选择用户模态框 -->
+    <el-dialog
+            :title="_i18n.t('dialog.selectUser.t')"
+            class="view-modal import-modal update-modal"
+            :visible.sync="dialog.selectUser.show"
+            width="768px"
+            center>
+
+        <!-- body -->
+        <div class="detail-dialog-body">
+            <div class="flex justift-between align-center margin-bottom-20">
+                <div class="flex align-center">
+                    <div @click="_clearSelectUserDialog" class="custom-button xs button-style6" v-t="'dialog.selectUser.h1'"></div>
+                    <div class="margin-l-20 font-bold">{{$t('dialog.selectUser.h2', {num: dialog.selectUser.multipleSelection.length})}}</div>
+                </div>
+                <!-- 搜索框 -->
+                <div class="flex justify-end">
+                    <!-- region # 白名单用户筛选 -->
+                    <div class="screen-item margin-r-10">
+                        <span>{{ $t('dep') }}</span>
+                        <el-select style="width: 200px" class="ztree-select" :placeholder="$t('allText')" popper-class="ztree-select">
+                            <el-option
+                                    key="1"
+                                    :label="dialog.selectUser.depName">
+                                <div style="height: 100%;">
+                                    <div v-if="department && department.length"  @click="userSelectCancelDep('depFilter', dialog.selectUser, 1)" class="ztree-cancle ads"><span>{{ $t('allText') }}</span></div>
+                                    <el-scrollbar style="height: 250px;">
+                                        <el-tree class="custom-tree" highlight-current="true" :default-expanded-keys="depExpand3" ref="depFilter" node-key="id" :data="department" :props="defaultProps" @node-click="userSelectDepChange($event, dialog.selectUser, 1)"></el-tree>
+                                    </el-scrollbar>
+                                </div>
+
+                            </el-option>
+                        </el-select>
+                    </div>
+
+                    <!-- endregion -->
+                    <el-input
+                            v-model="dialog.selectUser.like"
+                            class="search-input"
+                            :placeholder="_i18n.t('dialog.selectUser.ph1')"
+                            @keyup.enter.native="toFirstUserPage">
+                        <i @click="toFirstUserPage" slot="suffix" class="el-input__icon el-icon-search"></i>
+                    </el-input>
+                </div>
+            </div>
+            <el-table
+                    v-loading="dialog.selectUser.loading"
+                    ref="userListTable"
+                    class="custom-table"
+                    :data="dialog.selectUser.list"
+                    tooltip-effect="dark"
+                    @select="userListSelectionChange"
+                    @select-all="userListSelectionChange"
+                    max-height="380"
+                    row-key="id"
+                    border
+            >
+                <el-table-column
+                        :reserve-selection="true"
+                        type="selection"
+                        width="55">
+                </el-table-column>
+                <el-table-column
+                        prop="nickname"
+                        :label="_i18n.t('dialog.selectUser.table.h1')"
+                        width="100">
+                </el-table-column>
+                <el-table-column
+                        prop="sex"
+                        :label="_i18n.t('dialog.selectUser.table.h2')"
+                        width="100">
+                    <template slot-scope="scope">
+                        <span>{{scope.row.sex === 0 ? _i18n.t('dialog.selectUser.table.s1') : _i18n.t('dialog.selectUser.table.s2')}}</span>
+                    </template>
+                </el-table-column>
+                <el-table-column
+                        prop="card_number"
+                        :label="_i18n.t('dialog.selectUser.table.h3')"
+                        width="200">
+                    <template slot-scope="scope">
+                        <span>{{scope.row.card_number | text}}</span>
+                    </template>
+                </el-table-column>
+                <el-table-column
+                        :label="_i18n.t('dialog.selectUser.table.h4')">
+                    <template slot-scope="scope">
+                        <el-image
+                                v-if="scope.row.photo_url"
+                                style="height: 48px"
+                                :src="scope.row.photo_url"
+                                fit="contain">
+                            <div slot="error" class="height-full flex align-center">
+                                <i class="el-icon-picture-outline" style="font-size: 30px"></i>
+                            </div>
+                        </el-image>
+                        <span v-else>——</span>
+                    </template>
+                </el-table-column>
+            </el-table>
+
+            <!-- 分页 -->
+            <div class="flex table-bottom relative justify-center" style="margin-bottom: 0;">
+                <div class="absolute left-0">
+                </div>
+<!--                <div>
+                    <el-pagination
+                            background
+                            layout="prev, pager, next"
+                            :current-page="dialog.selectUser.page.pageNum"
+                            :page-size="dialog.selectUser.page.pageSize"
+                            :total="dialog.selectUser.page.count"
+                            @current-change="getUserList">
+                    </el-pagination>
+                </div>-->
+
+                <div class="common-page-wrapper">
+                    <span @click="toFirstUserPage" v-t="'page.home'"></span>
+                    <el-pagination
+                            class="common-page"
+                            background
+                            layout="prev, pager, next"
+                            :current-page="dialog.selectUser.page.pageNum"
+                            :page-size="dialog.selectUser.page.pageSize"
+                            :total="dialog.selectUser.page.count"
+                            @current-change="getUserList">
+                    </el-pagination>
+                    <span @click="toLastUserPage" v-t="'page.tail'"></span>
+                    <div class="common-page-input-wrapper">
+                        <span v-t="'page.t1'"></span>
+                        <div><input @keyup.enter="toTargetUserPage" @input="handleAmountChange(dialog.selectUser.page, 'target', 1)" type="text" v-model="dialog.selectUser.page.target"/></div>
+                        <span v-t="'page.t2'"></span>
+                        <div @click="toTargetUserPage" class="common-page-btn margin-l-10 custom-button button-style1 main-bg" v-t="'page.ok'"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        <div slot="footer" class="footer-center">
+            <span @click="dialog.selectUser.show = false" class="custom-button button-style1 margin-l-10" v-t="'ok'"></span>
+        </div>
+    </el-dialog>
+
+    <!-- 导出开门记录模态框 -->
+    <el-dialog
+            :title="$t('dialog.export.t')"
+            class="view-modal"
+            :visible.sync="dialog.export.show"
+            center
+            top="25vh">
+        <div class="body-wrapper small">
+            <!-- 		  	开始时间 -->
+            <div class="flex view-form-wrapper">
+                <div class="flex align-center view-form-item full need need-tx-20">
+                    <span v-t="'dialog.export.h1'"></span>
+                    <el-date-picker
+                            v-model="dialog.export.start"
+                            type="datetime"
+                            :placeholder="_i18n.t('dialog.export.ph1')"
+                    >
+                    </el-date-picker>
+                </div>
+            </div>
+            <!-- 		  	结束时间 -->
+            <div class="flex view-form-wrapper">
+                <div class="flex align-center view-form-item full need need-tx-20">
+                    <span v-t="'dialog.export.h2'"></span>
+                    <el-date-picker
+                            v-model="dialog.export.end"
+                            type="datetime"
+                            :placeholder="_i18n.t('dialog.export.ph2')"
+                            :picker-options="exportPickerOptions"
+                            default-time="23:59:59"
+                    >
+                    </el-date-picker>
+                </div>
+            </div>
+        </div>
+        <div slot="footer" class="footer-center">
+            <span @click="dialog.export.show = false" class="custom-button button-style5" v-t="'cancel'"></span>
+            <span @click="doExport" class="custom-button button-style1 margin-l-10" :class="{'disabled': !isCanExport}" v-t="'dialog.export.b1'"></span>
+        </div>
+    </el-dialog>
+
+    <!-- 同步设备模态框 -->
+    <el-dialog
+            :title="_i18n.t('dialog.sync.t')"
+            class="view-modal"
+            :visible.sync="dialog.sync.show"
+            center
+            top="25vh">
+        <div class="body-wrapper small">
+            <el-checkbox-group v-model="dialog.sync.checkList">
+                <div class="sync-item">
+                    <el-checkbox :label="0">{{$t('dialog.sync.h1')}}</el-checkbox>
+                </div>
+                <div class="sync-item">
+                    <el-checkbox :label="1">{{$t('dialog.sync.h2')}}</el-checkbox>
+                </div>
+                <div class="sync-item">
+                    <el-checkbox :label="2">{{$t('dialog.sync.h3')}}</el-checkbox>
+                    <el-select style="width: 80px" size="mini" v-model="dialog.sync.heartTime" :placeholder="_i18n.t('dialog.sync.ph1')">
+                        <el-option
+                                v-for="ht in 10"
+                                :key="ht"
+                                :label="ht + _i18n.t('dialog.sync.u1')"
+                                :value="ht">
+                        </el-option>
+                    </el-select>
+                </div>
+            </el-checkbox-group>
+            <div>
+                <p class="important-tip-info"><i class="el-icon-warning-outline" v-t="'dialog.sync.h4'"></i>
+            </div>
+        </div>
+        <div slot="footer" class="footer-center">
+            <span @click="dialog.sync.show = false" class="custom-button button-style5" v-t="'cancel'"></span>
+            <span @click="doSync" class="custom-button button-style1 margin-l-10" :class="{'disabled': !isCanSync}" v-t="'dialog.sync.b1'"></span>
+        </div>
+    </el-dialog>
+
+
+    <!-- 日志查看 -->
+    <el-dialog
+            class="log-dialog"
+            :title="$t('dialog.log.t')"
+            width="1100px"
+            top="30px"
+            center
+            :visible.sync="logDialogVisible">
+        <div class="log-dialog__body" v-loading="logDialog.loading">
+            <div class="log-pane-tab__wrapper">
+                <div class="log-pane__info ">
+                    <p><label><i class="el-icon-receiving"></i>{{$t('dialog.log.h1')}}</label>{{logDialog.record.name | text}}</p>
+                    <p><label><i class="el-icon-location-information"></i>{{$t('dialog.log.h2')}}</label>{{logDialog.record.placeName | text}}</p>
+                </div>
+
+                <el-radio-group v-model="logDialog.tabActive" class="log-radio-group" @change="changeLogTab">
+                    <el-radio-button v-for="item in logTypeOptions" :key="item.value" :label="item.value">
+                        <i :class="item.icon" v-if="item.icon != null && item.icon != ''"></i>
+                        {{item.name}}
+                    </el-radio-button>
+                </el-radio-group>
+            </div>
+
+            <div class="log-pane">
+                <div class="log-pane__header">
+                    <div class="flex-center">
+                        <el-date-picker
+                                size="small"
+                                v-model="logDialog.selectTimes"
+                                type="datetimerange"
+                                :start-placeholder="$t('dialog.log.h3')"
+                                :end-placeholder="$t('dialog.log.h4')"
+                                prefix-icon="el-icon-date"
+                                class="log-date-picker"
+                                format="yyyy-MM-dd HH:mm"
+                                popper-class="log-date-picker__popper"
+                                @change="changeLogTimes">
+                        </el-date-picker>
+                        <el-button size="small" type="primary"
+                                   style="margin-left: 8px;"
+                                   icon="el-icon-upload"
+                                   @click="exportLogV2">{{$t('dialog.log.h5')}}</el-button>
+                    </div>
+                    <div class="log-search-group">
+                        <input :placeholder="$t('dialog.log.h6')" v-model="logDialog.search" @keyup.enter="changeLogSearch">
+                    </div>
+                </div>
+
+                <div class="log-pane__body">
+                    <el-table size="small"
+                              border
+                              stripe
+                              :max-height="10 * 45"
+                              class="log-table"
+                              v-if="logDialog.showTable"
+                              :data="logDialog.data">
+                        <el-table-column
+                                label="#"
+                                type="index"
+                                align="center"
+                                width="50">
+                        </el-table-column>
+                        <el-table-column
+                                prop="time"
+                                :label="$t('dialog.log.h8')"
+                                width="180"
+                                align="center"
+                                :show-overflow-tooltip="true"
+                                :formatter="formatLogTime">
+                        </el-table-column>
+
+                        <el-table-column
+                                prop="nickname"
+                                :label="$t('dialog.log.h9')"
+                                :show-overflow-tooltip="true"
+                                width="120"
+                                :formatter="formatNull"
+                                align="center"
+                                v-if="logDialog.tabActive == '2'">
+                        </el-table-column>
+
+                        <el-table-column
+                                :label="$t('dialog.log.h10')"
+                                width="140"
+                                align="center"
+                                :show-overflow-tooltip="true"
+                                :formatter="formatNull">
+                            <template slot-scope="scope">
+                                {{logSubTypeMap[scope.row.subType] || $t('dialog.log.h11')}}
+                            </template>
+                        </el-table-column>
+                        <el-table-column
+                                prop="content"
+                                :label="$t('dialog.log.h12')"
+                                :show-overflow-tooltip="true"
+                                min-width="200"
+                                align="center"
+                                :formatter="formatNull">
+                        </el-table-column>
+
+                        <el-table-column
+                                :label="$t('dialog.log.h13')"
+                                :show-overflow-tooltip="true"
+                                width="100"
+                                align="center"
+                                :formatter="formatNull">
+                            <template slot-scope="scope">
+                                <el-button type="danger" size="mini" icon="el-icon-delete" circle @click="deleteLog(scope.row)"></el-button>
+                            </template>
+                        </el-table-column>
+                    </el-table>
+                </div>
+
+                <div class="log-pane__footer" v-if="logPage.count > 0">
+                	<div class="operate-wrapper">
+		  	 			<el-button size="small" type="danger" 
+					    	icon="el-icon-delete"
+					    	@click="deleteAllLogs">{{$t('commonLog.deleteAll')}}</el-button>
+		  	 		</div>
+                    <el-pagination
+                            background
+                            class="log-pagination"
+                            :page-size="logPage.pageSize"
+                            layout="prev, pager, next"
+                            :current-page="logPage.pageNum"
+                            :total="logPage.count"
+                            @current-change="changeLogPage">
+                    </el-pagination>
+                </div>
+            </div>
+        </div>
+    </el-dialog>
+</div>
+</body>
+<script src="/public/js/vue.min.js"></script>
+<script src="/public/elementui/element-ui.js"></script>
+<script src="/public/js/jquery-3.3.1.min.js"></script>
+<script src="/public/js/config/config.js"></script>
+<script src="/public/js/date.js"></script>
+<script src="/public/js/ajax-el.js"></script>
+<script src="/public/js/image-compress.js"></script>
+<script src="/public/js/moment.min.js"></script>
+<script src="/public/js/common/iframe.js"></script>
+<script src="/public/js/common/constants.js"></script>
+<script src="/public/js/common/import-tip.js"></script>
+<script src="/public/js/common/common-util.js"></script>
+<script src="/public/js/echarts.min.js"></script>
+<script src="/public/js/brand-tree.js"></script>
+<script src="/public/js/check-all-checkbox.js"></script>
+<script src="/public/js/tr-dialog.js"></script>
+<script src="/public/js/clipboard.min.js"></script>
+<script src="/public/js/common/vue-directive.js"></script>
+<script src="/public/js/debounce.js"></script>
+<script src="/public/js/moment.min.js"></script>
+<script src="/public/js/vue-i18n.js"></script>
+<script src="/public/js/config/i18n-config.js"></script>
+<script src="/public/js/i18n/manage/access-control/i18n-manage.js"></script>
+<script src="/public/elementui/locale/lang/zh-CN.js"></script>
+<script src="/public/elementui/locale/lang/en.js"></script>
+<script src="/public/js/access-control/manage.js"></script>
+</html>

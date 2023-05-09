@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>敏测接口测试</title>
+<style type="text/css">
+	.success {
+		color: green;
+		font-weight: bold;
+	}
+	.error {
+		color: red;
+		font-weight: bold;
+	}
+	.none {
+		font-weight: bold;
+	}
+</style>
+</head>
+<body>
+	<h1>敏测设备测试页面</h1>
+	<label>设备id：</label>
+	<input id="deviceId" placeholder="设备id" value="576854717">
+	
+	<hr>
+	
+	<div>
+		<h3>设备状态(10秒检查一次)</h3>
+		<ul>
+			<li>在线状态：<span id="onlineStatus">查询中...</span></li>
+			<li>开关状态：<span id="switchStatus">查询中...</span></li>
+		</ul>
+	</div>
+	
+	<hr>
+	
+	<div>
+		<h3>电源</h3>
+		<button onclick="doOpen()">开</button>
+		<button onclick="doClose()">关</button>
+<!-- 		<button onclick="checkOnline()">检查是否在线</button> -->
+<!-- 		<button onclick="checkStatus()">检查开关状态</button> -->
+	</div>
+	
+	<br>
+	<div>
+		<label>执行结果</label>
+		<br>
+		<textarea id="result" cols="50" rows="5"></textarea>
+	</div>
+	<br>
+	<div>
+		<label>控制id</label>
+		<input id="commandId" placeholder="控制id" style="width: 260px">
+		<button onclick="checkCommand()">查询</button><label>(每5秒自动检查)</label>
+		<div>
+		</div>
+		查询结果：<span id="commandStatus">待查询</span>
+	</div>
+
+	<br>
+	<hr>
+	<h3>操作日志</h3>
+<!-- 	<textarea style="font-size: 16px;font-weight: bold;" id="log" rows="10" cols="90"></textarea> -->
+	<div id="log" style="border: 2px solid gray;width: 760px;height: 200px;overflow-y: auto;padding: 3px;"></div>
+
+	<script type="text/javascript" th:src="@{/js/jquery-3.3.1.min.js}" src="/js/jquery-3.3.1.min.js"></script>
+	<script type="text/javascript">
+	
+		var checkInterval = null;
+	
+		$(function() {
+			doLog("当前设备ID:" + $("#deviceId").val());
+			checkOnline();
+			checkStatus();	
+			setInterval(function() {
+				console.log("定时任务");
+				checkOnline();
+				checkStatus();
+			}, 60000);
+		});
+		
+		function doLog(msg) {
+			var $div = $("<div>" + "[" + dateFormat("YYYY-mm-dd HH:MM:SS", new Date()) + "]" + msg + "</div>");
+			$("#log").append($div);
+			$("#log").scrollTop($("#log").prop("scrollHeight"));
+		}
+		
+		function dateFormat(fmt, date) {
+		    let ret;
+		    let opt = {
+		        "Y+": date.getFullYear().toString(),        // 年
+		        "m+": (date.getMonth() + 1).toString(),     // 月
+		        "d+": date.getDate().toString(),            // 日
+		        "H+": date.getHours().toString(),           // 时
+		        "M+": date.getMinutes().toString(),         // 分
+		        "S+": date.getSeconds().toString()          // 秒
+		        // 有其他格式化字符需求可以继续添加，必须转化成字符串
+		    };
+		    for (let k in opt) {
+		        ret = new RegExp("(" + k + ")").exec(fmt);
+		        if (ret) {
+		            fmt = fmt.replace(ret[1], (ret[1].length == 1) ? (opt[k]) : (opt[k].padStart(ret[1].length, "0")))
+		        };
+		    };
+		    return fmt;
+		}
+		
+		function checkCommand() {
+			var commandId = $("#commandId").val();
+			var bodyJson = {"commandId":commandId};
+			_ajax("commandStatus", bodyJson, function(result) {
+				var status = result.data.status;
+				if (status === "response" || status === "fail") {
+					clearInterval(checkInterval);
+				}
+				var statusMap = {
+					"created": "命令已创建",
+					"send": "命令已发送设备",
+					"response": "设备正常响应",
+					"fail": "命令发送失败"
+				};
+				$("#commandStatus").text(statusMap[status]);
+				doLog("查询命令" + commandId + "状态:" + statusMap[status]);
+			});
+			
+/* 			$.ajax({
+			    url: "/api/agdet/test",
+			    type: "get",
+			    data: {
+			      	"interfaceName": "commandStatus",
+			      	"bodyJson": JSON.stringify(bodyJson)
+			    },
+			    dataType: "json",
+			    success: function(result) {
+					$("#commandStatus").text(JSON.stringify(result));
+			    },
+			    error: function() {
+					alert("出错了");
+			    }
+			}); */
+		}
+		
+		function doOpen() {
+			_switch(1);
+		}
+		
+		function doClose() {
+			_switch(0);
+		}
+		
+		function _switch(state) {
+			var deviceId = $("#deviceId").val();
+			doLog("对设备" + deviceId + "进行" + (state === 1 ? "打开" : "关闭") + "电源操作");
+			var bodyJson = {"deviceId":deviceId,"state":state,"delay":0};
+			_ajax("electricity", bodyJson, function(result) {
+				$("#result").text(JSON.stringify(result));
+				$("#commandId").val(result.data.commandId);
+				if (checkInterval != null) {
+					clearInterval(checkInterval);
+				}
+				checkInterval = setInterval(function() {
+					checkCommand();
+				}, 5000);
+			});
+		}
+		
+		function checkOnline() {
+			var deviceId = $("#deviceId").val();
+			var bodyJson = {"deviceIds":deviceId};
+			_ajax("deviceOnline", bodyJson, function(result) {
+				var state = result.data.result[0].state;
+				$("#onlineStatus").text(state === 1 ? "在线" : "离线");
+				doLog("查询设备" + deviceId + "在线状态：" + (state === 1 ? '<span class="success">在线</span>' : '<span class="error">离线</span>'));
+			});
+		}
+		
+		function checkStatus() {
+			var deviceId = $("#deviceId").val();
+			var bodyJson = {"deviceIds": deviceId};
+			_ajax("deviceSwitch", bodyJson, function(result) {
+				var state = result.data.result[0].state;
+				var stateMap = ['关闭', '开启', '未知', '设备不存在'];
+				var stateClass = ['error', 'success', 'none', 'none'];
+				$("#switchStatus").text(stateMap[state]);
+				doLog("查询设备" + deviceId + "开关状态：" + '<span class="' + stateClass[state] + '">' + stateMap[state] + '</span>');
+			});
+		}
+		
+		function _ajax(interfaceName, bodyJson, callback) {
+			$.ajax({
+			    url: "/api/agdet/test",
+			    type: "get",
+			    data: {
+			      	"interfaceName": interfaceName,
+			      	"bodyJson": JSON.stringify(bodyJson)
+			    },
+			    dataType: "json",
+			    success: function(result) {
+			    	if (result.code !== 200) {
+			    		console.log("出错了!", result);
+			    		return;
+			    	}
+			    	if (callback) callback(result);
+			    },
+			    error: function() {
+					alert("出错了");
+			    }
+			});
+		}
+	</script>
+</body>
+</html>

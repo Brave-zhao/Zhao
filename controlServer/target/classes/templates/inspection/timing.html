@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>巡检定时</title>
+    <link rel="stylesheet" href="/public/css/v3/common/common.css">
+    <link rel="stylesheet" href="/public/elementui/element-ui.css">
+    <link rel="stylesheet" href="/public/ali-icon/iconfont.css">
+    <link rel="stylesheet" href="/public/css/v3/common/el-custom.css">
+    <link rel="stylesheet" href="/public/css/components/common.css">
+    <link rel="stylesheet" href="/public/css/inspection/timing.css">
+</head>
+<body>
+<div id="app" v-cloak v-loading="loading">
+    <div>
+        <div class="head-wrapper">
+            <div class="head">
+                <span></span><span >{{$t('p1')}}</span>
+            </div>
+        </div>
+        
+        <div class="content-wrapper" style="margin-bottom: 0;">
+            <div class="screen">
+                <div class="flex">
+                	<div class="screen-item">
+                		<div @click="showEditDialog(true)" class="custom-button button-style1">{{$t('p2')}}
+                        </div>
+                	</div>
+                	<div class="screen-item">
+                        <div @click="multiDelete" class="custom-button button-style2"><i class="el-icon-delete"></i>{{$tc('d', 2)}}
+                        </div>
+                    </div>
+                </div>
+                <div class="margin-l-20">
+                    <div class="screen-item">
+                        <el-input
+                                v-model="search"
+                                class="search-input"
+                                :placeholder="$t('p3')"
+                                @keyup.enter.native="changeSearch">
+                            <i @click="changeSearch" slot="suffix" class="el-input__icon el-icon-search"></i>
+                        </el-input>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="content-wrapper flex" style="margin: 0 30px">
+            <div class="width-full">
+                <el-table
+                        class="custom-table border-table"
+                        v-loading="tableLoading"
+                        :data="tableData"
+                        tooltip-effect="dark"
+                        style="width: 100%"
+                        @selection-change="handleSelectionChange">
+                    <el-table-column
+                         type="selection"
+                         width="55"
+                         align="center">
+                    </el-table-column>
+                    <el-table-column
+				      prop="name"
+				      :label="$t('p4')"
+				      :show-overflow-tooltip="true"
+				      min-width="80"
+				      align="center"
+				      :formatter="formatNull">
+					</el-table-column>
+					
+					<el-table-column
+				      :label="$t('p5')"
+				      :show-overflow-tooltip="true"
+				      min-width="140"
+				      align="center"
+				      :formatter="formatNull">
+				      <template slot-scope="scope">
+				      	{{formatPeriodText(scope.row)}}
+				      </template>
+					</el-table-column>
+					
+					<el-table-column
+				      :label="$t('p6')"
+				      :show-overflow-tooltip="true"
+				      min-width="80"
+				      align="center"
+				      :formatter="formatNull">
+				      <template slot-scope="scope">
+				      	{{moment(scope.row.time, 'HH:mm:ss').format('HH:mm')}}
+				      </template>
+					</el-table-column>
+					
+					<el-table-column
+				      :label="$t('p7')"
+				      :show-overflow-tooltip="true"
+				      min-width="100"
+				      align="center"
+				      :formatter="formatNull">
+				      <template slot-scope="scope">
+				      	{{scope.row.all == 1 || $global.isNull(scope.row.placeNames) ? $t('all') : scope.row.placeNames}}
+				      </template>
+					</el-table-column>
+					
+					<el-table-column
+				      :label="$t('p8')"
+				      :show-overflow-tooltip="true"
+				      min-width="100"
+				      align="center"
+				      :formatter="formatNull">
+				      <template slot-scope="scope">
+				      	{{scope.row.all == 1 ||  $global.isNull(scope.row.propertyTypeNames)? $t('all') : scope.row.propertyTypeNames}}
+				      </template>
+					</el-table-column>
+					
+					<el-table-column
+				      prop="user"
+				      :label="$t('p9')"
+				      :show-overflow-tooltip="true"
+				      min-width="80"
+				      align="center"
+				      :formatter="formatUser">
+					</el-table-column>
+					
+					<el-table-column
+				      :label="$t('p10')"
+				      :show-overflow-tooltip="true"
+				      min-width="80"
+				      align="center">
+				      <template slot-scope="scope">
+				      	<el-switch v-model="scope.row.enable" @change="changeEnable($event, scope.row)"></el-switch>
+				      </template>
+					</el-table-column>
+					
+					<el-table-column
+			     	   :label="$t('operate')"
+                       align="center"
+                       min-width="140">
+                       <template slot-scope="scope">
+                       	 	<div class="flex justify-center">
+                       	 		<div @click="showEditDialog(false, scope.row)" class="font-btn" >{{$t('edit')}}</div>
+                                <div @click="singleDelete(scope.row)" class="font-btn" >{{$tc('d', 1)}}</div>
+                            </div>
+                       </template>
+					</el-table-column>
+                </el-table>
+                <div class="flex table-bottom relative justify-center">
+                    <tr-pagination
+                             background
+                             layout="prev, pager, next"
+                             :current-page="page.pageNum"
+                             :page-size="page.pageSize"
+                             :total="page.count"
+                             @current-change="getTableData">
+                     </tr-pagination>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- 定时编辑 -->
+    <tr-dialog 
+      :visible.sync="editDialogVisible"
+      :title="editDialog.isAdd ? $t('p2') : $t('p11')"
+      width="800px"
+      :with-cancel="true"
+      @confirm="confirmSubmit">
+       <div class="timing-item-box">
+       	 <div>{{$t('p12')}}</div>
+       	 <div class="timing-item">
+       	 	<div>{{$t('p13')}}</div>
+       	 	<div class="timing-item__checkbox">
+       	 		<el-checkbox-group v-model="editDialog.weeks" style="flex-shrink:0;">
+				    <el-checkbox :label="item.value" v-for="item in weekOptions" :key="item.value">{{item.label}}</el-checkbox>
+				</el-checkbox-group>
+				<!-- 其他日期 -->
+				<el-checkbox v-model="editDialog.otherDate" 
+					class="timing-date__checkbox" 
+					@change="changeOtherDateCheckbox">
+					<div class="timing-date__name">{{$global.isNull(editDialog.date) ? $t('p14') : editDialog.date}}</div>
+					<el-date-picker
+						  :style="{'z-index': editDialog.otherDate ? -1 : 2}"
+					      v-model="editDialog.date"
+					      type="date"
+					      value-format="yyyy-MM-dd"
+					      format="yyyy-MM-dd"
+					      :clearable="false"
+                    	  :editable="false"
+                    	  @change="changeOtherDate">
+				    </el-date-picker>
+				</el-checkbox>
+				
+				<!-- 每天 -->
+				<el-checkbox v-model="editDialog.everyday">{{$t('p15')}}</el-checkbox>
+					
+       	 	</div>
+       	 </div>
+       </div>
+       
+       <div class="timing-item-box">
+       	  <div>{{$t('p16')}}</div>
+       	  <div class="timing-item timing-item__single">
+  	 		 <input v-model="editDialog.name" :placeholder="$t('p17')"/>
+       	  </div>
+       </div>
+       
+       <div class="timing-item-box">
+       	  <div>{{$t('p18')}}</div>
+       	  <div class="timing-item timing-item__single">
+       	  	<el-time-picker
+       	  		v-model="editDialog.time"
+                format="HH:mm"
+                value-format="HH:mm:ss"
+                :clearable="false"
+                :editable="false"
+                prefix-icon=" ">
+       	  	</el-time-picker>
+       	  </div>
+       </div>
+       <div class="timing-item-box">
+       	  <div>{{$t('p19')}}</div>
+       	  <div class="timing-item ">
+       	  	 <div>{{$t('p20')}}</div>
+       	  	 <el-radio-group v-model="editDialog.type" class="margin-t-20">
+    			<el-radio :label="item.value" v-for="item in timingTypeOptions" :key="item.value">{{item.label}}</el-radio>
+    		 </el-radio-group>
+       	  </div>
+       </div>
+       
+       <div class="timing-item-box" v-if="editDialog.type != 'all'">
+       	  <div>{{editDialog.type == 'place' ? $t('p21') : $t('p22')}}</div>
+       	  <div class="timing-item">
+       	  	 <tree-check 
+       	  	 	:auto-obtain-data="false" 
+       	  	 	:data="editDialog.placeData" 
+       	  	 	:collapse-tags="true" 
+       	  	 	v-model="editDialog.placeIds"
+       	  	 	:clearable="true"
+       	  	 	v-show="editDialog.type == 'place'"></tree-check>
+       	  	 	
+       	  	 <el-select 
+       	  	   multiple 
+       	  	   :placeholder="$t('p23')"
+       	  	   v-model="editDialog.propertyTypeIds"
+       	  	   v-show="editDialog.type == 'propertyType'"
+       	  	   style="width: 250px;"
+       	  	   class="timing-select"
+       	  	   :collapse-tags="true" >
+       	  	 	<el-option
+			      v-for="item in editDialog.propertyTypes"
+			      :key="item.id + ''"
+			      :label="item.name"
+			      :value="item.id +''">
+			    </el-option>
+       	  	 </el-select>
+       	  </div>
+       </div>
+     </tr-dialog>
+</div>
+</body>
+<script src="/public/js/bluebird.min.js"></script>
+<script src="/public/js/vue.min.js"></script>
+<script src="/public/elementui/element-ui.js"></script>
+<script src="/public/js/jquery-3.3.1.min.js"></script>
+<script src="/public/js/config/config.js"></script>
+
+<script src="/public/locales/vue-i18n.js"></script>
+<script src="/public/element-ui-2.15.9/locale/lang/zh-CN.js"></script>
+<script src="/public/element-ui-2.15.9/locale/lang/en.js"></script>
+<script src="/public/locales/i18n-config.js"></script>
+<script src="/public/locales/i18n-all.js"></script>
+
+<script src="/public/js/ajax-el.js"></script>
+<script src="/public/js/moment.min.js"></script>
+<script src="/public/js/common/iframe.js"></script>
+<script src="/public/js/common/common-util.js"></script>
+<script src="/public/js/common/vue-common-util.js"></script>
+<script src="/public/js/common/vue-directive.js"></script>
+<script src="/public/js/components/common.js"></script>
+<script src="/public/js/inspection/timing.js"></script>
+</html>

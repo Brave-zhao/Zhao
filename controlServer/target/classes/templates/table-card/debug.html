@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>桌牌调试</title>
+    <link rel="stylesheet" href="/public/css/v3/common/common.css">
+    <link rel="stylesheet" href="/public/elementui/element-ui.css">
+    <link rel="stylesheet" href="/public/element-ui-2.15.9/theme/index.css">
+    <link rel="stylesheet" href="/public/ali-icon/iconfont.css">
+    <link rel="stylesheet" href="/public/css/components/common.css">
+    <link rel="stylesheet" href="/public/css/common/admin-common.css">
+    <link rel="stylesheet" href="/public/css/table-card/debug.css">
+</head>
+<body>
+<div id="app" v-cloak>
+	<div class="page-header">
+		<div class="page-header__wrapper">桌牌调试工具</div>
+	</div>
+	<div class="page-body">
+		<div class="page-body_wrapper">
+			<div class="page-box">
+				<div class="page-box__title">基站MQTT主题前缀生成</div>
+				<div class="input-group row-group">
+					<el-input placeholder="输入基站编码" size="small" v-model="station"></el-input>
+					<el-button size="small" type="primary" @click="createTopic">生成主题前缀</el-button>
+				</div>
+				
+				<div class="row-group">
+					<el-input
+					  type="textarea"
+					  :rows="8"
+					  placeholder="基站MQTT主题前缀"
+					  v-model="topics"
+					  readonly
+					  resize="none">
+					</el-input>
+				</div>
+				
+				<div class="row-group">
+					 <el-alert
+					    title="配置说明"
+					    type="info"
+					    show-icon>
+					    <div>
+					    	<p>雅量墨水屏需通过ESLStationManageTool软件配置后上线，在保证网络正常的前提下，进行如下配置：</p>
+					    	<p>（1）基站应用接口版本改为：2.2.2</p>
+					    	<p>（2）MQTT主机地址格式为 tcp://[ip]:[port]</p>
+					    	<p>（3）MQTT客户端ID填写基站编码</p>
+					    	<p>（4）按实际填写MQTT登录用户和登录密码</p>
+					    	<p>（5）MQTT topic前缀由上述方法生成，填入基站编码后自动生成复制填入即可</p>
+					    </div>
+					  </el-alert>
+				</div>
+			</div>
+			
+			
+			<div class="page-box" v-loading="tableLoading">
+				<div class="page-box__title">桌牌列表</div>
+				<el-table
+				    :data="tableData"
+				    border
+				    stripe
+				    class="w-full mt-1">
+				    <el-table-column
+				      prop="name"
+				      label="名称"
+				      :show-overflow-tooltip="true"
+				      min-width="80"
+				      align="center"
+				      :formatter="formatNull">
+					</el-table-column>
+					
+					<el-table-column
+				      prop="placeName"
+				      label="所在地点"
+				      :show-overflow-tooltip="true"
+				      min-width="100"
+				      align="center"
+				      :formatter="formatNull">
+				      <template slot="header" slot-scope="scope">
+				      	<table-tree-filter v-model="tablePlaceIds" :data="placeData" 
+				      		:is-single="false" @change="changePlaces">所在地点</table-tree-filter>
+				      </template>
+				     </el-table-column>
+				     
+				     <el-table-column
+				      prop="uniqueCode"
+				      label="UUID"
+				      :show-overflow-tooltip="true"
+				      min-width="80"
+				      align="center"
+				      :formatter="formatNull">
+				     </el-table-column>
+				     
+				     <el-table-column
+				      label="下发内容"
+				      :show-overflow-tooltip="true"
+				      min-width="80"
+				      align="center"
+				      :formatter="formatNull">
+				      <template slot-scope="scope">
+				      	 <div v-if="scope.row.publishInfo == null">未下发</div>
+				      	 <div v-else>
+				      	 	<p v-if="scope.row.publishInfo.title">标题：{{scope.row.publishInfo.title}}</p>
+				      	 	<p v-if="scope.row.publishInfo.subTitle">副标题：{{scope.row.publishInfo.subTitle}}</p>
+				      	 </div>
+				      </template>
+				     </el-table-column>
+				     
+				     <el-table-column
+				      label="下发状态"
+				      :show-overflow-tooltip="true"
+				      min-width="80"
+				      align="center"
+				      :formatter="formatNull">
+				      <template slot-scope="scope">
+				      	 <div v-if="scope.row.publishStatus == null || scope.row.publishInfo == null">
+				      	 	<el-tag type="info">未知</el-tag>
+				      	 </div>
+				      	 <div v-else>
+				      	 	<el-tag type="success" v-if="scope.row.publishStatus == 1">已下发</el-tag>
+				      	 	<el-tag type="danger" v-if="scope.row.publishStatus == 4">下发中</el-tag>
+				      	 </div>
+				      </template>
+				     </el-table-column>
+				     
+				     <el-table-column
+				      label="在线状态"
+				      :show-overflow-tooltip="true"
+				      min-width="80"
+				      align="center">
+				      <template slot-scope="scope">
+				      	<div style="display: flex;align-content: center;justify-content: center;">
+		                  	 <div class="status-box active" v-if="scope.row.online">
+						      	 <span >在线</span>
+						     </div>
+						      	
+						     <div class="status-box" v-if="!scope.row.online">
+						      	 <span>离线</span>
+						     </div>
+		                  </div>
+				      </template>
+					</el-table-column>
+					
+					 <el-table-column
+				      label="操作"
+				      width="160"
+				      align="center">
+				       <template slot-scope="scope">
+				       	 <button class="font-btn" @click="republishToDevice(scope.row)">重发</button>
+				       	 <button class="font-btn" @click="showUploadDialog(scope.row)">下发图片</button>
+				       </template>
+				      </el-table-column>
+				</el-table>
+				<div class="mt-2 flex-center">
+					<el-pagination
+						background
+                        layout="prev, pager, next"
+                        :current-page="page.pageNum"
+                        :page-size="page.pageSize"
+                        :total="page.count"
+                        @current-change="getTableData">
+                     </el-pagination>
+				</div>
+			</div>
+			
+			<div class="page-box">
+				<div class="page-box__title">重发地点桌牌</div>
+				
+				<div class="align-center">
+					<tree-check v-model="placeIds" 
+						:data="placeData" 
+						placeholder="请选择地点" 
+						:collapse-tags="true"
+						:filter-node="allowRepublishPlace"></tree-check>
+						
+					<el-button size="small" type="primary" style="margin-left: 8px;" @click="republish">重新下发所选地点桌牌</el-button>
+					<div class="place-tooltip" :title="selectPlaceText">已选：{{selectPlaceText}}</div>
+				</div>
+				
+			</div>
+		</div>
+	</div>
+	
+	<tr-dialog
+		title="下发图片"
+		center
+		confirm-text="上传"
+		:visible.sync="uploadDialog.visible"
+		v-loading="uploadDialog.loading"
+		@confirm="confirmUpload">
+		<div class="mt-2 mb-2">
+			<el-upload
+			  :action="$global.fullServerUrl('api/tableCard/debug/upload')"
+			  ref="uploader"
+			  :show-file-list="false"
+			  :auto-upload="false"
+			  :on-change="changeUploadFile"
+			  :before-upload="beforeUpload"
+			  :on-success="handleUploadSuccess"
+			  :on-error="handleUploadError"
+			  :data="uploadDialog.data"
+			  accept="image/jpeg,image/png">
+			  <div class="upload-wrapper" :style="uploadStyle" slot="default">
+			  	 <el-image :src="uploadDialog.imgUrl" v-if="uploadDialog.imgUrl" fit="contain">
+				 </el-image>
+			  	 <i class="el-icon-plus" v-else></i>
+			  </div>
+			 
+			</el-upload>
+		</div>
+	</tr-dialog>
+</div>
+</body>
+<script src="/public/js/bluebird.min.js"></script>
+<script src="/public/js/vue.min.js"></script>
+<script src="/public/elementui/element-ui.js"></script>
+<script src="/public/js/jquery-3.3.1.min.js"></script>
+<script src="/public/js/config/config.js"></script>
+
+<script src="/public/locales/vue-i18n.js"></script>
+<script src="/public/element-ui-2.15.9/locale/lang/zh-CN.js"></script>
+<script src="/public/element-ui-2.15.9/locale/lang/en.js"></script>
+<script src="/public/locales/i18n-config.js"></script>
+<script src="/public/locales/i18n-all.js"></script>
+
+<script src="/public/js/common/vue-ajax.js"></script>
+<script src="/public/js/moment.min.js"></script>
+<script src="/public/js/common/common-util.js"></script>
+<script src="/public/js/common/vue-common-util.js"></script>
+<script src="/public/js/common/vue-directive.js"></script>
+<script src="/public/js/components/common.js"></script>
+<script src="/public/js/table-card/debug.js"></script>
+</html>

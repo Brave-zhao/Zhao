@@ -1,0 +1,10 @@
+Manifest-Version: 1.0
+Implementation-Title: controlServer
+Implementation-Version: 3.1.6-RELEASE
+Built-By: 26401
+Implementation-Vendor-Id: com.tenger
+Build-Jdk: 1.8.0_171
+Implementation-URL: https://projects.spring.io/spring-boot/#/spring-bo
+ ot-starter-parent/controlServer
+Created-By: Maven Integration for Eclipse
+

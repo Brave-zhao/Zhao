@@ -1,0 +1,17 @@
+spring:
+  application:
+    name: controlServer
+  jmx:
+    default-domain: controlServer
+
+# openfeign应用名称配置
+feign-custom:
+  client:
+    centralServer: centralServer
+    appointment: appointment
+    publish: publish
+    ipIntercom: ipIntercom
+  path:
+    centralServer: /centralServer/api
+    appointment: /release
+    ipIntercom: ipIntercom/release

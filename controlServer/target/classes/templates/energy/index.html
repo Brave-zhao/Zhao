@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>能耗分析</title>
+    <link rel="stylesheet" href="/public/css/v3/common/common.css">
+    <link rel="stylesheet" href="/public/css/v3/common/modal.css">
+    <link rel="stylesheet" href="/public/elementui/element-ui.css">
+    <link rel="stylesheet" href="/public/ali-icon/iconfont.css">
+    <link rel="stylesheet" href="/public/css/v3/common/el-custom.css">
+    <link rel="stylesheet" href="/public/css/v3/common/progress.css">
+    <link rel="stylesheet" href="/public/css/energy/reset.css">
+    <link rel="stylesheet" href="/public/css/energy/w-tree-filter.css">
+    <link rel="stylesheet" href="/public/css/energy/index.css">
+</head>
+<body>
+<div id="app" v-cloak>
+    <div style="min-width: 1170px;">
+        <div class="head-wrapper">
+            <div class="head">
+                <span></span><span>{{$t('head')}}</span>
+            </div>
+        </div>
+
+        <div class="content-wrapper" style="margin-bottom: 26px;">
+            <div class="screen">
+                <div class="flex">
+                    <div class="screen-item" style="min-width: 206px;">
+                        <span class="screen-item_title">{{$t('dialog.h1')}}</span>
+                        <w-tree-filter :value="placeData" :active-node-key.sync="placeIds"></w-tree-filter>
+                    </div>
+                    <div class="screen-item">
+                        <span class="screen-item_title">{{$t('dialog.h2')}}</span>
+                        <el-radio-group class="time-button-wrapper" v-model="time">
+                            <el-radio-button label="daily">{{$t('day')}}</el-radio-button>
+                            <el-radio-button label="month">{{$t('month')}}</el-radio-button>
+                            <el-radio-button label="year">{{$t('year')}}</el-radio-button>
+                        </el-radio-group>
+                    </div>
+                    <div class="screen-item">
+                        <span class="screen-item_title">{{$t('dialog.h3')}}</span>
+                        <el-date-picker
+                            :key="time"
+                            v-model="date"
+                            v-bind="datePickerOption"
+                            :format="$t('dateFormat')"
+                        >
+                        </el-date-picker>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="content-wrapper" style="margin: 0 30px; padding-bottom: 15px;">
+            <div class="flex mb-15">
+                <!-- 能耗饼图 -->
+                <div v-loading="chartLoading" class="negery-wrapper">
+                    <div class="title-wrapper">{{$t('dialog.h4')}}</div>
+                    <div id="echart1"></div>
+                    <el-button class="w-custom-button" type="primary" @click="downloadHandler(0)">{{$t('dialog.h5')}}</el-button>
+                </div>
+                <!-- 能耗表格 -->
+                <div v-loading="chartLoading" class="negery-table">
+                    <el-table class="negery-table_inner" :data="tableData" style="width: 100%;"
+                        max-height="357"
+                    >
+                        <el-table-column prop="name" :label="$t('dialog.h6')" min-width="100"
+                            align="center"
+                            show-overflow-tooltip
+                        >
+                        </el-table-column>
+                        <el-table-column prop="battery" :label="column[2] + '(Kwh)'" min-width="130"
+                            align="center"
+                            show-overflow-tooltip
+                            ref="col"
+                        >
+                        </el-table-column>
+                        <el-table-column prop="percentage" :label="$t('dialog.h7')"
+                            align="center"
+                            show-overflow-tooltip
+                        >
+                        </el-table-column>
+                        <el-table-column prop="latelyBattery" :label="column[4] + '(Kwh)'" min-width="140"
+                            align="center"
+                            show-overflow-tooltip
+                        >
+                        </el-table-column>
+                        <el-table-column prop="chainRatio" :label="$t('dialog.h8')"
+                            align="center"
+                            show-overflow-tooltip
+                        >
+                        </el-table-column>
+                    </el-table>
+                </div>
+            </div>
+            <!-- 二 -->
+            <div class="flex">
+                <!-- 能耗柱形图 -->
+                <div v-loading="chartLoading" class="negery-zhu-wrapper">
+                    <div class="title-wrapper">{{$t('dialog.h9')}}</div>
+                    <div id="echart2"></div>
+                    <el-button class="w-custom-button" type="primary" @click="downloadHandler(1)">{{$t('dialog.h5')}}</el-button>
+                </div>
+                <!-- 能耗折形图 -->
+                <div v-loading="chartLoading" class="negery-zhe-wrapper flex-grow-1">
+                    <div class="title-wrapper">{{$t('dialog.h9')}}</div>
+                    <div id="echart3"></div>
+                    <el-button class="w-custom-button" type="primary" @click="downloadHandler(1)">{{$t('dialog.h5')}}</el-button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+<script src="/public/js/vue.min.js"></script>
+<script src="/public/elementui/element-ui.js"></script>
+<script src="/public/js/jquery-3.3.1.min.js"></script>
+<script src="/public/js/config/config.js"></script>
+<script src="/public/js/date.js"></script>
+<script src="/public/js/ajax-el.js"></script>
+<script src="/public/js/image-compress.js"></script>
+<script src="/public/js/moment.min.js"></script>
+<script src="/public/js/common/iframe.js"></script>
+<script src="/public/js/common/constants.js"></script>
+<script src="/public/js/common/import-tip.js"></script>
+<script src="/public/js/common/common-util.js"></script>
+<!-- <script src="/public/js/echarts.min.js"></script> -->
+<script src="/public/js/echarts-5.2.min.js"></script>
+<script src="/public/js/brand-tree.js"></script>
+<script src="/public/js/check-all-checkbox.js"></script>
+<script src="/public/js/tr-dialog.js"></script>
+<script src="/public/js/clipboard.min.js"></script>
+<script src="/public/js/common/vue-directive.js"></script>
+<script src="/public/js/debounce.js"></script>
+
+<script src="/public/js/energy/w-tree-filter.js"></script>
+<!-- <script src="/public/js/energy/WebSocket.js"></script> -->
+<script src="/public/js/vue-i18n.js"></script>
+<script src="/public/js/config/i18n-config.js"></script>
+<script src="/public/js/i18n/energy/i18n-index.js"></script>
+<script src="/public/elementui/locale/lang/zh-CN.js"></script>
+<script src="/public/elementui/locale/lang/en.js"></script>
+<script src="/public/js/energy/index.js"></script>
+</html>

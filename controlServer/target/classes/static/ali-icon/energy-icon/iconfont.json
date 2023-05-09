@@ -1,0 +1,58 @@
+{
+  "id": "2820676",
+  "name": "controlserver空开",
+  "font_family": "iconfont",
+  "css_prefix_text": "icon-",
+  "description": "",
+  "glyphs": [
+    {
+      "icon_id": "12856630",
+      "name": "模式管理",
+      "font_class": "moshiguanli",
+      "unicode": "eca8",
+      "unicode_decimal": 60584
+    },
+    {
+      "icon_id": "20427976",
+      "name": "警告",
+      "font_class": "jinggao",
+      "unicode": "e68f",
+      "unicode_decimal": 59023
+    },
+    {
+      "icon_id": "1727533",
+      "name": "307感叹号-线性圆框",
+      "font_class": "gantanhao-xianxingyuankuang",
+      "unicode": "e8ec",
+      "unicode_decimal": 59628
+    },
+    {
+      "icon_id": "13422162",
+      "name": "OA考勤-取消-01",
+      "font_class": "OAkaoqin-quxiao-",
+      "unicode": "e62c",
+      "unicode_decimal": 58924
+    },
+    {
+      "icon_id": "23315804",
+      "name": "补签",
+      "font_class": "buqian",
+      "unicode": "e802",
+      "unicode_decimal": 59394
+    },
+    {
+      "icon_id": "6009205",
+      "name": "tooltip-info",
+      "font_class": "tooltip-info",
+      "unicode": "e690",
+      "unicode_decimal": 59024
+    },
+    {
+      "icon_id": "15756064",
+      "name": "tooltip-icon",
+      "font_class": "tooltip-icon",
+      "unicode": "e69f",
+      "unicode_decimal": 59039
+    }
+  ]
+}

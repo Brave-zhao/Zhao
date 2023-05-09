@@ -1,0 +1,256 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration scan="true" scanPeriod="60 seconds" debug="false">
+	<contextName>controlServer</contextName>
+	<property name="log.path" value="C:/log/controlServer/" />
+	<property name="log.pattern" value="[%d{HH:mm:ss.SSS}] %contextName [%thread] %-5level %msg [%logger{36}]%n" />
+	<property name="log.creator.path" value="${log.path}creator" />
+	<property name="log.zigbee.path" value="${log.path}zigbee" />
+	<!--输出到控制台-->
+	<appender name="console" class="ch.qos.logback.core.ConsoleAppender">
+		<!-- <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+		<level>ERROR</level>
+		</filter>-->
+		<encoder>
+<!-- 			<pattern>%d{HH:mm:ss.SSS} %contextName [%thread] %-5level %logger{36} - %msg%n</pattern> -->
+			<pattern>${log.pattern}</pattern>
+		</encoder>
+	</appender>
+	
+	<!--输出到文件-->
+	<appender name="file" class="ch.qos.logback.core.rolling.RollingFileAppender">
+		<file>${log.path}main.log</file>
+		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+			<fileNamePattern>${log.path}main.%d{yyyy-MM-dd}.log</fileNamePattern>
+		</rollingPolicy>
+		<encoder>
+			<pattern>${log.pattern}</pattern>
+		</encoder>
+	</appender>
+	
+	<!--creator包info级别以上文件输出-->
+	<appender name="creator_file" class="ch.qos.logback.core.rolling.RollingFileAppender">
+		<file>${log.creator.path}/creator.log</file>
+		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+			<fileNamePattern>${log.creator.path}/creator.%d{yyyy-MM-dd}.log</fileNamePattern>
+		</rollingPolicy>
+		<encoder>
+			<pattern>${log.pattern}</pattern>
+		</encoder>
+		<!-- 配置只记录info级别以上的 -->
+		 <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>INFO</level>
+        </filter>
+	</appender>
+	
+	<!--creator.netty包info级别以上文件输出-->
+	<appender name="netty_file" class="ch.qos.logback.core.rolling.RollingFileAppender">
+		<file>${log.creator.path}/netty.log</file>
+		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+			<fileNamePattern>${log.creator.path}/netty.%d{yyyy-MM-dd}.log</fileNamePattern>
+		</rollingPolicy>
+		<encoder>
+			<pattern>${log.pattern}</pattern>
+		</encoder>
+		<!-- 配置只记录info级别以上的 -->
+		 <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>INFO</level>
+        </filter>
+    </appender>
+	<!-- 敏测滚动日志 -->
+	<appender name="agdetFile" class="ch.qos.logback.core.rolling.RollingFileAppender">
+		<file>${log.path}agdet.log</file>
+		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+			<fileNamePattern>${log.path}agdet.%d{yyyy-MM-dd}.log</fileNamePattern>
+		</rollingPolicy>
+		<encoder>
+			<pattern>${log.pattern}</pattern>
+		</encoder>
+	</appender>
+	
+	<!-- 敏测schedule滚动日志 -->
+	<appender name="agdetScheduleFile" class="ch.qos.logback.core.rolling.RollingFileAppender">
+		<file>${log.path}agdet-schedule.log</file>
+		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+			<fileNamePattern>${log.path}agdet-schedule.%d{yyyy-MM-dd}.log</fileNamePattern>
+		</rollingPolicy>
+		<encoder>
+			<pattern>${log.pattern}</pattern>
+		</encoder>
+	</appender>
+	
+	<!--zigbee日志 -->
+	<appender name="zigbeeFile" class="ch.qos.logback.core.rolling.RollingFileAppender">
+		<file>${log.zigbee.path}zigbee.log</file>
+		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+			<fileNamePattern>${log.zigbee.path}zigbee.%d{yyyy-MM-dd}.log</fileNamePattern>
+		</rollingPolicy>
+		<encoder>
+			<pattern>${log.pattern}</pattern>
+		</encoder>
+	</appender>
+	
+	<!-- 红外传感器 -->
+	<appender name="infraredFile" class="ch.qos.logback.core.rolling.RollingFileAppender">
+		<file>${log.path}infrared.log</file>
+		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+			<fileNamePattern>${log.path}infrared.%d{yyyy-MM-dd}.log</fileNamePattern>
+		</rollingPolicy>
+		<encoder>
+			<pattern>${log.pattern}</pattern>
+		</encoder>
+		
+	</appender>
+	
+	<!-- 凯图网关空开 -->
+	<appender name="eastcatoFile" class="ch.qos.logback.core.rolling.RollingFileAppender">
+		<file>${log.path}eastcato.log</file>
+		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+			<fileNamePattern>${log.path}eastcato.%d{yyyy-MM-dd}.log</fileNamePattern>
+		</rollingPolicy>
+		<encoder>
+			<pattern>${log.pattern}</pattern>
+		</encoder>
+		
+		<!-- 配置只记录info级别以上的 -->
+		 <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>INFO</level>
+        </filter>
+	</appender>
+	
+	<!-- 温度传感器 -->
+	<appender name="sensorFile" class="ch.qos.logback.core.rolling.RollingFileAppender">
+		<file>${log.path}sensor.log</file>
+		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+			<fileNamePattern>${log.path}sensor.%d{yyyy-MM-dd}.log</fileNamePattern>
+		</rollingPolicy>
+		<encoder>
+			<pattern>${log.pattern}</pattern>
+		</encoder>
+		
+		<!-- 配置只记录info级别以上的 -->
+		 <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>INFO</level>
+        </filter>
+	</appender>
+	
+	<!-- 场景触发 -->
+	<appender name="eventFile" class="ch.qos.logback.core.rolling.RollingFileAppender">
+		<file>${log.path}event.log</file>
+		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+			<fileNamePattern>${log.path}event.%d{yyyy-MM-dd}.log</fileNamePattern>
+		</rollingPolicy>
+		<encoder>
+			<pattern>${log.pattern}</pattern>
+		</encoder>
+		
+		<!-- 配置只记录info级别以上的 -->
+		 <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>INFO</level>
+        </filter>
+	</appender>
+	
+	<!-- 墨水屏 -->
+	<appender name="einkFile" class="ch.qos.logback.core.rolling.RollingFileAppender">
+		<file>${log.path}eink.log</file>
+		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+			<fileNamePattern>${log.path}eink.%d{yyyy-MM-dd}.log</fileNamePattern>
+		</rollingPolicy>
+		<encoder>
+			<pattern>${log.pattern}</pattern>
+		</encoder>
+		
+		<!-- 配置只记录info级别以上的 -->
+		 <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>INFO</level>
+        </filter>
+	</appender>
+	
+	<root level="info">
+		<appender-ref ref="console" />
+		<appender-ref ref="file" />
+	</root>
+
+<!--
+	<logger name="com.tenger.control.repair" level="DEBUG" additivity="false">
+		<appender-ref ref="console"/>
+	</logger>
+-->
+
+	<logger name="com.tenger.control.creator" level="DEBUG" additivity="false">
+		<appender-ref ref="console"/>
+		<appender-ref ref="creator_file"/>
+    </logger>
+    
+    <logger name="com.tenger.control.creator.netty" level="DEBUG" additivity="false">
+		<appender-ref ref="console"/>
+		<appender-ref ref="netty_file"/>
+    </logger>
+    
+    <!-- 敏测 -->
+    <logger name="com.tenger.control.agdet" level="DEBUG" additivity="false">
+    	<!-- console仅测试，生产环境注释掉 -->
+    	<appender-ref ref="console" />
+    	<appender-ref ref="agdetFile" />
+    </logger>
+    
+    <!-- 敏测schedule -->
+    <logger name="com.tenger.control.agdet.web.schedule.AgdetSchedule" level="DEBUG" additivity="false">
+    	<!-- console仅测试，生产环境注释掉 -->
+    	<appender-ref ref="console" />
+    	<appender-ref ref="agdetScheduleFile" />
+    </logger>
+    
+    <!-- zigbee -->
+    <logger name="com.tenger.control.mqtt" level="INFO" additivity="false">
+    	<!-- console仅测试，生产环境注释掉 -->
+    	<appender-ref ref="console" />
+    	<appender-ref ref="zigbeeFile" />
+    </logger>
+
+	<logger name="org.eclipse.paho.client.mqttv3.MqttException" level="INFO" additivity="false">
+		<!-- console仅测试，生产环境注释掉 -->
+		<appender-ref ref="zigbeeFile" />
+	</logger>
+
+    
+     <logger name="com.tenger.control.infrared" level="INFO" additivity="false">
+    	<!-- console仅测试，生产环境注释掉 -->
+    	<appender-ref ref="console" />
+    	<appender-ref ref="infraredFile" />
+    </logger>
+    
+    <logger name="org.springframework.jms.listener.DefaultMessageListenerContainer" additivity="false">
+    	
+    </logger>
+    
+     <logger name="com.tenger.control.mqtt.eastcato" level="INFO" additivity="false">
+    	<!-- console仅测试，生产环境注释掉 -->
+    	<appender-ref ref="console" />
+    	<appender-ref ref="eastcatoFile" />
+    </logger>
+    
+    <logger name="com.tenger.control.mqtt.sensor" level="INFO" additivity="false">
+    	<!-- console仅测试，生产环境注释掉 -->
+    	<appender-ref ref="console" />
+    	<appender-ref ref="sensorFile" />
+    </logger>
+    
+    <logger name="com.tenger.control.event" level="INFO" additivity="false">
+    	<!-- console仅测试，生产环境注释掉 -->
+    	<appender-ref ref="console" />
+    	<appender-ref ref="eventFile" />
+    </logger>
+    
+    <logger name="com.tenger.control.mqtt.system" level="INFO" additivity="false">
+    	<!-- console仅测试，生产环境注释掉 -->
+    	<appender-ref ref="console" />
+    	<appender-ref ref="eventFile" />
+    </logger>
+    
+    <logger name="com.tenger.control.mqtt.tablecard" level="INFO" additivity="false">
+    	<!-- console仅测试，生产环境注释掉 -->
+    	<appender-ref ref="console" />
+    	<appender-ref ref="einkFile" />
+    </logger>
+    
+</configuration>

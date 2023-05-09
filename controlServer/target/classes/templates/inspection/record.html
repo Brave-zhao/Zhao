@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>巡检记录</title>
+    <link rel="stylesheet" href="/public/css/v3/common/common.css">
+    <link rel="stylesheet" href="/public/elementui/element-ui.css">
+    <link rel="stylesheet" href="/public/ali-icon/iconfont.css">
+    <link rel="stylesheet" href="/public/css/v3/common/el-custom.css">
+    <link rel="stylesheet" href="/public/css/components/common.css">
+    <link rel="stylesheet" href="/public/css/inspection/record.css">
+</head>
+<body>
+<div id="app" v-cloak v-loading="loading">
+    <div>
+        <div class="head-wrapper">
+            <div class="head">
+                <span></span><span >{{$t('p1')}}</span>
+            </div>
+        </div>
+        
+        <template v-if="!detail.show">
+        <div class="content-wrapper" style="margin-bottom: 0;">
+            <div class="screen">
+                <div class="flex">
+                	<div class="screen-item">
+                        <div @click="multiDelete" class="custom-button button-style2"><i class="el-icon-delete"></i>{{$tc('d', 2)}}
+                        </div>
+                    </div>
+                </div>
+                <div class="margin-l-20">
+                    <div class="screen-item">
+                        <el-input
+                                v-model="search"
+                                class="search-input"
+                                :placeholder="$t('p2')"
+                                @keyup.enter.native="changeSearch">
+                            <i @click="changeSearch" slot="suffix" class="el-input__icon el-icon-search"></i>
+                        </el-input>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="content-wrapper flex" style="margin: 0 30px">
+            <div class="width-full">
+                <el-table
+                        class="custom-table border-table"
+                        v-loading="tableLoading"
+                        :data="tableData"
+                        tooltip-effect="dark"
+                        style="width: 100%"
+                        @selection-change="handleSelectionChange">
+                    <el-table-column
+                         type="selection"
+                         width="55"
+                         align="center">
+                    </el-table-column>
+                    <el-table-column
+				      prop="name"
+				      :label="$t('p3')"
+				      :show-overflow-tooltip="true"
+				      min-width="150"
+				      align="center"
+				      :formatter="formatNull">
+					</el-table-column>
+					
+					<el-table-column
+					  prop="user"
+				      :label="$t('p4')"
+				      :show-overflow-tooltip="true"
+				      min-width="60"
+				      align="center"
+				      :formatter="formatCreator">
+					</el-table-column>
+					
+					<el-table-column
+				      :label="$t('p5')"
+				      :show-overflow-tooltip="true"
+				      min-width="80"
+				      align="center"
+				      :formatter="formatNull">
+				      <template slot-scope="scope">
+			      		<div>{{$t('p6')}}<span class="text-success">{{scope.row.statusEquipmentOnline}}</span></div>
+			      		<div>{{$t('p7')}}<span class="text-danger">{{scope.row.statusEquipmentOffline}}</span></div>
+				      </template>
+					</el-table-column>
+					
+					<el-table-column
+				      :label="$t('p8')"
+				      :show-overflow-tooltip="true"
+				      min-width="80"
+				      align="center"
+				      :formatter="formatNull">
+				      <template slot-scope="scope">
+			      		<div>{{$t('p9')}}<span class="text-success">{{scope.row.warningEquipmentTotal - scope.row.warningEquipmentAbnormal}}</span></div>
+			      		<div>{{$t('p10')}}<span class="text-danger">{{scope.row.warningEquipmentAbnormal}}</span></div>
+				      </template>
+					</el-table-column>
+					
+					<el-table-column
+				      label="设备故障"
+				      :show-overflow-tooltip="true"
+				      min-width="80"
+				      align="center"
+				      :formatter="formatNull">
+				      <template slot-scope="scope">
+			      		<div>{{$t('p11')}}<span class="text-success">{{scope.row.faultEquipmentTotal - scope.row.faultEquipmentAbnormal}}</span></div>
+			      		<div>{{$t('p12')}}<span class="text-danger">{{scope.row.faultEquipmentAbnormal}}</span></div>
+				      </template>
+					</el-table-column>
+					
+					<el-table-column
+				      :label="$t('p13')"
+				      :show-overflow-tooltip="true"
+				      min-width="60"
+				      align="center"
+				      :formatter="formatNull">
+				      <template slot-scope="scope">
+				      	{{Math.round(scope.row.progress)}}%
+				      </template>
+					</el-table-column>
+					
+					<el-table-column
+				      :show-overflow-tooltip="true"
+				      min-width="60"
+				      align="center"
+				      :formatter="formatNull">
+				       <template slot-scope="scope" slot="header">
+				       	 <table-filter :data="recordStatusOptions" @change="changeStatus" v-model="status">{{$t('p14')}}</table-filter>
+				       </template>
+				      <template slot-scope="scope">
+				      	{{recordStatusMap[scope.row.status] | filterUnknown}}
+				      </template>
+					</el-table-column>
+					
+					<el-table-column
+				      :show-overflow-tooltip="true"
+				      min-width="100"
+				      align="center"
+				      :formatter="formatNull">
+				      <template slot-scope="scope" slot="header">
+				      	<table-date-filter @change="changeDates" v-model="dates">{{$t('p15')}}</table-date-filter>
+				      </template>
+				      <template slot-scope="scope">
+				      	{{scope.row.startTime ? $global.formatDate(scope.row.startTime,'YYYY-MM-DD HH:mm') : '——'}}
+				      </template>
+					</el-table-column>
+					
+					<el-table-column
+				      :label="$t('p16')"
+				      :show-overflow-tooltip="true"
+				      min-width="60"
+				      align="center"
+				      :formatter="formatNull">
+				      <template slot-scope="scope">
+				      	{{Math.ceil(scope.row.duration / 1000)}}{{$t('p21')}}
+				      </template>
+					</el-table-column>
+					
+					<el-table-column
+			     	   :label="$t('operate')"
+                       align="center"
+                       min-width="140">
+                       <template slot-scope="scope">
+                       	 	<div class="flex justify-center">
+                                <div @click="showDetails(scope.row)" class="font-btn">{{$t('p17')}}</div>
+                                <div @click="exportRecord(scope.row)" class="font-btn">{{$t('p34')}}</div>
+                                <div @click="singleDelete(scope.row)" class="font-btn" >{{$tc('d', 1)}}</div>
+                            </div>
+                       </template>
+					</el-table-column>
+                </el-table>
+                <div class="flex table-bottom relative justify-center">
+                    <tr-pagination
+                             background
+                             layout="prev, pager, next"
+                             :current-page="page.pageNum"
+                             :page-size="page.pageSize"
+                             :total="page.count"
+                             @current-change="getTableData">
+                     </tr-pagination>
+                </div>
+            </div>
+        </div>
+        </template>
+        
+        <!-- 详情列表 -->
+        <template v-if="detail.show">
+        <div class="content-wrapper" style="margin-bottom: 0;">
+            <div class="screen">
+                <div class="flex">
+                	<div class="screen-item">
+                		<button type="text" class="main-color text-btn" @click="goBack">
+                			<i class="el-icon-arrow-left"></i>{{$t('p18')}}
+                		</button>
+                	</div>
+                	<div class="screen-item">
+                		<div @click="multiIgnoreDetails" class="custom-button button-style6"><i class="el-icon-remove-outline"></i>{{$t('p19')}}
+                        </div>
+                	</div>
+                	<div class="screen-item">
+                		<div @click="multiDeleteDetails" class="custom-button button-style2"><i class="el-icon-delete"></i>{{$tc('d', 2)}}
+                        </div>
+                	</div>
+                	
+                	<div class="screen-item">
+                		<span style="color: #8b9ba5">（{{$t('p20')}}{{Math.ceil(detail.record.duration / 1000)}}{{$t('p21')}}，
+                		{{$t('p22')}}{{stepDeviceInfo.total}}，
+                		{{$t('p23')}}{{stepDeviceInfo.abnormal}}）</span>
+                	</div>
+                </div>
+                <div class="margin-l-20 flex align-center">
+                	<div class="screen-item">
+                		<el-radio-group v-model="detail.step" size="small" 
+                			class="custom-radio-group"
+                			@change="changeDetailStep">
+					      <el-radio-button :label="item.value" 
+					      	v-for="item in stepOptions" 
+					      	:key="item.value">{{item.label}}</el-radio-button>
+					    </el-radio-group>
+                    </div>
+                    <div class="screen-item">
+                        <el-input
+                                v-model="detail.search"
+                                class="search-input"
+                                :placeholder="$t('p24')"
+                                @keyup.enter.native="changeDetailSearch">
+                            <i @click="changeDetailSearch" slot="suffix" class="el-input__icon el-icon-search"></i>
+                        </el-input>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="content-wrapper flex" style="margin: 0 30px">
+            <div class="width-full">
+                <el-table
+                        class="custom-table border-table"
+                        v-loading="tableLoading"
+                        :data="detail.data"
+                        tooltip-effect="dark"
+                        style="width: 100%"
+                        @selection-change="handleDetailSelectionChange">
+                    <el-table-column
+                       type="selection"
+                       align="center"
+                       width="55">
+                    </el-table-column>
+                    <el-table-column
+                      prop="propertyName"
+				      :label="$t('p25')"
+				      :show-overflow-tooltip="true"
+				      min-width="100"
+				      align="center"
+				      :formatter="formatNull">
+					</el-table-column>
+					
+					<el-table-column
+                      prop="placeName"
+				      :label="$t('p26')"
+				      :show-overflow-tooltip="true"
+				      min-width="100"
+				      align="center"
+				      :formatter="formatNull">
+					</el-table-column>
+					
+					<el-table-column
+                      prop="content"
+				      :label="$t('p27')"
+				      :show-overflow-tooltip="true"
+				      min-width="160"
+				      align="center"
+				      :formatter="formatNull">
+					</el-table-column>
+					
+					<el-table-column
+				      :show-overflow-tooltip="true"
+				      min-width="120"
+				      align="center">
+				      <template slot-scope="scope" slot="header">
+				      	<table-date-filter v-model="detail.dates" @change="changeDetailDates">{{$t('p28')}}</table-date-filter>
+				      </template>
+				      <template slot-scope="scope">
+				      	{{scope.row.time ? $global.formatDate(scope.row.time, "YYYY-MM-DD HH:mm") : "——"}}
+				      </template>
+					</el-table-column>
+					
+					<el-table-column
+				      :label="$t('p29')"
+				      :show-overflow-tooltip="true"
+				      min-width="80"
+				      align="center">
+				      <template slot-scope="scope">
+				      	{{stepMap[scope.row.step] | filterUnknown}}
+				      </template>
+					</el-table-column>
+					
+					<el-table-column
+				      :label="$t('p14')"
+				      :show-overflow-tooltip="true"
+				      min-width="80"
+				      align="center">
+				      <template slot-scope="scope">
+				      	{{detailStatusMap[scope.row.status] | filterUnknown}}
+				      </template>
+					</el-table-column>
+					
+					<el-table-column
+				      :label="$t('p30')"
+				      :show-overflow-tooltip="true"
+				      min-width="80"
+				      align="center">
+				      <template slot-scope="scope">
+				      	{{scope.row.duration}}{{$t('p35')}}
+				      </template>
+					</el-table-column>
+					
+					<el-table-column
+				      :label="$t('operate')"
+				      min-width="120"
+				      align="center">
+				      <template slot-scope="scope">
+				      	<div class="flex justify-center">
+                             <div @click="cancelIgnoreDetail(scope.row)" class="font-btn" v-if="scope.row.status == 3">{{$t('p31')}}</div>
+                             <div @click="singleIgnoreDetail(scope.row)" class="font-btn" v-if="scope.row.status != 3">{{$t('p32')}}</div>
+                             <div @click="singleDeleteDetail(scope.row)" class="font-btn" >{{$tc('d', 1)}}</div>
+                         </div>
+				      </template>
+					</el-table-column>
+                 </el-table>
+                 <div class="flex table-bottom relative justify-center">
+                 	<div class="table-bottom__left">
+                 		<el-checkbox v-model="detail.showIgnored" @change="getDetailData(1)">{{$t('p33')}}</el-checkbox>
+                 	</div>
+                    <tr-pagination
+                             background
+                             layout="prev, pager, next"
+                             :current-page="detailPage.pageNum"
+                             :page-size="detailPage.pageSize"
+                             :total="detailPage.count"
+                             @current-change="getDetailData">
+                     </tr-pagination>
+                </div>
+              </div>
+        </div>
+        </template>
+    </div>
+    
+</div>
+</body>
+<script src="/public/js/bluebird.min.js"></script>
+<script src="/public/js/vue.min.js"></script>
+<script src="/public/elementui/element-ui.js"></script>
+<script src="/public/js/jquery-3.3.1.min.js"></script>
+<script src="/public/js/config/config.js"></script>
+
+<script src="/public/locales/vue-i18n.js"></script>
+<script src="/public/element-ui-2.15.9/locale/lang/zh-CN.js"></script>
+<script src="/public/element-ui-2.15.9/locale/lang/en.js"></script>
+<script src="/public/locales/i18n-config.js"></script>
+<script src="/public/locales/i18n-all.js"></script>
+
+<script src="/public/js/ajax-el.js"></script>
+<script src="/public/js/moment.min.js"></script>
+<script src="/public/js/common/iframe.js"></script>
+<script src="/public/js/common/common-util.js"></script>
+<script src="/public/js/common/vue-common-util.js"></script>
+<script src="/public/js/common/vue-directive.js"></script>
+<script src="/public/js/components/common.js"></script>
+<script src="/public/js/inspection/record.js"></script>
+</html>

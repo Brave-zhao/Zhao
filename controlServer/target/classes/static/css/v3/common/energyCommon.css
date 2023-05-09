@@ -1,0 +1,145 @@
+.head-wrapper {
+    margin: 8px 20px;
+}
+
+.head {
+    border-left: 3px solid #43B498;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    padding: 0 11px;
+    color: #999999;
+    font-size: 16px;
+}
+
+.head>span:nth-child(2) {
+    color: #43B498;
+}
+
+.content-wrapper {
+    margin: 30px 30px 20px 20px;
+}
+
+.energy-screen {
+    overflow: hidden;
+    height: 56px;
+    background: #FFFFFF;
+    border: 1px solid #DEDEDE;
+    box-shadow: 0px 3px 5px 1px rgba(210, 210, 210, 0.21);
+    border-radius: 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 30px;
+    font-size: 14px;
+}
+
+.screen-item {
+    display: flex;
+    align-items: center;
+}
+
+.screen-item>span {
+    color: #BBBBBB;
+    margin-right: 10px;
+    flex-shrink: 0;
+}
+
+.flex-items-center {
+    display: flex;
+    align-items: center;
+}
+
+.flex-between {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.flex-center {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.flex-column {
+    display: flex;
+    flex-direction: column;
+}
+
+.warp {
+    flex-wrap: wrap;
+}
+
+/*#region CodeHighlighter  宽高*/
+
+.wh100 {
+    width: 100%;
+    height: 100%;
+}
+
+.h100 {
+    height: 100%;
+}
+
+.w100 {
+    width: 100%;
+}
+
+/*#endregion CodeHighlighter*/
+
+.fixed {
+    position: fixed;
+}
+
+.pointer {
+    cursor: pointer;
+}
+
+.pos-abs {
+    position: absolute;
+}
+
+.pos-rel {
+    position: relative;
+}
+
+.call-police {
+    right: 0;
+    opacity: 0;
+    transition: all 0.5s;
+}
+
+.showpolice,
+.showpolice-off {
+    -webkit-animation: switchcallpolice 1s infinite;
+    -moz-animation: switchcallpolice 1s infinite;
+    -ms-animation: switchcallpolice 1s infinite;
+    animation: switchcallpolice 1s infinite;
+}
+
+@keyframes switchcallpolice {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+.el-input__inner:hover {
+    cursor: pointer;
+}
+
+.opacity08:hover {
+    opacity: 0.8;
+}
+
+.el-loading-spinner .path {
+    stroke: #43B498;
+}
+
+.ft-14 {
+    font-size: 14px !important;
+}

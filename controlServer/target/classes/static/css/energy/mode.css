@@ -1,0 +1,298 @@
+.screen-item .el-input__inner {
+    border-radius: 17px;
+    font-size: 14px;
+    font-family: PingFang SC;
+    font-weight: bold;
+    color: #666666;
+}
+
+.screen-item+.screen-item {
+    margin-left: 38px;
+}
+
+.screen-item.back i {
+    font-size: 13px;
+}
+
+.screen-item span {
+    color: #333;
+}
+
+.screen-item span+span {
+    color: #666;
+}
+
+.screen-status {
+    width: 10px;
+    height: 10px;
+    background: #CCCCCC;
+    border-radius: 50%;
+    margin-right: 4px;
+}
+
+.screen-status.active {
+    background: #43B498;
+}
+
+.screen-item-label {
+    font-size: 16px;
+    font-family: PingFang SC;
+    font-weight: bold;
+    color: #333333;
+}
+
+/* 表格 */
+
+.el-table .cell {
+    position: relative;
+    text-align: center;
+    font-size: 14px;
+    font-family: PingFang SC;
+    font-weight: 500;
+    color: #666666;
+}
+
+/* .el-tooltip__popper .popper__arrow,
+.el-tooltip__popper .popper__arrow:after {
+    max-width: 480px;
+} */
+
+.el-tooltip__popper.is-dark {
+    max-width: 480px;
+}
+
+/* 操作 */
+.table-button {
+    width: 70px;
+    height: 33px;
+    background: #55BBA2;
+    box-shadow: 0px 0px 10px 0px rgba(254, 179, 184, 0.4);
+    opacity: 0.9;
+    border-radius: 5px;
+}
+
+.table-button span {
+    color: #fff;
+}
+
+.table-separator {
+    color: #43B498;
+    font-size: 12px;
+    margin: 2px 15px 0 0;
+}
+
+.table-detail-box {
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+.el-table__empty-block {
+    display: inline-block;
+}
+
+
+/* 底部 */
+.energy-footer {
+    bottom: 20px;
+    height: 50px;
+    width: 100%;
+    /* padding: 0 48px; */
+}
+
+.page .number,
+.page .btn-prev,
+.page .btn-next {
+    width: 34px;
+    height: 34px;
+    border: 1px solid #DEDEDE;
+}
+
+.page .number {
+    line-height: 32px;
+}
+
+.page .number.active {
+    background-color: #43B498;
+    color: #fff;
+    border: 1px solid #43B498;
+}
+
+.page .btn-prev {
+    border-right: none;
+}
+
+.page .btn-next {
+    border-left: none;
+}
+
+.el-pager li:hover {
+    color: #43B498;
+}
+
+.el-pagination button:hover {
+    color: #43B498;
+}
+
+.page .number+.number {
+    border-left: none;
+}
+
+/* 修改模式 */
+.el-dialog__title {
+    font-size: 26px;
+    font-family: PingFang SC;
+    font-weight: bold;
+    color: #333333;
+}
+
+.el-dialog__header {
+    border-bottom: 1px solid #DEDEDE;
+}
+
+.el-dialog__headerbtn {
+    width: 29px;
+    height: 29px;
+    background: #CBC8CB;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.el-dialog__headerbtn .el-dialog__close {
+    color: #fff;
+}
+
+.el-dialog {
+    border-radius: 14px;
+}
+
+.tr-dialog__footer-btn {
+    width: 180px;
+    height: 34px;
+    background: #43B498;
+    border-radius: 6px;
+    border: none;
+    outline: none;
+    color: #fff;
+    margin: 20px auto 0;
+    display: block;
+    font-size: 18px;
+    font-family: PingFang SC;
+    font-weight: 500;
+}
+
+.mode-item-box+.mode-item-box {
+    margin-top: 27px;
+}
+
+.mode-item {
+    margin-top: 8px;
+    background: #F8F9FA;
+    border-radius: 6px;
+    padding: 10px;
+    font-size: 14px;
+    font-family: PingFang SC;
+    font-weight: 400;
+    color: #333333;
+}
+
+.el-checkbox__inner::after {
+    top: 3px;
+    left: 3px;
+}
+
+.el-checkbox__inner::after {
+    border-radius: 50%;
+    border: none;
+    width: 5px;
+    height: 5px;
+    background: #fff;
+}
+
+.el-checkbox__inner {
+    width: 15px;
+    height: 15px;
+    border-radius: 50%;
+    border-color: #DCDCDC;
+}
+
+.mode-item.dialog-description {
+    height: 96px;
+    overflow: auto;
+}
+
+/* .mode-item.dialog-checkbox {
+    height: 140px;
+    overflow: auto;
+} */
+
+.mode-item.dialog-description input {
+    border: none;
+    outline: none;
+    background-color: transparent;
+}
+
+.checkbox-content {
+    margin-top: 19px;
+}
+
+.mode-item.dialog-description .el-textarea__inner {
+    resize: none;
+    border: none;
+    background-color: transparent;
+}
+
+.checkbox-content .el-checkbox {
+    /* height: 40px; */
+    /*  width: 65px;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis; */
+}
+
+.checkbox-item {
+    margin-right: 15px;
+    padding: 5px;
+    border: 1px solid transparent;
+}
+
+.equipment-switch-box {
+    margin-top: 12px;
+}
+
+::-webkit-scrollbar {
+    display: none;
+}
+
+.el-switch__core::before {
+    content: "Off";
+    position: absolute;
+    top: 0;
+    right: 5px;
+    font-size: 10px;
+    font-family: PingFang SC;
+    font-weight: 400;
+    color: #333333;
+}
+
+.el-switch__core {
+    width: 45px !important;
+}
+
+.is-checked .el-switch__core::before {
+    content: "On";
+    position: absolute;
+    top: -1px;
+    left: 5px;
+    font-size: 10px;
+    font-family: PingFang SC;
+    font-weight: 400;
+    color: #333333;
+}
+
+.checkbox-active {
+    border: 1px solid #36B688;
+    border-radius: 10px;
+}

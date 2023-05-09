@@ -1,0 +1,251 @@
+
+/* region # 管理部门弹框内容 */
+.dep-wrapper {
+    height: 652px;
+    background: #FFFFFF;
+    border: 1px solid #DEDEDE;
+    border-radius: 4px;
+}
+/* 标题区 */
+.dep-head-wrapper {
+    height: 60px;
+    border-bottom: 1px solid #DEDEDE;
+}
+.dep-head-wrapper i {
+    font-size: 28px;
+    line-height: 1;
+    color: rgb(204, 204, 204);
+    cursor: pointer;
+    padding: 8px;
+    position: absolute;
+    right: 0;
+}
+/* 内容区 */
+.dep-content-wrapper {
+    min-height: 521px;
+    padding: 32px 80px 39px;
+}
+.depBox-left {
+    width: 400px;
+    height: 450px;
+    background: #FFFFFF;
+    border: 1px solid #DEDEDE;
+    box-shadow: 0px -2px 10px 0px rgba(0, 0, 0, 0.05);
+}
+.depBox-left > :only-child {
+    height: 100% !important;
+}
+/* 自定义tree样式 */
+.depTree .el-tree-node__content {
+    height: 45px;
+}
+.custom-tree-node {
+    flex-grow: 1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 14px;
+    padding-right: 10px;
+}
+/* 自定义选择人的样式 */
+.person-wrapper {
+    height: 100%;
+}
+.dep-wrapper .el-scrollbar {
+    height: calc(100% - 56px);
+}
+.person-list {
+    height: calc(100% - 41px - 56px);
+}
+.person-dep {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 10px;
+    border-bottom: 1px solid #eee;
+}
+.person-dep > span {
+    text-overflow: ellipsis;
+    flex-grow: 1;
+    width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+}
+.person-dep .el-button {
+    margin-left: 10px;
+}
+/* end */
+.detpBox-left_btn-wrapper {
+    border-top: 1px solid #F1F1F1;
+    height: 56px;
+    box-sizing: border-box;
+}
+.depBox-right {
+    width: 400px;
+    height: 450px;
+    background: #F7F7F7;
+    box-shadow: 0px 3px 7px 0px rgba(0, 0, 0, 0.05);
+}
+.dexBox-right_wrapper {
+    padding-left: 15px;
+    padding-right: 20px;
+}
+.dexBox-right_item {
+    display: flex;
+    width: 100%;
+    flex-direction: row-reverse;
+    justify-content: space-between;
+    align-items: center;
+    height: 60px;
+}
+/* 用户 */
+.depUser-wrapper{
+    padding-left: 15px;
+    padding-right: 20px;
+}
+.depUser-item {
+    display: flex;
+    width: 100%;
+    align-items: center;
+    height: 60px;
+}
+.depUser-item_img {
+    width: 50px;
+    height: 50px;
+    object-fit: contain;
+    margin-right: 15px;
+    border-radius: 50%;
+    overflow: hidden;
+}
+.depUser-item_title {
+    font-size: 16px;
+    color: #333;
+}
+.depUser-item i {
+    margin-left: auto;
+    padding-top: 5px;
+    padding-bottom: 5px;
+    padding-left: 5px;
+    cursor: pointer;
+    font-size: 16px;
+}
+.dexBox-right_item + .dexBox-right_item  {
+    border-top: 1px solid #EDEDED;
+}
+.depBox-middle {
+    width: 400px;
+    height: 450px;
+    background: #F7F7F7;
+    box-shadow: 0px 3px 7px 0px rgba(0, 0, 0, 0.05);
+}
+/* 按钮区 */
+.dep-btn-wrapper  {
+    height: 70px;
+    background: #FAFAFB;
+    border: 1px solid #DEDEDE;
+    border-radius: 0px 0px 4px 4px;
+}
+.dep-btn-wrapper .el-button {
+    width: 100px;
+    height: 34px;
+    border: 1px solid #DEDEDE;
+    border-radius: 4px;
+}
+
+.dep-btn-wrapper .el-button:focus, .el-button:hover {
+    opacity: .7;
+}
+/* endregion */
+
+
+
+
+/* region # 初始化样式 */
+/* div, span {
+    box-sizing: border-box;
+}
+span {
+    display: inline-block;
+} */
+
+.dep-wrapper,
+.dep-wrapper > div,
+.dep-wrapper > span {
+    box-sizing: border-box;
+}
+.dep-wrapper > span {
+    display: inline-block;
+    font-size: inherit;
+}
+
+/* region # 空白dialog 弹框，外部再加个flex-center完美 */
+.kb-dialog {
+    margin-top: 44px !important;
+    background-color: transparent;
+    width: auto;
+}
+    /* title */
+.kb-dialog .el-dialog__header {
+    display: none;
+}
+.kb-dialog .el-dialog__title {
+}
+.kb-dialog .el-dialog__headerbtn .el-dialog__close {
+}
+    /* body */
+.kb-dialog .el-dialog__body {
+    padding: 0;
+}
+/* endregion */
+
+.flex-center {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.flex-start-center {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+}
+.mr-5 {
+    margin-right: 5px;
+}
+.mr-10 {
+    margin-right: 10px;
+}
+.mr-15 {
+    margin-right: 15px;
+}
+.mr-20 {
+    margin-right: 20px;
+}
+.mr-30 {
+    margin-right: 30px;
+}
+
+.ml-20 {
+    margin-left: 20px;
+}
+
+
+.color-999 {
+    color: #999;
+}
+.color-333 {
+    color: #333;
+}
+.color-bbb {
+    color: #bbb;
+}
+
+.font-18 {
+    font-size: 18px;
+}
+.font-italic {
+    font-style: italic;
+}
+.bg-fff {
+    background-color: #fff;
+}
+

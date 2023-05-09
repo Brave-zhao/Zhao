@@ -1,0 +1,261 @@
+/* ================================== w-checkbox-filter ====================== */
+/* 
+    搜索、复选框形式的数据选择弹框
+*/
+.tree-wrapper {
+    margin: 0 auto;
+    width: 200px;
+    /* height: 334px; */
+    background: #FFFFFF;
+    border: 1px solid #DEDEDE;
+    box-shadow: 0px 5px 8px 0px rgba(0, 0, 0, 0.08);
+    background-color: white;
+}
+/* 搜索 */
+.search-item {
+    width: 186px;
+    height: 34px;
+    background-color: #FCFCFD;
+    border: 1px solid #DEDEDE;
+    box-shadow: 0px 2px 5px 0px rgba(0, 0, 0, 0.06);
+    border-radius: 5px;
+    font-size: 14px;
+    color: #666666;
+    
+    display: flex;
+    align-items: center;
+    
+    margin: 6px auto;
+}
+.search-item .input {
+    width: 0;
+    flex-grow: 1;
+    height: 100%;
+    padding-left: 10px;
+    background-color: transparent;
+    
+    outline: 0 none;
+    border: none;
+}
+.search-item .iconfont {
+    padding: 0 10px;
+    font-size: 25px;
+    color: #43b498;
+}
+
+/* 复选框内容区 */
+.w-content-item {
+    height: 240px;
+}
+
+.w-checkboxGroup {
+    display: flex;
+    flex-direction: column;
+}
+.w-checkboxGroup .el-checkbox + .el-checkbox {
+    margin-left: 0;
+}
+.w-checkboxGroup .el-checkbox {
+    height: 40px;
+    display: flex;
+    align-items: center;
+    padding-left: 25px;
+}
+.w-checkboxGroup .el-checkbox:hover {
+    background-color: #43b498;
+}
+.w-checkboxGroup .el-checkbox:hover .el-checkbox__label {
+    color: white;
+}
+.w-checkboxGroup .el-checkbox:hover .el-checkbox__inner {
+    border-color: #eee;
+}
+.w-checkboxGroup .el-checkbox__inner:hover {
+    border-color: #eee;
+}
+/* 复选框形式样式 */
+
+.w-radioGroup {
+    display: flex;
+    flex-direction: column;
+    padding: 0 8px;
+}
+.w-radioGroup .el-radio-button {
+    display: flex;
+    align-items: center;
+    height: 40px;
+}
+.w-radioGroup .el-radio-button.is-active {
+    background-color: #F1F1F1 !important;
+}
+.w-radioGroup .el-radio-button__inner {
+    color: #333 !important;
+    font-size: 14px !important;
+    width: auto !important;
+    padding-left: 18px;
+}
+.w-radioGroup .el-radio-button.is-active .el-radio-button__inner {
+    background-color: transparent !important;
+    color: #333 !important;
+    border: none !important;
+    box-shadow: none !important;
+    transition: none;
+}
+.el-radio-button:focus:not(.is-focus):not(:active):not(.is-disabled) {
+    box-shadow: none !important;
+}
+
+
+.w-content-item {
+    height: auto;
+}
+.w-content-item .el-scrollbar {
+    padding-bottom: 17px;
+}
+.w-content-item .el-scrollbar__view {
+    min-height: 40px;
+    max-height: 300px;
+}
+/* 空展位符 */
+.w-radioGroup:empty::before,
+.w-checkboxGroup:empty::before {
+    content: "——";
+    color: gray;
+    font-size: 14px;
+
+    position: absolute;
+    left: 0; right: 0; bottom: 0; top: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* download 包装 */
+.w-dropdown {
+    cursor: pointer;
+}
+
+
+.w-el-dropdown-menu {
+    padding: 0;
+    background: transparent;
+    border: none;
+    box-shadow: none;
+}
+.w-el-dropdown-menu .el-dropdown-menu__item {
+    padding: 0;
+}
+.w-el-dropdown-menu .popper__arrow {
+    display: none;
+}
+/* 看情况调 */
+.el-dropdown-menu__item:focus, .el-dropdown-menu__item:not(.is-disabled):hover {
+    background-color: initial;
+    color: initial;
+}
+
+/* ---------- */
+
+/* 取消横向滚动条样式 */
+/* .t-content-item .el-scrollbar__wrap { height: calc(100% + 17px); overflow: auto; } */
+.t-content-item .el-scrollbar__wrap {
+    overflow-x: scroll !important;
+    overflow-y: scroll !important;
+}
+
+.btn-group-item {
+    width: 176px;
+    height: 43px;
+    border-top: 1px solid #F1F1F1;
+    margin: 0 auto;
+    
+    display: flex;
+    align-items: center;
+}
+
+
+.tree-popper.el-popper {
+    margin: 0;
+    padding: 0;
+    box-shadow: none;
+    border: none;
+    margin-top: 10px;
+    background: transparent;
+}
+
+
+/* 文本按钮样式 */
+.el-button--text {
+    color: #333;
+    background: 0 0;
+    padding-left: 0;
+    padding-right: 0
+}
+.el-button--text:focus,.el-button--text:hover {
+    color: #43b498;
+    border-color: transparent;
+    background-color: transparent
+}
+.el-button--text:active {
+    color: #43b498;
+    background-color: transparent
+}
+
+.custom-select {
+    width: 100%;
+    height: 100%;
+    box-sizing: border-box;
+    border: 1px solid #DCDFE6;
+    border-radius: 4px;
+    
+    display: flex;
+    align-items: center;
+    padding-left: 15px;
+
+    color: #43b498;
+    padding-right: 35px;
+}
+.custom-select-icon {
+    color: #C0C4CC;
+    position: absolute;
+    right: 12px;
+    margin: auto;
+}
+
+.custom-select:hover {
+    border-color: #C0C4CC
+}
+
+
+.t-content-item .el-tree-node__content {
+    height: 40px;
+}
+.x-diDian-wrapper {
+    position: relative;
+    background-color: #fff;
+    width: 140px;
+    padding: 5px 8px;
+    text-align: left;
+    border: 1px solid #DCDFE6;
+    border-radius: 4px;
+    transition: border-color .2s cubic-bezier(.645,.045,.355,1);
+}
+.x-diDian-wrapper:hover {
+    border-color: #C0C4CC;
+}
+.x-diDian-wrapper:focus {
+    border-color: #43b498;
+}
+
+.x-diDian-wrapper input {
+    width: 100%;
+}
+.x-diDian-wrapper i {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #C0C4CC;
+    font-size: 12px;
+}
+/* end ================================== w-checkbox-filter ====================== */

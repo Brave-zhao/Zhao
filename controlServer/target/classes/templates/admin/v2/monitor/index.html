@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+	<meta name="renderer" content="webkit">
+	<meta name="viewport"
+		content="width=device-width, initial-scale=1.0, minimum-scale=0.5, maximum-scale=2.0, user-scalable=yes" />
+	<title>监控窗口</title>
+	<link rel="stylesheet" href="/public/element-ui-2.15.9/theme/index.css">
+	<link rel="stylesheet" href="/public/css/components/common.css">
+	<link rel="stylesheet" href="/public/css/common/admin-common.css">
+	<link rel="stylesheet" href="/public/font-awesome/css/font-awesome.min.css">
+	<link rel="stylesheet" href="/public/ali-icon/control/iconfont.css">
+	<link rel="stylesheet" href="/public/css/common/custom-element.css">
+
+	<link rel="stylesheet" href="/public/css/admin/v2/monitor/index.css">
+	<style type="text/css">
+		[v-cloak] {
+			display: none;
+		}
+	</style>
+</head>
+
+<body>
+	<div id="app" v-cloak class="wh100">
+		<div class="v2-monitor-container flex bg-24222A wh100">
+			<!-- 地点筛选 -->
+			<div class="place bg-302d39 h100 flex column shrink-0">
+				<div class="search-switch-content shrink-0">
+					<!-- 切换 -->
+					<div>
+						<div class="flex switch-classroom pointer">
+							<div class="single" @click="changeClassroomType(0)"
+								:class="{ 'active-bg': place.type === 0 }">
+								<span>{{ $t("v2miml1") }}</span>
+							</div>
+							<div class="many" @click="changeClassroomType(1)"
+								:class="{ 'active-bg': place.type === 1 }">
+								<span>{{ $t("v2miml2") }}</span>
+							</div>
+						</div>
+					</div>
+					<!-- 搜索 -->
+					<div class="place-search-content">
+						<div class="flex place-search">
+							<i class="iconfont iconsousuo2 active-color"></i>
+							<el-input class="black-input" type="text" :placeholder="$t('v2miml3')"
+								v-model="place.search"></el-input>
+						</div>
+					</div>
+				</div>
+				<div class="place-line-content">
+					<div class="place-line"></div>
+				</div>
+				<!-- 地点树 -->
+				<div class="place-content">
+					<el-scrollbar class="custom-scrollbar">
+						<!-- 单课室 -->
+						<el-tree v-if="place.type == 0"
+							class="custom-tree el-tree--highlight-current black-tree-single black-tree"
+							:props="place.props" :filter-node-method="filterNode" ref="placeTree" :indent="25"
+							:default-expanded-keys="place.defauleIds" @node-click="changeSinglePlaceNode"
+							:current-node-key="place.id" node-key="id" :data="place.classroomList">
+						</el-tree>
+						<el-tree v-else class="custom-tree el-tree--highlight-current black-tree" :props="place.props"
+							:filter-node-method="filterNode" :show-checkbox="true" ref="placeTree"
+							:default-expanded-keys="place.defauleIds" @check="checkChangePlaceNode" :indent="25"
+							:default-checked-keys="defaultCheckedIds" :current-node-key="place.id" node-key="id"
+							:data="place.list">
+						</el-tree>
+					</el-scrollbar>
+				</div>
+			</div>
+
+			<div class="player-container">
+				<div class="wh100 flex column" v-if="place.type === 1">
+					<!-- 头 -->
+					<div class="flex flex-between bg-302d39 statistics-title shrink-0">
+						<!-- 地点统计 -->
+						<div class="place-data">
+							<div class="place-data__total">
+								<span>{{ $t("v2miml4", {number: selectPlaceNames.length}) }}</span>
+							</div>
+							<div class="place-data__name flex items-center">
+								<span class="name-label shrink-0">{{ $t("v2miml5") }}：</span>
+								<span :title="selectPlaceNames.join('，')" class="name-content ellipsis">{{
+									selectPlaceNames.join('，') }}</span>
+							</div>
+						</div>
+
+						<!-- 轮训 -->
+						<div class="carousel-data flex items-center shrink-0">
+							<div class="carousel-data__label">
+								<span>{{ $t("v2miml6") }}：</span>
+							</div>
+							<div class="carousel-data__time">
+								<el-input v-model.trim="inputAutoplayTime" :disabled="autoplay" type="number"
+									:min="0" />
+							</div>
+							<div class="carousel-data__button">
+								<el-button class="black-button--success" @click="placeCarousel">{{autoplay ?
+									$t("v2miml7") : $t("v2miml8")}}</el-button>
+							</div>
+						</div>
+
+					</div>
+					<div class="flex player-wrapper">
+						<div class="player-wrapper__box wh100 flex">
+							<!-- 地点流 -->
+							<div class="player-video">
+								<div class="h100">
+									<div v-show="!selectPlaceItem.length" class="classroom-select-empty h100 bg-302d39">
+										<el-empty :description="$t('v2miml9')" class="h100"></el-empty>
+									</div>
+									<tr-lazy-carousel ref="carousel" class="wh100" v-if="carouselTotal > 0"
+										:autoplay="autoplay" height="100%" @change="changeInterval"
+										:initial-index="initialIndex" :interval="interval * 1000">
+										<tr-lazy-carousel-item v-for="(item, itemI) in cutApartSelectPlaceAllStream" :key="itemI">
+											<div class="wh100 flex carousel-item-wrapper"
+												:class="'carousel-item-wrapper-' + page.pageSize">
+												<el-scrollbar class="custom-scrollbar">
+													<div :class="{'wh100': page.pageSize == 1}" class="flex flex-center"
+														:style="carouselItemPadding(sizeI)" v-for="(size, sizeI) in item">
+														<div class="wh100 bg-302d39 flex column carouse-item relative">
+															<!-- 有地点数据 -->
+															<template v-if="size.id">
+																<div class="place-name ellipsis">
+																	<span>{{size.streamName}}</span>
+																</div>
+																<!-- 有视频流 -->
+																<div v-if="size.stream"
+																	class="play-icon-wrapper flex flex-center">
+																	<!-- 未播放或者错误 -->
+																	<div v-if="!size.myPlay || size.myError"
+																		@click="playStream(size)"
+																		class="flex column items-center">
+																		<div
+																			class="play-icon-box flex flex-center pointer">
+																			<i class="iconfont icon24gf-play"></i>
+																		</div>
+																		<!-- 错误 -->
+																		<span v-if="size.myError"
+																			class="no-signal is-error-font">{{
+																			$t("v2miml10") }}</span>
+																	</div>
+																	<!-- 播放中 -->
+																	<video loop muted
+																		:id="'video' + size.id"
+																		:ref="'video' + size.id"
+																		class="video wh100"
+																		:src="size.stream"
+																		controls v-else></video>
+																</div>
+																<!-- 无视频流 -->
+																<div v-else class="flex flex-center wh100 no-signal">
+																	<span>{{ $t("v2miml11") }}</span>
+																</div>
+															</template>
+															<!-- 无地点数据 -->
+															<template v-else>
+																<div class="flex flex-center wh100 no-signal">
+																	<span>{{ $t("v2miml12") }}</span>
+																</div>
+															</template>
+
+														</div>
+													</div>
+												</el-scrollbar>
+											</div>
+										</tr-lazy-carousel-item>
+									</tr-lazy-carousel>
+
+								</div>
+							</div>
+							<!-- 分页 -->
+							<div class="pagination-container shrink-0 bg-302d39">
+								<el-scrollbar class="custom-scrollbar">
+									<div class="flex column items-center">
+										<!-- 宫格 -->
+										<div class="pagination-size flex column items-center">
+											<div class="pagination-title"><span>{{ $t("v2miml13") }}</span></div>
+											<div class="one size-item pointer" @click="changePageSize(1)"
+												:class="{'page-active': page.pageSize == 1}">
+												<i class="iconfont iconyk_fangkuai_fill"></i>
+											</div>
+											<div class="four size-item pointer" @click="changePageSize(4)"
+												:class="{'page-active': page.pageSize == 4}">
+												<i class="iconfont iconfour-squares-full"></i>
+											</div>
+											<div class="nine size-item pointer" @click="changePageSize(9)"
+												:class="{'page-active': page.pageSize == 9}">
+												<i class="iconfont iconnine-squares-full"></i>
+											</div>
+										</div>
+										<!-- 翻页 -->
+										<div class="pagination-turning flex column items-center">
+											<div class="pagination-title"><span>{{ $t("v2miml14") }}</span></div>
+											<div @click="updatePageNum(-1)"
+												class="switch-btn page-prev flex flex-center pointer">
+												<i class="el-icon-arrow-left"></i>
+											</div>
+											<div class="flex flex-center page-num">
+												<span>{{ page.pageNum + 1 }}</span>
+											</div>
+											<div @click="updatePageNum(+1)"
+												class="switch-btn page-next flex flex-center pointer">
+												<i class="el-icon-arrow-right"></i>
+											</div>
+										</div>
+										<!-- 前往 -->
+										<div class="pagination-jump flex column items-center">
+											<div class="pagination-title"><span>{{ $t("v2miml15") }}</span></div>
+											<div>
+												<el-input @change="setInitialIndex(inputInitialIndex)"
+													v-model="inputInitialIndex" />
+											</div>
+											<div><span>{{ $t("page.p") }}</span></div>
+										</div>
+									</div>
+								</el-scrollbar>
+							</div>
+						</div>
+					</div>
+				</div>
+
+				<div class="wh100 flex column" v-if="place.type === 0">
+					<div class="flex flex-between bg-302d39 statistics-title shrink-0">
+						<!-- 地点统计 -->
+						<div class="place-data">
+							<div class="place-data__total">
+								<span class="name-label shrink-0">{{ $t("v2miml1") }}</span>
+							</div>
+							<div class="place-data__name flex-items-center" :title="place.currPlaceNode.name">
+								<i class="el-icon-location-information"></i>
+								<span class="name-content ellipsis">{{ place.currPlaceNode.name }}</span>
+							</div>
+						</div>
+
+					</div>
+
+					<div class="flex player-wrapper single-classroom">
+						<div class="left-video">
+							<div class="flex column wh100">
+								<div class="flex">
+									<!-- v-for不能删除，为了兼容多课室的播放方法 -->
+									<div class="video-item max-video" v-for="n in 1">
+										<template v-if="singleMainVideo && singleMainVideo.stream">
+											<div class="place-name ellipsis">
+												<span>{{singleMainVideo.streamName}}</span>
+											</div>
+											<div class="play-icon-wrapper flex flex-center wh100">
+												<div v-if="!singleMainVideo.myPlay ||singleMainVideo.myError"
+													@click="playStream(singleMainVideo)"
+													class="flex column items-center">
+													<div class="play-icon-box flex flex-center pointer">
+														<i class="iconfont icon24gf-play"></i>
+													</div>
+													<span v-if="singleMainVideo.myError"
+														class="no-signal is-error-font">{{ $t("v2miml10") }}</span>
+												</div>
+												<video loop muted :id="'video' + singleMainVideo.id"
+													:ref="'video' + singleMainVideo.id" class="video wh100"
+													:src="singleMainVideo.stream" controls v-else></video>
+											</div>
+										</template>
+										<div class="flex flex-center wh100 no-signal" v-else>
+											<span>{{ $t("v2miml11") }}</span>
+										</div>
+									</div>
+									<div class="min-video-list flex column">
+										<div class="video-item min-video-item" v-for="item in singleSubVideos"
+											@click="chooseMainStream(item)">
+											<template v-if="item && item.stream">
+												<div class="place-name ellipsis">
+													<span>{{item.streamName}}</span>
+												</div>
+												<div class="play-icon-wrapper flex flex-center wh100">
+													<div v-if="!item.myPlay ||item.myError" @click="playStream(item)"
+														class="flex column items-center">
+														<div class="play-icon-box flex flex-center pointer">
+															<i class="iconfont icon24gf-play"></i>
+														</div>
+														<span v-if="item.myError" class="no-signal is-error-font">{{
+															$t("v2miml10") }}</span>
+													</div>
+													<video loop muted :id="'video' + item.id" :ref="'video' + item.id"
+														class="video wh100" :src="item.stream" v-else></video>
+												</div>
+											</template>
+											<div class="flex flex-center wh100 no-signal" v-else>
+												<span>{{ $t("v2miml11") }}</span>
+											</div>
+										</div>
+									</div>
+								</div>
+								<!-- 音量设置 -->
+								<div class="flex setting-bottom-wrapper">
+									<div class="direction-setting">
+										<div class="direction-container">
+											<div class="w100 relative direction-image">
+												<img class="wh100" src="/public/images/admin/control/camera.png" alt="">
+												<div class="direction-list-wrapper absolute wh100">
+													<div class="direction-list wh100 relative">
+														<div class="absolute direction-item pointer"
+															v-for="(icon, key) in directionList" :key="icon"
+															:style="directionAbsolute(key)">
+															<i :class="icon"></i>
+														</div>
+													</div>
+												</div>
+											</div>
+										</div>
+									</div>
+
+									<div class="volume-setting">
+										<button class="volume-setting-item flex column pointer">
+											<i class="el-icon-plus"></i>
+											<span>{{ $t("v2miml18") }}+</span>
+										</button>
+										<button class="volume-setting-item flex column pointer">
+											<i class="el-icon-minus"></i>
+											<span>{{ $t("v2miml18") }}-</span>
+										</button>
+										<button class="volume-setting-item flex column pointer">
+											<!-- icon24gf-volumeZero -->
+											<i class="iconfont icon24gf-volumeCross"></i>
+											<span>{{ $t("v2miml19") }}</span>
+										</button>
+									</div>
+
+								</div>
+
+							</div>
+						</div>
+
+						<!-- 会议信息 -->
+						<div class="right-evaluate">
+							<div class="course-comment-wrapper wh100">
+								<!-- 当前会议数据 -->
+								<div class="meeting-info shrink-0">
+									<div class="course-comment__header flex items-center">
+										<i class="el-icon-document-copy"></i>
+										<span>{{ $t("v2miml25") }}</span>
+									</div>
+									<div class="meeting-list">
+										<div class="meeting-item flex" v-for="(item, key) in meetingData">
+											<span class="shrink-0 meeting-label">{{ $t("meetingData")[key] }}：</span>
+											<span class="meeting-value" v-if="key != 'fileItems'">{{ item.value ||
+												"——"}}</span>
+											<div v-else class="meeting-file-list">
+												<span class="meeting-value" v-if="item.value && !item.value.length">{{
+													$t("v2miml31")
+													}}</span>
+												<el-scrollbar v-else>
+													<div class="flex">
+														<div class="meeting-file-item flex column items-center"
+															v-for="file in item.value">
+															<div class="meeting-file__content relative pointer">
+																<div class="meeting-file__img-box">
+																	<img class="wh100 meeting-file__img"
+																		src="/public/images/admin/v2/monitor/fille.png">
+																</div>
+																<div class="iconfont iconxiazai1 file-down"></div>
+															</div>
+															<!-- 文件名 -->
+															<span :title="file.originalFilename">{{
+																file.originalFilename }}</span>
+														</div>
+													</div>
+												</el-scrollbar>
+											</div>
+										</div>
+									</div>
+								</div>
+								<!-- 人员签到数据 -->
+								<div class="attendance-info flex column">
+									<div class="attendance-results flex items-center course-comment__header shrink-0">
+										<i class="el-icon-data-analysis"></i>
+										<span>{{ $t("v2miml26") }}</span>
+									</div>
+									<div class="personnel-info">
+										<el-scrollbar class="custom-scrollbar">
+											<div class="personnel-placeholder" v-if="!personnelList.length">{{
+												$t("v2miml27") }}</div>
+											<div v-else class="personnel-list">
+												<div class="personnel-item flex items-center"
+													v-for="item in personnelList">
+													<div class="personnel-avatar">
+														<template v-if="item.myStatus">
+															<img v-if="item.sex === 0" class="wh100"
+																src="/public/images/admin/v2/monitor/default-boy.png">
+															<img v-if="item.sex === 1" class="wh100"
+																src="/public/images/admin/v2/monitor/default-girl.png">
+														</template>
+														<img v-else class="wh100"
+															src="/public/images/admin/v2/monitor/default-temporary.png">
+													</div>
+													<div class="personnel-name__status">
+														<div>
+															<span class="meeting-label">{{ $t("v2miml28") }}：</span>
+															<span class="meeting-value">{{ item.nickname ||
+																item.name}}</span>
+														</div>
+														<div class="personnel-status">
+															<span class="meeting-label">{{ $t("status") }}：</span>
+															<span class="meeting-value"
+																:style="{color: item.myStatus == 'checkInUser' ? '#2bb900' : '#E6A23C'}">{{
+																item.myStatus ? (item.myStatus == "checkInUser" ?
+																$t("v2miml29") : $t("v2miml30")) : "——"
+																}}</span>
+														</div>
+													</div>
+												</div>
+											</div>
+										</el-scrollbar>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</body>
+<!-- 基础 -->
+<script src="/public/js/bluebird.min.js"></script>
+<script src="/public/js/vue.min.js"></script>
+<script src="/public/element-ui-2.15.9/index.js"></script>
+<script src="/public/js/jquery-3.3.1.min.js"></script>
+<script src="/public/js/moment.min.js"></script>
+<script src="/public/js/config/config.js"></script>
+<script src="/public/js/common/vue-common-util.js"></script>
+<script src="/public/js/common/vue-ajax.js"></script>
+<script src="/public/js/common/iframe.js"></script>
+
+<!-- 翻译 -->
+<script src="/public/locales/vue-i18n.js"></script>
+<script src="/public/element-ui-2.15.9/locale/lang/zh-CN.js"></script>
+<script src="/public/element-ui-2.15.9/locale/lang/en.js"></script>
+<script src="/public/locales/i18n-config.js"></script>
+<script src="/public/locales/i18n-all.js"></script>
+
+<script src="/public/js/components/common.js"></script>
+<script src="/public/js/echarts.min.js"></script>
+<script src="/public/js/websocket/sockjs.min.js"></script>
+<script src="/public/js/websocket/stomp.min.js"></script>
+
+<script src="/public/js/flv.min.js"></script>
+<script src="/public/js/hls.min.js"></script>
+<script src="/public/js/admin/v2/monitor/index.js"></script>
+<script src="/public/js/components/template/DragDrop.js"></script>
+
+</html>

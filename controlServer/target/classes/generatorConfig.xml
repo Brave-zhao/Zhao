@@ -1,0 +1,321 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE generatorConfiguration
+        PUBLIC "-//mybatis.org//DTD MyBatis Generator Configuration 1.0//EN"
+        "http://mybatis.org/dtd/mybatis-generator-config_1_0.dtd">
+<!-- 配置生成器 -->
+<generatorConfiguration>
+    <!-- 一个数据库一个context -->
+    <!--defaultModelType="flat" 大数据字段，不分表 -->
+    <context id="central" targetRuntime="MyBatis3Simple" defaultModelType="flat">
+        <!-- 自动识别数据库关键字，默认false，如果设置为true，根据SqlReservedWords中定义的关键字列表；
+        一般保留默认值，遇到数据库关键字（Java关键字），使用columnOverride覆盖 -->
+        <property name="autoDelimitKeywords" value="true" />
+        <!-- 生成的Java文件的编码 -->
+        <property name="javaFileEncoding" value="utf-8" />
+        <!-- beginningDelimiter和endingDelimiter：指明数据库的用于标记数据库对象名的符号，比如ORACLE就是双引号，MYSQL默认是`反引号； -->
+        <property name="beginningDelimiter" value="`" />
+        <property name="endingDelimiter" value="`" />
+
+        <!-- 格式化java代码 -->
+        <property name="javaFormatter" value="org.mybatis.generator.api.dom.DefaultJavaFormatter"/>
+        <!-- 格式化XML代码 -->
+        <property name="xmlFormatter" value="org.mybatis.generator.api.dom.DefaultXmlFormatter"/>
+        <plugin type="org.mybatis.generator.plugins.SerializablePlugin" />
+
+        <plugin type="org.mybatis.generator.plugins.ToStringPlugin" />
+
+        <!-- 注释 -->
+        <commentGenerator >
+            <property name="suppressAllComments" value="false"/><!-- 是否取消注释 -->
+            <property name="suppressDate" value="true" /> <!-- 是否生成注释代时间戳-->
+        </commentGenerator>
+
+        <!-- jdbc连接 -->
+        <jdbcConnection driverClass="com.mysql.cj.jdbc.Driver" connectionURL="jdbc:mysql://127.0.0.1:3306/controlserver?serverTimezone=GMT&amp;useUnicode=true&amp;characterEncoding=utf8&amp;nullCatalogMeansCurrent=true" userId="root" password="root" />
+        <!-- 类型转换 -->
+        <javaTypeResolver>
+            <!-- 是否使用bigDecimal， false可自动转化以下类型（Long, Integer, Short, etc.） -->
+            <property name="forceBigDecimals" value="false"/>
+        </javaTypeResolver>
+
+        <!-- 生成实体类地址 -->
+          <!--  <javaModelGenerator targetPackage="com.tenger.control.repair.domain" targetProject="./src/main/java" >
+            <property name="enableSubPackages" value="false"/>
+            <property name="trimStrings" value="true"/>
+        </javaModelGenerator> -->
+        
+         <!-- <javaModelGenerator targetPackage="com.tenger.control.mqtt.tablecard.domain" targetProject="./src/main/java" >
+            <property name="enableSubPackages" value="false"/>
+            <property name="trimStrings" value="true"/>
+        </javaModelGenerator> -->
+        
+     <javaModelGenerator targetPackage="com.tenger.control.mqtt.eastcato.entity" targetProject="./src/main/java" >
+            <property name="enableSubPackages" value="false"/>
+            <property name="trimStrings" value="true"/>
+        </javaModelGenerator>
+
+        <!-- 生成mapxml文件 -->
+        <sqlMapGenerator targetPackage="mapper" targetProject="./src/main/resources" >
+            <property name="enableSubPackages" value="false" />
+        </sqlMapGenerator>
+
+
+        <!-- 生成mapxml对应client，也就是接口dao -->
+           <!-- <javaClientGenerator targetPackage="com.tenger.control.repair.dao" targetProject="./src/main/java" type="XMLMAPPER" >
+            <property name="enableSubPackages" value="false" />
+        </javaClientGenerator> -->
+        
+        <!-- <javaClientGenerator targetPackage="com.tenger.control.mqtt.tablecard.dao" targetProject="./src/main/java" type="XMLMAPPER" >
+            <property name="enableSubPackages" value="false" />
+        </javaClientGenerator> -->
+        
+     <javaClientGenerator targetPackage="com.tenger.control.mqtt.eastcato.dao" targetProject="./src/main/java" type="XMLMAPPER" >
+            <property name="enableSubPackages" value="false" />
+        </javaClientGenerator>
+        
+        <!-- ********************************************************************************************************************************* -->
+        <!-- table可以有多个,每个数据库中的表都可以写一个table，tableName表示要匹配的数据库表,也可以在tableName属性中通过使用%通配符来匹配所有数据库表,只有匹配的表才会自动生成文件 -->
+        <!-- 用户表 -->
+
+<!-- 		<table tableName="tb_user" domainObjectName="User" schema="central" enableCountByExample="true" enableUpdateByExample="true" enableDeleteByExample="true" enableSelectByExample="true"  -->
+<!-- enableUpdateByPrimaryKey="true" selectByExampleQueryId="true" > -->
+<!--             <property name="useActualColumnNames" value="false" /> -->
+<!--             <generatedKey column="id" sqlStatement="Mysql" identity="true" /> -->
+<!--         </table> -->
+
+		<!-- 电量统计表 -->
+<!--		<table tableName="tb_electricity" domainObjectName="Electricity" schema="central" enableCountByExample="true" enableUpdateByExample="true" enableDeleteByExample="true" enableSelectByExample="true" -->
+<!--enableUpdateByPrimaryKey="true" selectByExampleQueryId="true" >-->
+<!--            <property name="useActualColumnNames" value="false" />-->
+<!--            <generatedKey column="id" sqlStatement="Mysql" identity="true" />-->
+<!--        </table>-->
+
+        <!-- 报修表 -->
+<!--
+        <table tableName="tb_repair" domainObjectName="Repair" schema="central" enableCountByExample="true" enableUpdateByExample="true" enableDeleteByExample="true" enableSelectByExample="true"
+               enableUpdateByPrimaryKey="true" selectByExampleQueryId="true" >
+            <property name="useActualColumnNames" value="false" />
+            <generatedKey column="id" sqlStatement="Mysql" identity="true" />
+        </table>
+-->
+
+
+        <!-- 门禁开门日志表 -->
+        <!--<table tableName="tb_access_control_open_log" domainObjectName="AccessControlOpenLog" schema="central" enableCountByExample="true" enableUpdateByExample="true" enableDeleteByExample="true" enableSelectByExample="true"
+               enableUpdateByPrimaryKey="true" selectByExampleQueryId="true" >
+            <property name="useActualColumnNames" value="false" />
+            <generatedKey column="id" sqlStatement="Mysql" identity="true" />
+        </table>-->
+
+        <!-- 报修订单表 -->
+       <!--  <table tableName="tb_repair" domainObjectName="Repair" schema="central" enableCountByExample="true" enableUpdateByExample="true" enableDeleteByExample="true" enableSelectByExample="true"
+               enableUpdateByPrimaryKey="true" selectByExampleQueryId="true" >
+            <property name="useActualColumnNames" value="false" />
+            <generatedKey column="id" sqlStatement="Mysql" identity="true" />
+        </table> -->
+
+        <!-- 报修订单任务分配表 -->
+        <!--<table tableName="tb_repair_task" domainObjectName="RepairTask" schema="central" enableCountByExample="true" enableUpdateByExample="true" enableDeleteByExample="true" enableSelectByExample="true"
+               enableUpdateByPrimaryKey="true" selectByExampleQueryId="true" >
+            <property name="useActualColumnNames" value="false" />
+            <generatedKey column="id" sqlStatement="Mysql" identity="true" />
+        </table>-->
+
+        <!-- 报修订单附件表 -->
+        <!--<table tableName="tb_repair_file" domainObjectName="RepairFile" schema="central" enableCountByExample="true" enableUpdateByExample="true" enableDeleteByExample="true" enableSelectByExample="true"
+               enableUpdateByPrimaryKey="true" selectByExampleQueryId="true" >
+            <property name="useActualColumnNames" value="false" />
+            <generatedKey column="id" sqlStatement="Mysql" identity="true" />
+        </table>-->
+
+        <!-- 报修订单评价表 -->
+        <!--<table tableName="tb_repair_score" domainObjectName="RepairScore" schema="central" enableCountByExample="true" enableUpdateByExample="true" enableDeleteByExample="true" enableSelectByExample="true"
+               enableUpdateByPrimaryKey="true" selectByExampleQueryId="true" >
+            <property name="useActualColumnNames" value="false" />
+            <generatedKey column="id" sqlStatement="Mysql" identity="true" />
+        </table>-->
+
+        <!-- 报修订单日志表 -->
+        <!--<table tableName="tb_repair_log" domainObjectName="RepairLog" schema="central" enableCountByExample="true" enableUpdateByExample="true" enableDeleteByExample="true" enableSelectByExample="true"
+               enableUpdateByPrimaryKey="true" selectByExampleQueryId="true" >
+            <property name="useActualColumnNames" value="false" />
+            <generatedKey column="id" sqlStatement="Mysql" identity="true" />
+        </table>-->
+        
+        <!-- <table tableName="tb_gateway_record" domainObjectName="GatewayRecord" schema="central" enableCountByExample="true" enableUpdateByExample="true" enableDeleteByExample="true" enableSelectByExample="true"
+               enableUpdateByPrimaryKey="true" selectByExampleQueryId="true" >
+            <property name="useActualColumnNames" value="false" />
+            <generatedKey column="id" sqlStatement="Mysql" identity="true" />
+        </table> -->
+        
+         <!-- <table tableName="tb_gateway_warning" domainObjectName="GatewayWarning" schema="central" enableCountByExample="true" enableUpdateByExample="true" enableDeleteByExample="true" enableSelectByExample="true"
+               enableUpdateByPrimaryKey="true" selectByExampleQueryId="true" >
+            <property name="useActualColumnNames" value="false" />
+            <generatedKey column="id" sqlStatement="Mysql" identity="true" />
+        </table> -->
+        
+        <!-- <table tableName="tb_gateway_history" domainObjectName="GatewayHistory" schema="central" enableCountByExample="true" enableUpdateByExample="true" enableDeleteByExample="true" enableSelectByExample="true"
+               enableUpdateByPrimaryKey="true" selectByExampleQueryId="true" >
+            <property name="useActualColumnNames" value="false" />
+            <generatedKey column="id" sqlStatement="Mysql" identity="true" />
+        </table> -->
+        
+        <!-- <table tableName="tb_gateway_timing" domainObjectName="GatewayTiming" schema="central" enableCountByExample="true" enableUpdateByExample="true" enableDeleteByExample="true" enableSelectByExample="true"
+               enableUpdateByPrimaryKey="true" selectByExampleQueryId="true" >
+            <property name="useActualColumnNames" value="false" />
+            <generatedKey column="id" sqlStatement="Mysql" identity="true" />
+        </table> -->
+        
+       <!--  <table tableName="tb_gateway_name" domainObjectName="GatewayName" schema="central" enableCountByExample="true" enableUpdateByExample="true" enableDeleteByExample="true" enableSelectByExample="true"
+               enableUpdateByPrimaryKey="true" selectByExampleQueryId="true" >
+            <property name="useActualColumnNames" value="false" />
+            <generatedKey column="id" sqlStatement="Mysql" identity="true" />
+        </table> -->
+        
+        <!-- <table tableName="tb_sensor_record" domainObjectName="SensorRecord" schema="central" enableCountByExample="true" enableUpdateByExample="true" enableDeleteByExample="true" enableSelectByExample="true"
+               enableUpdateByPrimaryKey="true" selectByExampleQueryId="true" >
+            <property name="useActualColumnNames" value="false" />
+            <generatedKey column="id" sqlStatement="Mysql" identity="true" />
+        </table> -->
+        
+        <!-- <table tableName="tb_gateway_wx" domainObjectName="GatewayWx" schema="central" enableCountByExample="true" enableUpdateByExample="true" enableDeleteByExample="true" enableSelectByExample="true"
+               enableUpdateByPrimaryKey="true" selectByExampleQueryId="true" >
+            <property name="useActualColumnNames" value="false" />
+            <generatedKey column="id" sqlStatement="Mysql" identity="true" />
+        </table> -->
+        
+       <!--  <table tableName="tb_infrared_record" domainObjectName="InfraredRecord" schema="central" enableCountByExample="true" enableUpdateByExample="true" enableDeleteByExample="true" enableSelectByExample="true"
+               enableUpdateByPrimaryKey="true" selectByExampleQueryId="true" >
+            <property name="useActualColumnNames" value="false" />
+            <generatedKey column="id" sqlStatement="Mysql" identity="true" />
+        </table> -->
+        
+<!--         <table tableName="tb_gateway_mode" domainObjectName="GatewayMode" schema="central" enableCountByExample="true" enableUpdateByExample="true" enableDeleteByExample="true" enableSelectByExample="true"
+               enableUpdateByPrimaryKey="true" selectByExampleQueryId="true" >
+            <property name="useActualColumnNames" value="false" />
+            <generatedKey column="id" sqlStatement="Mysql" identity="true" />
+        </table>-->
+        
+<!--        <table tableName="tb_sensor_record" domainObjectName="SensorRecord" schema="central" enableCountByExample="true" enableUpdateByExample="true" enableDeleteByExample="true" enableSelectByExample="true"
+               enableUpdateByPrimaryKey="true" selectByExampleQueryId="true" >
+            <property name="useActualColumnNames" value="false" />
+            <generatedKey column="id" sqlStatement="Mysql" identity="true" />
+        </table>-->
+
+        <!-- <table tableName="tb_repair" domainObjectName="Repair" schema="central" enableCountByExample="true" enableUpdateByExample="true" enableDeleteByExample="true" enableSelectByExample="true"
+               enableUpdateByPrimaryKey="true" selectByExampleQueryId="true" >
+            <property name="useActualColumnNames" value="false" />
+            <generatedKey column="id" sqlStatement="Mysql" identity="true" />
+        </table> -->
+
+<!--        <table tableName="tb_repair_update_log" domainObjectName="RepairUpdateLog" schema="central" enableCountByExample="true" enableUpdateByExample="true" enableDeleteByExample="true" enableSelectByExample="true"
+               enableUpdateByPrimaryKey="true" selectByExampleQueryId="true" >
+            <property name="useActualColumnNames" value="false" />
+            <generatedKey column="id" sqlStatement="Mysql" identity="true" />
+        </table>-->
+
+         <!-- <table tableName="tb_repair_assign" domainObjectName="RepairAssign" schema="central" enableCountByExample="true" enableUpdateByExample="true" enableDeleteByExample="true" enableSelectByExample="true"
+               enableUpdateByPrimaryKey="true" selectByExampleQueryId="true" >
+            <property name="useActualColumnNames" value="false" />
+            <generatedKey column="id" sqlStatement="Mysql" identity="true" />
+        </table> -->
+        
+        <!-- <table tableName="tb_place_action" domainObjectName="PlaceAction" schema="central" enableCountByExample="true" enableUpdateByExample="true" enableDeleteByExample="true" enableSelectByExample="true"
+               enableUpdateByPrimaryKey="true" selectByExampleQueryId="true" >
+            <property name="useActualColumnNames" value="false" />
+            <generatedKey column="id" sqlStatement="Mysql" identity="true" />
+        </table> -->
+        
+<!--        <table tableName="tb_place_mode" domainObjectName="PlaceMode" schema="central" enableCountByExample="true" enableUpdateByExample="true" enableDeleteByExample="true" enableSelectByExample="true"
+               enableUpdateByPrimaryKey="true" selectByExampleQueryId="true" >
+            <property name="useActualColumnNames" value="false" />
+            <generatedKey column="id" sqlStatement="Mysql" identity="true" />
+        </table>-->
+
+        <!-- 报修评价表 -->
+<!--        <table tableName="tb_repair_evaluation" domainObjectName="RepairEvaluation" schema="central" enableCountByExample="true" enableUpdateByExample="true" enableDeleteByExample="true" enableSelectByExample="true"
+               enableUpdateByPrimaryKey="true" selectByExampleQueryId="true" >
+            <property name="useActualColumnNames" value="false" />
+            <generatedKey column="id" sqlStatement="Mysql" identity="true" />
+        </table>-->
+
+        <!-- 报修结果表 -->
+<!--        <table tableName="tb_repair_result" domainObjectName="RepairResult" schema="central" enableCountByExample="true" enableUpdateByExample="true" enableDeleteByExample="true" enableSelectByExample="true"
+               enableUpdateByPrimaryKey="true" selectByExampleQueryId="true" >
+            <property name="useActualColumnNames" value="false" />
+            <generatedKey column="id" sqlStatement="Mysql" identity="true" />
+        </table>-->
+        
+        <!-- 巡检记录  -->
+        <!-- <table tableName="tb_inspection_record" domainObjectName="InspectionRecord" schema="central" enableCountByExample="true" enableUpdateByExample="true" enableDeleteByExample="true" enableSelectByExample="true"
+               enableUpdateByPrimaryKey="true" selectByExampleQueryId="true" >
+            <property name="useActualColumnNames" value="false" />
+            <generatedKey column="id" sqlStatement="Mysql" identity="true" />
+        </table> -->
+        
+        <!-- 巡检细节 -->
+       <!--  <table tableName="tb_inspection_detail" domainObjectName="InspectionDetail" schema="central" enableCountByExample="true" enableUpdateByExample="true" enableDeleteByExample="true" enableSelectByExample="true"
+               enableUpdateByPrimaryKey="true" selectByExampleQueryId="true" >
+            <property name="useActualColumnNames" value="false" />
+            <generatedKey column="id" sqlStatement="Mysql" identity="true" />
+        </table> -->
+        <!-- 巡检定时 -->
+        <!-- <table tableName="tb_inspection_timing" domainObjectName="InspectionTiming" schema="central" enableCountByExample="true" enableUpdateByExample="true" enableDeleteByExample="true" enableSelectByExample="true"
+               enableUpdateByPrimaryKey="true" selectByExampleQueryId="true" >
+            <property name="useActualColumnNames" value="false" />
+            <generatedKey column="id" sqlStatement="Mysql" identity="true" />
+        </table> -->
+        
+        <!-- 无人值守 -->
+        <!-- <table tableName="tb_unattended_config" domainObjectName="UnattendedConfig" schema="central" enableCountByExample="true" enableUpdateByExample="true" enableDeleteByExample="true" enableSelectByExample="true"
+               enableUpdateByPrimaryKey="true" selectByExampleQueryId="true" >
+            <property name="useActualColumnNames" value="false" />
+            <generatedKey column="id" sqlStatement="Mysql" identity="true" />
+        </table> -->
+        
+        <!-- 控制模板 -->
+       <!--  <table tableName="tb_control_template" domainObjectName="ControlTemplate" schema="central" enableCountByExample="true" enableUpdateByExample="true" enableDeleteByExample="true" enableSelectByExample="true"
+               enableUpdateByPrimaryKey="true" selectByExampleQueryId="true" >
+            <property name="useActualColumnNames" value="false" />
+            <generatedKey column="id" sqlStatement="Mysql" identity="true" />
+        </table> -->
+        
+       <!--  <table tableName="tb_place_template" domainObjectName="PlaceTemplate" schema="central" enableCountByExample="true" enableUpdateByExample="true" enableDeleteByExample="true" enableSelectByExample="true"
+               enableUpdateByPrimaryKey="true" selectByExampleQueryId="true" >
+            <property name="useActualColumnNames" value="false" />
+            <generatedKey column="id" sqlStatement="Mysql" identity="true" />
+        </table> -->
+        
+        <!-- 控制模板组件 -->
+        <!-- <table tableName="tb_control_component" domainObjectName="ControlComponent" schema="central" enableCountByExample="true" enableUpdateByExample="true" enableDeleteByExample="true" enableSelectByExample="true"
+               enableUpdateByPrimaryKey="true" selectByExampleQueryId="true" >
+            <property name="useActualColumnNames" value="false" />
+            <generatedKey column="id" sqlStatement="Mysql" identity="true" />
+        </table> -->
+        
+        <!-- 集控 -->
+       <!--  <table tableName="tb_multi_control" domainObjectName="MultiControl" schema="central" enableCountByExample="true" enableUpdateByExample="true" enableDeleteByExample="true" enableSelectByExample="true"
+               enableUpdateByPrimaryKey="true" selectByExampleQueryId="true" >
+            <property name="useActualColumnNames" value="false" />
+            <generatedKey column="id" sqlStatement="Mysql" identity="true" />
+        </table> -->
+        
+        <!-- <table tableName="tb_background" domainObjectName="Background" schema="central" enableCountByExample="true" enableUpdateByExample="true" enableDeleteByExample="true" enableSelectByExample="true"
+               enableUpdateByPrimaryKey="true" selectByExampleQueryId="true" >
+            <property name="useActualColumnNames" value="false" />
+            <generatedKey column="id" sqlStatement="Mysql" identity="true" />
+        </table> -->
+        
+        <!-- <table tableName="tb_eink_attribute" domainObjectName="EinkAttribute" schema="central" enableCountByExample="true" enableUpdateByExample="true" enableDeleteByExample="true" enableSelectByExample="true"
+               enableUpdateByPrimaryKey="true" selectByExampleQueryId="true" >
+            <property name="useActualColumnNames" value="false" />
+            <generatedKey column="id" sqlStatement="Mysql" identity="true" />
+        </table> -->
+        
+        <table tableName="tb_gateway_warning_strategy" domainObjectName="GatewayWarningStrategy" schema="central" enableCountByExample="true" enableUpdateByExample="true" enableDeleteByExample="true" enableSelectByExample="true"
+               enableUpdateByPrimaryKey="true" selectByExampleQueryId="true" >
+            <property name="useActualColumnNames" value="false" />
+            <generatedKey column="id" sqlStatement="Mysql" identity="true" />
+        </table>
+    </context>
+</generatorConfiguration>

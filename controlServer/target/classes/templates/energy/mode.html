@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>开门记录</title>
+    <link rel="stylesheet" href="/public/css/v3/common/common.css" />
+    <link rel="stylesheet" href="/public/css/v3/common/modal.css" />
+    <link rel="stylesheet" href="/public/elementui/element-ui.css" />
+    <link rel="stylesheet" href="/public/ali-icon/iconfont.css" />
+    <link rel="stylesheet" href="/public/ali-icon/energy-icon/iconfont.css" />
+    <link rel="stylesheet" href="/public/css/v3/common/el-custom.css" />
+    <link rel="stylesheet" href="/public/css/v3/common/progress.css" />
+    <link rel="stylesheet" href="/public/css/v3/common/energyCommon.css" />
+    <link
+      rel="stylesheet"
+      href="/public/font-awesome/css/font-awesome.min.css"
+    />
+    <link rel="stylesheet" href="/public/css/energy/mode.css" />
+  </head>
+  <body>
+    <div id="app" v-cloak>
+      <div class="container">
+        <div class="head-wrapper">
+          <div class="head"><span></span><span>{{$t('head')}}</span></div>
+        </div>
+
+        <div class="flex-column wh100">
+          <!-- 筛选区 -->
+          <div class="content-wrapper" style="margin-bottom: 35px">
+            <div class="energy-screen">
+              <div class="flex">
+                <div class="screen-item back pointer" @click="changeBack">
+                  <i class="iconfont iconjiantou2"></i>
+                  <span>{{$t('back')}}</span>
+                </div>
+                <div class="screen-item">
+                  <span>{{$t('place')}}</span>
+                  <span>{{headerSelect.placeValue}}</span>
+                </div>
+                <!-- <div class="screen-item">
+                  <span>配电箱:</span>
+                  <span>内蒙古测试</span>
+                </div> -->
+                <div class="screen-item">
+                  <span>{{$t('status')}}</span>
+                  <div class="flex-center">
+                    <div class="screen-status" :class="{active:true}"></div>
+                    <span>{{$t('on')}}</span>
+                  </div>
+                </div>
+              </div>
+              <div class="margin-l-20 flex-center">
+                <div class="screen-item">
+                  <el-input
+                    class="search-input"
+                    :placeholder="$t('placeholder.h1')"
+                    v-model="page.search"
+                  >
+                    <i
+                      slot="suffix"
+                      class="el-input__icon el-icon-search main-color font-bold"
+                    ></i>
+                  </el-input>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="energy-container relative">
+            <!-- 表格 -->
+            <el-table
+              :data="tableData"
+              style="width: 100%"
+              stripe
+              height="710px"
+            >
+              <el-table-column
+                prop="name"
+                :label="$t('dialog.h1')"
+                width="380"
+                show-overflow-tooltip
+                :formatter="formatter"
+              >
+              </el-table-column>
+              <el-table-column
+                prop="description"
+                :label="$t('dialog.h2')"
+                width="350"
+                show-overflow-tooltip
+                :formatter="formatter"
+              >
+              </el-table-column>
+              <el-table-column
+                prop="name"
+                :label="$t('dialog.h3')"
+                show-overflow-tooltip
+                :formatter="formatter"
+              >
+                <template slot-scope="scope">
+                  <div class="table-handle">
+                    <div v-html="modeDetail(scope.row)"></div>
+                  </div>
+                </template>
+              </el-table-column>
+              <el-table-column :label="$t('dialog.h4')" width="300">
+                <template slot-scope="scope">
+                  <div class="flex-center warp table-handle">
+                    <div
+                      class="table-button flex-center pointer opacity08"
+                      @click="changeEdit(scope.row)"
+                    >
+                      <span>{{$t('edit')}}</span>
+                    </div>
+                  </div>
+                </template>
+              </el-table-column>
+            </el-table>
+            <!-- 底部 -->
+            <div class="energy-footer absolute">
+              <div class="flex-center relative wh100">
+                <div
+                  class="footer-left absolute left-0 flex-items-center"
+                ></div>
+                <div class="page">
+                  <el-pagination
+                    @current-change="changeCurrPageNum"
+                    :page-size="page.size"
+                    layout="prev, pager, next"
+                    :current-page="page.num"
+                    :pager-count="10"
+                    :total="page.count"
+                  >
+                  </el-pagination>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 安全管理弹框 -->
+        <tr-dialog
+          :title="$t('dialog.h5')"
+          :visible.sync="mode.isShowDialog"
+          width="50rem"
+          :confirm-text="$t('dialog.h6')"
+          class="mode-dialog"
+          @confirm="undateMode"
+        >
+          <div class="mode-item-box">
+            <span>{{$t('dialog.h7')}}</span>
+            <div class="mode-item dialog-description">
+              <el-input
+                type="textarea"
+                :rows="4"
+                :placeholder="$t('dialog.h8')"
+                v-model="currRowDetail.description"
+              >
+              </el-input>
+            </div>
+          </div>
+          <div class="mode-item-box">
+            <span>{{$t('dialog.h9')}}</span>
+            <div class="mode-item dialog-checkbox">
+              <span>{{$t('dialog.h10')}}</span>
+              <el-scrollbar style="height: 140px">
+                <div class="checkbox-content flex-items-center warp">
+                  <!-- <el-checkbox-group
+                    v-model="checkList"
+                    class="flex-items-center warp"
+                    @change="changeCheckboxGroup"
+                  > -->
+                  <!-- 所有设备列表 -->
+                  <div
+                    v-for="(item,index) in equipmentList"
+                    :key="item.value"
+                    class="checkbox-item flex-center flex-column"
+                    :class="{'checkbox-active':item.isChecked}"
+                  >
+                    <el-checkbox :label="item.name" v-model="item.isChecked" :title="item.name"
+                      >{{item.name}}</el-checkbox
+                    >
+                    <div class="equipment-switch-box" v-show="item.isChecked">
+                      <el-switch
+                        v-model="item.status"
+                        active-color="#43B498"
+                        inactive-color="#C6CCD2"
+                        inactive-icon-class="ceshi"
+                      />
+                    </div>
+                  </div>
+                  <!-- </el-checkbox-group> -->
+                </div>
+              </el-scrollbar>
+            </div>
+          </div>
+        </tr-dialog>
+      </div>
+    </div>
+  </body>
+  <script src="/public/js/vue.min.js"></script>
+  <script src="/public/elementui/element-ui.js"></script>
+  <script src="/public/js/jquery-3.3.1.min.js"></script>
+  <script src="/public/js/config/config.js"></script>
+  <script src="/public/js/energy/WebSocket.js"></script>
+  <script src="/public/js/date.js"></script>
+  <script src="/public/js/ajax-el.js"></script>
+  <script src="/public/js/moment.min.js"></script>
+  <script src="/public/js/common/iframe.js"></script>
+  <script src="/public/js/common/constants.js"></script>
+  <script src="/public/js/common/import-tip.js"></script>
+  <script src="/public/js/common/common-util.js"></script>
+  <script src="/public/js/echarts.min.js"></script>
+  <script src="/public/js/brand-tree.js"></script>
+  <script src="/public/js/tr-dialog.js"></script>
+  <script src="/public/js/check-all-checkbox.js"></script>
+  <script src="/public/js/common/vue-directive.js"></script>
+  <script src="/public/js/vue-i18n.js"></script>
+  <script src="/public/js/config/i18n-config.js"></script>
+  <script src="/public/js/i18n/energy/i18n-mode.js"></script>
+  <script src="/public/elementui/locale/lang/zh-CN.js"></script>
+  <script src="/public/elementui/locale/lang/en.js"></script>
+  <script src="/public/js/energy/mode.js"></script>
+</html>

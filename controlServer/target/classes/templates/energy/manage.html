@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>设备列表</title>
+    <link rel="stylesheet" href="/public/css/v3/common/common.css" />
+    <link rel="stylesheet" href="/public/css/v3/common/modal.css" />
+    <link rel="stylesheet" href="/public/elementui/element-ui.css" />
+    <link rel="stylesheet" href="/public/ali-icon/iconfont.css" />
+    <link rel="stylesheet" href="/public/ali-icon/energy-icon/iconfont.css" />
+    <link rel="stylesheet" href="/public/css/v3/common/el-custom.css" />
+    <link rel="stylesheet" href="/public/css/v3/common/progress.css" />
+    <link rel="stylesheet" href="/public/css/components/common.css">
+    <link rel="stylesheet" href="/public/css/v3/common/energyCommon.css" />
+    <link
+      rel="stylesheet"
+      href="/public/font-awesome/css/font-awesome.min.css"
+    />
+    <link rel="stylesheet" href="/public/css/energy/print.min.css" />
+    <link rel="stylesheet" href="/public/css/energy/manage.css" />
+  </head>
+  <body>
+    <div id="app" v-cloak>
+      <div class="container">
+        <div class="head-wrapper">
+          <div class="head"><span></span><span>{{$t('head')}}</span></div>
+        </div>
+
+        <div class="flex-column wh100">
+          <!-- 筛选区 -->
+          <div class="content-wrapper" style="margin-bottom: 35px">
+            <div class="energy-screen">
+              <div class="flex">
+                <div class="screen-item"  v-if="false">
+                  <div class="screen-item-label">{{$t('place')}}</div>
+                  <div class="header-select">
+                    <el-select
+                      popper-class="header-tree-select"
+                      v-model="headerSelect.currPlaceName"
+                      :placeholder="$t('place')"
+                     
+                    >
+                      <el-option class="ads">
+                        <div style="height: 100%;">
+                          <div v-if="headerSelect.placeItem && headerSelect.placeItem.length"  @click.stop="cancelNode" class="ztree-cancle ads"><span>{{$t('allText')}}</span></div>
+                          <el-tree
+                            accordion
+                            ref="treeRef"
+                            :data="headerSelect.placeItem"
+                            :props="props"
+                            @node-click="changeNode"
+                          ></el-tree>
+                        </div>
+                        
+                      </el-option>
+                    </el-select>
+                  </div>
+                </div>
+                <!-- <div class="screen-item">
+                  <div class="screen-item-label">配电箱：</div>
+                  <div class="header-select">
+                    <el-select
+                      v-model="headerSelect.boxValue"
+                      placeholder="请选择"
+                    >
+                      <el-option
+                        v-for="(item,index) in headerSelect.boxOption"
+                        :key="index"
+                      ></el-option>
+                    </el-select>
+                  </div>
+                </div> -->
+              </div>
+              <div class="margin-l-20">
+                <div class="screen-item">
+                  <el-input
+                    class="search-input"
+                    :placeholder="$t('placeholder.h1')"
+                    v-model="page.search"
+                  >
+                    <i
+                      slot="suffix"
+                      class="el-input__icon el-icon-search main-color font-bold"
+                    ></i>
+                  </el-input>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="energy-container relative">
+            <!-- 表格 -->
+            <el-table
+              ref="table"
+              :data="tableData"
+              stripe
+              @select="selectEquipment"
+              @select-all="selectEquipment"
+            >
+              <el-table-column
+                type="selection"
+                width="60"
+                :formatter="formatNull"
+              ></el-table-column>
+              <el-table-column
+                type="index"
+                :label="$t('dialog.h1')"
+                width="100"
+                :formatter="formatNull"
+              >
+              </el-table-column>
+              <el-table-column
+                prop="name"
+                :label="$t('dialog.h2')"
+                width="180"
+                :formatter="formatNull"
+                show-overflow-tooltip
+              >
+                <template slot="header" slot-scope="scope">
+                	<y-checkbox-filter :data="headerNameOptions" v-model="page.names" 
+                		@change="changeCurrPageNum(1)" >{{$t('dialog.h2')}}</y-checkbox-filter>
+                </template>
+                <template slot-scope="scope">
+                  <div class="flex-center">
+                    <div
+                      v-if="warningData.length > 0 && warningData.indexOf(scope.row.uniqueCode)!=-1"
+                      class="call-police"
+                      :class="{ showpolice: warningData.indexOf(scope.row.uniqueCode)!=-1 }"
+                    >
+                      <svg class="icon font-20 warning-icon" aria-hidden="true">
+                        <use xlink:href="#icon-jinggao"></use>
+                      </svg>
+                    </div>
+                    <span>{{scope.row.name}}</span>
+                  </div>
+                </template>
+              </el-table-column>
+              <el-table-column
+                prop="placeName"
+                :label="$t('dialog.h3')"
+                width="150"
+                :formatter="formatNull"
+                show-overflow-tooltip>
+                <template slot="header" slot-scope="scope">
+                	<table-tree-filter v-model="page.placeIds" 
+                		:data="headerSelect.originalPlaces"
+                		:is-single="false" :searchable="true" @change="changeCurrPageNum(1)">{{$t('dialog.h3')}}</table-tree-filter>
+                </template>
+              </el-table-column>
+              <el-table-column
+                prop="uniqueCode"
+                label="UUID"
+                :formatter="formatNull"
+                show-overflow-tooltip
+              >
+                <template slot="header" slot-scope="_obj">
+                  <el-tooltip
+                    class="item"
+                    effect="dark"
+                    :content="$t('dialog.h4')"
+                    placement="top"
+                  >
+                  	<y-checkbox-filter :data="headerUuidOptions" v-model="page.uniqueCodes" 
+                		@change="changeCurrPageNum(1)" >
+                		<div class="flex-center">
+                		  <i class="fa icon-tooltip-icon iconfont"></i>	
+	                      <span>{{_obj.column.label}}</span>
+	                    </div>
+                	</y-checkbox-filter>
+                    
+                  </el-tooltip>
+                </template>
+              </el-table-column>
+              <el-table-column
+                prop="equipmentIp"
+                :label="$t('dialog.h5')"
+                :formatter="formatNull"
+                show-overflow-tooltip
+              >
+              </el-table-column>
+              <el-table-column prop="online" :label="$t('dialog.h6')">
+              	<template slot="header" slot-scope="scope">
+                	<table-filter :data="onlineOptions" v-model="page.online" 
+                		@change="changeCurrPageNum(1)" >{{$t('dialog.h6')}}</table-filter>
+                </template>
+                <template slot-scope="scope">
+                  <div style="display: flex;align-content: center;justify-content: center;">
+                  	 <div class="status-box active" v-if="scope.row.online">
+				      	 <span >{{$t('dialog.h7')}}</span>
+				     </div>
+				      	
+				     <div class="status-box" v-if="!scope.row.online" :class="{'flashing': isFlashingByUuid(scope.row.uniqueCode)}">
+				      	 <span>{{$t('dialog.h8')}}</span>
+				     </div>
+                  </div>
+                </template>
+              </el-table-column>
+              <el-table-column :label="$t('dialog.h9')">
+                <template slot-scope="scope">
+                  <!-- <el-image
+                    style="width: 50px; height: 50px"
+                    :src="scope.row.code"
+                  ></el-image> -->
+                  <div :ref="'qrcode' + scope.row.id" class="flex-center" @click="zoomQrCode(scope.row)">
+                    {{createQrCode(scope.row)}}
+                  </div>
+                </template>
+              </el-table-column>
+              <el-table-column :label="$t('dialog.h10')" width="180">
+                <template slot-scope="scope">
+                  <!-- <el-button size="mini" class="table-setting" @click="goToSetting(scope.row)">设置</el-button> -->
+                  <!-- <el-button size="mini" class="table-setting" @click="showLogDialog(scope.row)">日志</el-button> -->
+                  <el-dropdown trigger="click" placement="bottom">
+                    <div class="table-dropdown-button"><i class="el-icon-arrow-down"></i></div>
+                    <el-dropdown-menu class="table-select" slot="dropdown">
+                      <el-dropdown-item>
+                        <div class="table-dropdown-item" @click="goToSetting(scope.row)">
+                          <i :title="$t('dialog.h11')" class="el-icon-setting energy" type="warn"></i>
+                          <span>{{$t('dialog.h11')}}</span>
+                        </div>
+                      </el-dropdown-item>
+                      
+                      <el-dropdown-item>
+                        <div class="table-dropdown-item" @click="showWarningStrategy(scope.row)">
+                          <i :title="$t('p301')" class="el-icon-setting energy" type="warn"></i>
+                          <span>{{$t('p301')}}</span>
+                        </div>
+                      </el-dropdown-item>
+                      
+                      <el-dropdown-item>
+                        <div class="table-dropdown-item" @click="showLogDialog(scope.row)">
+                          <i :title="$t('dialog.h12')" class="el-icon-document energy" type="edit"></i>
+                          <span>{{$t('dialog.h12')}}</span>
+                        </div>
+                      </el-dropdown-item>
+                      
+                      <el-dropdown-item>
+                        <div class="table-dropdown-item" @click="showBindControlDialog(scope.row)">
+                          <i :title="$t('dialog.h13')" class="el-icon-unlock energy" style="color: #e6a23c;padding-right: 4px;"></i>
+                          <span>{{$t('dialog.h13')}}</span>
+                        </div>
+                      </el-dropdown-item>
+                    </el-dropdown-menu>
+                  </el-dropdown>
+                </template>
+              </el-table-column>
+            </el-table>
+            <!-- 底部 -->
+            <div class="energy-footer-container">
+              <div class="energy-footer">
+                <div class="footer-left absolute left-0 flex-items-center ads">
+                  <div class="equipment-add">
+                    <el-button
+                      class="main-bg"
+                      @click="addeEquipment.isShowDialog = true"
+                    >
+                      <i class="iconfont icon-buqian"></i>
+                      <span class="footer-button-text">{{$t('add')}}</span>
+                    </el-button>
+                  </div>
+                  <div class="equipment-delete">
+                    <el-button @click="changeDeleteEquipment">
+                      <i class="iconfont iconOAkaoqin-quxiao- font-bold"></i>
+                      <span class="footer-button-text">{{$t('delete')}}</span>
+                    </el-button>
+                  </div>
+                </div>
+                <!-- <div class="page">
+                  <el-pagination
+                    @current-change="changeCurrPageNum"
+                    :page-size="size"
+                    layout="prev, pager, next"
+                    :current-page="page.num"
+                    :pager-count="10"
+                    :total="page.count"
+                  >
+                  </el-pagination>
+                </div> -->
+                <div class="common-page-wrapper ads l-page">
+                  <button @click="toFirstPage">{{$t('page.home')}}</button>
+                  <el-pagination
+                          class="common-page"
+                          background
+                          layout="prev, pager, next"
+                          :current-page="page.num"
+                          :page-size="page.size"
+                          :total="page.count"
+                          @current-change="changeCurrPageNum">
+                  </el-pagination>
+                  <button @click="toLastPage">{{$t('page.tail')}}</button>
+                  <div class="common-page-input-wrapper">
+                      <span>{{$t('page.t1')}}</span>
+                      <div><input @keyup.enter="toTargetPage" @input="handleAmountChange(page, 'target', 1)" type="text" v-model="page.target"/></div>
+                      <span>{{$t('page.t2')}}</span>
+                      <div @click="toTargetPage" class="common-page-btn margin-l-10 custom-button button-style1 main-bg">{{$t('page.ok')}}</div>
+                  </div>
+              </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 删除设备 -->
+        <tr-dialog
+          :title="$t('delete')"
+          width="35rem"
+          class="update-name-dialog"
+          :visible.sync="deleteEquipment.isShowDialog"
+          with-cancel
+          top="25vh"
+          @confirm="confirmDeleteEquipment"
+        >
+          <div class="delete-timing-body flex-center">
+            <span>{{$t('dialog.h14')}}</span>
+          </div>
+        </tr-dialog>
+        <!-- 新增设备 -->
+        <el-drawer
+          :visible.sync="addeEquipment.isShowDialog"
+          :show-close="false"
+          class="add-drawer"
+          :wrapper-closable="false"
+          :modal="false"
+        >
+          <!-- 头部 -->
+          <div slot="title">
+            <div class="flex-between" style="margin-bottom: 15px;">
+              <div class="drawer-title-left flex-items-center">
+                <i
+                  @click="cancelDrawer"
+                  class="el-icon-close flex-center add-drawer-close opacity08"
+                ></i>
+                <div class="add-drawer-add_box">
+                  <span class="pos-rel">{{$t('add')}}</span>
+                </div>
+              </div>
+  
+              <div class="drawer-title-right">
+                <button class="cancel-button opacity08" @click="cancelDrawer">
+                  {{$t('cancel')}}
+                </button>
+                <button
+                  class="confirm-button"
+                  @click="confirmAddeEquipment"
+                  :class="addeEquipment.disable?'disable':'opacity08'"
+                  style="margin-right: 3px;"
+                >
+                {{$t('complete')}}
+                </button>
+              </div>
+            </div>
+            <img style="width: 100%;" src="/public/images/v3/modal-separation.png">
+          </div>
+          <div class="ads-wrapper">
+            <!-- 内容 -->
+            <div class="flex-items-center form-item-box">
+              <span class="drawer-label show">{{$t('dialog.h15')}}</span>
+              <div class="drawer-item w100">
+                <el-input v-model="addeEquipment.data.name"></el-input>
+              </div>
+            </div>
+            <div class="flex-items-center form-item-box">
+              <span class="drawer-label show" style="letter-spacing: 1.1px;">UUID</span>
+              <div class="drawer-item w100">
+                <el-input v-model="addeEquipment.data.uniqueCode"></el-input>
+              </div>
+            </div>
+            <div class="flex-items-center form-item-box">
+              <span class="drawer-label">{{$t('dialog.h17')}}</span>
+              <el-select
+                class="w100"
+                popper-class="add-tree-select"
+                v-model="addeEquipment.placeValue"
+              >
+                <el-option>
+                  <el-tree
+                    :data="headerSelect.placeItem"
+                    :props="props"
+                    @node-click="changeAddNode"
+                  ></el-tree>
+                </el-option>
+              </el-select>
+              <!-- <el-dropdown trigger="click" class="w100">
+                <div class="drawer-item w100">
+                  <el-input
+                    disabled
+                    type="text"
+                    placeholder="请选择地点"
+                    suffix-icon="el-icon-arrow-down"
+                    v-model="addeEquipment.placeValue"
+                  ></el-input>
+                </div>
+                <el-dropdown-menu slot="dropdown">
+                  <el-dropdown-item>
+                    <el-tree
+                      :data="headerSelect.placeItem"
+                      :props="props"
+                      @node-click="changeAddNode"
+                    ></el-tree>
+                  </el-dropdown-item>
+                </el-dropdown-menu>
+              </el-dropdown> -->
+            </div>
+            <div class="flex-items-center form-item-box">
+              <span class="drawer-label">{{$t('dialog.h16')}}</span>
+              <div class="drawer-item">
+                <el-input v-model="addeEquipment.data.equipmentIp"></el-input>
+              </div>
+            </div>
+          </div>
+        </el-drawer>
+        <!-- 二维码 -->
+        <tr-dialog
+          :title="qr.title"
+          width="35rem"
+          class="qrcode-dialog"
+          :visible.sync="qr.isShowDialog"
+          with-cancel
+          top="25vh"
+          center
+          :cancel-text="$t('dialog.h18')"
+          :confirm-text="$t('dialog.h19')"
+          @confirm="confirmSave"
+          @cancel="confirmPrint"
+        >
+          <div class="flex-center">
+            <div ref="qrcodebig" id="qrcodebig"></div>
+          </div>
+        </tr-dialog>
+
+        <audio
+          ref="warningAudio"
+          :src="warningAudioUrl"
+          hidden="true"
+          controls="controls"
+          loop="loop"
+          preload="preload"
+          muted="true"
+        ></audio>
+        
+        <!-- 日志查看 -->
+        <el-dialog 
+         	class="log-dialog"
+         	:title="$t('dialog.h20')"
+         	width="1100px"
+         	top="30px"
+         	center
+         	:visible.sync="logDialogVisible">
+         	<div class="log-dialog__body" v-loading="logDialog.loading">
+         		<div class="log-pane-tab__wrapper">
+         			<div class="log-pane__info " v-if="logDialog.record != null">
+	         			<p><label><i class="el-icon-receiving"></i>{{$t('dialog.h24')}}</label>{{logDialog.record.name}}</p>
+	         			<p v-if="logDialog.record.placeName != null"><label><i class="el-icon-location-information"></i>{{$t('place')}}</label>
+	         				{{logDialog.record.placeName}}
+	         			</p>
+	         		</div>
+	         		
+	         		<el-radio-group v-model="logDialog.tabActive" class="log-radio-group" @change="changeLogTab">
+      					<el-radio-button v-for="item in logTypeOptions" :key="item.value" :label="item.value">
+      						<i :class="item.icon" v-if="item.icon != null && item.icon != ''"></i>
+      						{{item.name}}
+      					</el-radio-button>
+      				</el-radio-group>
+         		</div>
+         		
+			  	 <div class="log-pane">
+			  	 	<div class="log-pane__header">
+			  	 		<div class="flex-center">
+				  	 		<el-date-picker
+				  	 		  size="small"
+						      v-model="logDialog.selectTimes"
+						      type="datetimerange"
+						      :start-placeholder="$t('dialog.h21')"
+						      :end-placeholder="$t('dialog.h22')"
+						      prefix-icon="el-icon-date"
+						      class="log-date-picker"
+						      format="yyyy-MM-dd HH:mm"
+						      popper-class="log-date-picker__popper"
+						      @change="changeLogTimes">
+						    </el-date-picker>
+						    <el-button size="small" type="primary" 
+						    	style="margin-left: 8px;" 
+						    	icon="el-icon-upload"
+						    	@click="exportLog">{{$t('dialog.h23')}}</el-button>
+					    </div>
+				    	<div class="log-search-group">
+							<input :placeholder="$t('placeholder.h3')" v-model="logDialog.search" @keyup.enter="changeLogSearch">
+						</div>
+			  	 	</div>
+			  	 	
+			  	 	<div class="log-pane__body">
+			  	 		<el-table size="small" 
+			  	 			border 
+			  	 			stripe
+			  	 			:max-height="10 * 45"
+			  	 			class="log-table"
+			  	 			:data="logDialog.data"
+			  	 			v-if="logDialog.showTable">
+			  	 			<el-table-column
+			  	 			  :label="$t('dialog.h1')"
+						      type="index"
+						      align="center"
+						      width="60">
+						    </el-table-column>
+			  	 			 <el-table-column
+							      prop="time"
+							      :label="$t('dialog.h25')"
+							      width="180"
+							      align="center"
+							      :show-overflow-tooltip="true"
+							      :formatter="formatLogTime">
+							</el-table-column>
+							
+							<el-table-column
+								  prop="nickname"
+							      :label="$t('dialog.h26')"
+							      :show-overflow-tooltip="true"
+							      width="120"
+							      :formatter="formatNull"
+							      align="center"
+							      v-if="logDialog.tabActive == '2'">
+							</el-table-column>
+							
+							<el-table-column
+							      :label="$t('dialog.h27')"
+							      width="140"
+							      align="center"
+							      :show-overflow-tooltip="true"
+							      :formatter="formatNull">
+							      <template slot-scope="scope">
+							      	{{logSubTypeMap[scope.row.subType] || $t('dialog.h28')}}
+							      </template>
+							</el-table-column>
+							<el-table-column
+							      prop="content"
+							      :label="$t('dialog.h29')"
+							      :show-overflow-tooltip="true"
+							      min-width="200"
+							      align="center"
+							      :formatter="formatNull">
+							</el-table-column>
+							
+							<el-table-column
+							      :label="$t('dialog.h30')"
+							      :show-overflow-tooltip="true"
+							      width="100"
+							      align="center"
+							      :formatter="formatNull">
+							      <template slot-scope="scope">
+							      	<el-button type="danger" size="mini" icon="el-icon-delete" circle @click="deleteLog(scope.row)"></el-button>
+							      </template>
+							</el-table-column>
+			  	 		</el-table>
+			  	 	</div>
+			  	 	
+			  	 	<div class="log-pane__footer" v-if="logPage.count > 0">
+			  	 		<div class="operate-wrapper">
+			  	 			<el-button size="small" type="danger" 
+						    	icon="el-icon-delete"
+						    	@click="deleteAllLogs">{{$t('commonLog.deleteAll')}}</el-button>
+			  	 		</div>
+			  	 		<el-pagination
+			  	 			background
+			  	 		    class="log-pagination"
+		                    :page-size="logPage.pageSize"
+		                    layout="prev, pager, next"
+		                    :current-page="logPage.pageNum"
+		                    :total="logPage.count"
+		                    @current-change="changeLogPage">
+		                  </el-pagination>
+			  	 	</div>
+			  	 </div>
+         	</div>
+         </el-dialog>
+     	
+     	
+     	<!-- 权限设置 -->
+     	<el-dialog
+				:title="$t('dialog.h31')"
+				class="log-dialog permission-dialog"
+				:visible.sync="permissionDialogVisible"
+				width="900px"
+				center
+				v-loading="permissionLoading">
+			<div class="body-wrapper">
+				<div class="flex justift-between">
+				</div>
+				<div class="flex justift-between margin-t-10">
+					<div class="bind-tree" >
+						<span class="bind-title main-color width-full text-overflow">{{$t('dialog.h36')}}({{permissionDialog.selectDepartment == null ? $t('allText') : permissionDialog.selectDepartment.name}})</span>
+						<el-scrollbar style="height:100%">
+							<el-tree :default-expand-all="true" 
+								:check-strictly="true"
+								ref="permissionTree" 
+								:expand-on-click-node="false" 
+								show-checkbox 
+								node-key="id" 
+								:data="departmentTree" 
+								:props="{label:'name'}" 
+								@node-click="changePermissonDept"
+								@check="handlePermissionDeptCheck"></el-tree>
+						</el-scrollbar>
+					</div>
+					<div class="bind-dep-user" >
+						<span class="bind-title main-color">{{$t('dialog.h32')}}</span>
+						<el-scrollbar style="height:100%">
+							<el-checkbox-group class="flex flex-column align-start" 
+								v-model="permissionDialog.checkedDeptUserIds"
+								v-if="permissionUsers.length > 0"
+								@change="changeDeptUsersCheck">
+								<div  v-for="user in permissionUsers" class="bind-user-item">
+									<el-checkbox :disabled="user.isCreator && permissionDialog.checkedUsers.length > 0" :label="user.id">{{user.nickname}}</el-checkbox>
+								</div>
+							</el-checkbox-group>
+							
+							<div v-if="permissionUsers.length <= 0" class="flex flex-center margin-t-20">{{$t('dialog.h33')}}</div>
+						</el-scrollbar>
+					</div>
+					<div class="bind-selected">
+						<span class="bind-title main-color">{{$t('dialog.h34')}}</span>
+						<el-scrollbar style="height:100%">
+							<div v-for="user in permissionDialog.checkedUsers" class="bind-user-item flex justift-between margin-r-10">
+								<span :style="{color: user.isCreator ? '#e6a23c' : '#606266'}"
+								>{{user.nickname}}</span>
+								<i  @click="removeCheckedUser(user)" :title="$t('dialog.h35')" class="el-icon-delete" type="delete" v-if="!user.isCreator"></i>
+							</div>
+						</el-scrollbar>
+					</div>
+				</div>
+			</div>
+			<div slot="footer" class="dialog-footer main-bg" @click="confirmPermission">
+				<span>{{$t('confirm')}}</span>
+			</div>
+		</el-dialog>
+      </div>
+      
+      <tr-dialog
+       :title="$t('p301')"
+       width="600px"
+       v-loading="warningStrategy.loading"
+       :visible.sync="warningStrategy.show"
+       @confirm="confirmSetwWarningStrategy">
+      	<div class="warning-strategy__wrapper">
+      		<div class="warning-strategy__part">
+      			<div class="warning-strategy__title">
+      				{{$t('p302')}}
+      			</div>
+      			<div class="warning-strategy__body">
+      				<span>{{$t('p303')}}</span>
+      				<el-select v-model="warningStrategy.warningStrategy" 
+      					:placeholder="$t('p304')"
+      					:clearable="true"
+      					popper-class="warning-select__popper">
+      					<el-option v-for="item in warningStrategy.alertStrategies" 
+      						:value="item.id"
+      						:key="item.id"
+      						:label="item.name"></el-option>
+      				</el-select>
+      			</div>
+      		</div>
+      		
+      		<div class="warning-strategy__part">
+      			<div class="warning-strategy__title">
+      				{{$t('p305')}}
+      			</div>
+      			
+      			<div class="warning-strategy__body danger">
+      				<span>{{$t('p306')}}</span>
+      				<el-select v-model="warningStrategy.cutoffStrategy" 
+      					:placeholder="$t('p301')"
+      					:clearable="true"
+      					popper-class="warning-select__popper">
+      					<el-option v-for="item in warningStrategy.alertStrategies" 
+      						:value="item.id"
+      						:key="item.id"
+      						:label="item.name"></el-option>
+      				</el-select>
+      			</div>
+      		</div>
+      		
+      		<div class="warning-strategy__checkbox">
+      			<el-checkbox v-model="warningStrategy.isAll">{{$t('p307')}}</el-checkbox>
+      		</div>
+      	</div>
+      </tr-dialog>
+    </div>
+  </body>
+  <script src="/public/js/vue.min.js"></script>
+  <script src="/public/elementui/element-ui.js"></script>
+  <script src="/public/js/jquery-3.3.1.min.js"></script>
+  <script src="/public/js/qrcode.min.js"></script>
+  <script src="/public/js/config/config.js"></script>
+  <script src="/public/js/energy/WebSocket.js"></script>
+  <script src="/public/js/date.js"></script>
+  <script src="/public/js/ajax-el.js"></script>
+  <script src="/public/js/moment.min.js"></script>
+  <script src="/public/js/common/iframe.js"></script>
+  <script src="/public/js/common/constants.js"></script>
+  <script src="/public/js/common/import-tip.js"></script>
+  <script src="/public/js/common/common-util.js"></script>
+  <script src="/public/js/echarts.min.js"></script>
+  <script src="/public/js/brand-tree.js"></script>
+  <script src="/public/js/tr-dialog.js"></script>
+  <script src="/public/js/check-all-checkbox.js"></script>
+  <script src="/public/js/common/vue-directive.js"></script>
+  <script src="/public/ali-icon/energy-icon/iconfont.js"></script>
+  <script src="/public/js/vue-i18n.js"></script>
+  <script src="/public/js/config/i18n-config.js"></script>
+  <script src="/public/js/i18n/energy/i18n-manage.js"></script>
+  <script src="/public/elementui/locale/lang/zh-CN.js"></script>
+  <script src="/public/elementui/locale/lang/en.js"></script>
+  
+  <script src="/public/js/common/vue-common-util.js"></script>
+  <script src="/public/js/components/common.js"></script>
+
+  <script src="/public/js/energy/manage.js"></script>
+  <script src="/public/js/energy/print.min.js"></script>
+</html>

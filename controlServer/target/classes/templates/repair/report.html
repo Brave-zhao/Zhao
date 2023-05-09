@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>报修管理</title>
+    <link rel="stylesheet" href="/public/css/v3/common/common.css">
+    <link rel="stylesheet" href="/public/css/v3/common/modal.css">
+    <link rel="stylesheet" href="/public/elementui/element-ui.css">
+    <link rel="stylesheet" href="/public/ali-icon/iconfont.css">
+    <link rel="stylesheet" href="/public/css/v3/common/el-custom.css">
+    <link rel="stylesheet" href="/public/css/v3/common/progress.css">
+    <link rel="stylesheet" href="/public/css/repair/report.css">
+    <link rel="stylesheet" href="/public/css/components/ChooseDialog.css">
+</head>
+<body>
+<div id="app" v-cloak>
+    <div style="min-width: 960px">
+        <div class="head-wrapper">
+            <div class="head">
+                <span></span><span v-t="'title'"></span>
+            </div>
+        </div>
+        <!-- total-wrapper开始 -->
+        <div class="total-wrapper" v-loading="totalLoading">
+            <div class="total-wrapper-inner">
+                <div class="item">
+                    <img src="/public/images/repair/total-1.png">
+                    <div class="title">{{$t('p1')}}</div>
+                    <div class="content">{{total.todo}}</div>
+                </div>
+                <div class="item">
+                    <img src="/public/images/repair/total-2.png">
+                    <div class="title">{{$t('p2')}}</div>
+                    <div class="content">{{total.finished}}</div>
+                </div>
+                <div class="item">
+                    <img src="/public/images/repair/total-3.png">
+                    <div class="title">{{$t('p3')}}</div>
+                    <div class="content">{{total.sum}}</div>
+                </div>
+            </div>
+        </div>
+        <!-- total-wrapper结束 -->
+
+        <!-- charts-wrapper开始 -->
+        <div class="charts-wrapper">
+            <div class="charts-wrapper-inner">
+                <div v-loading="chartLoading[1]" class="item">
+                    <div class="chart-item" id="chart1"></div>
+                    <div class="filter-wrapper">
+                        <el-radio-group class="date-switch" v-model="chartFilter.attrSwitch" size="mini" @change="">
+                            <el-radio-button :label="1">{{$t('type')}}</el-radio-button>
+                            <el-radio-button :label="2">{{$t('p4')}}</el-radio-button>
+                        </el-radio-group>
+                        <!-- TODO -->
+                        <el-dropdown v-if="chartFilter.attrSwitch === 1" :hide-on-click="false" trigger="click" placement="bottom-start">
+                            <el-input
+                                    class="filter-input"
+                                    size="small"
+                                    :value="chartFilter.properTypeName"
+                                    :placeholder="$t('p5')"
+                                    suffix-icon="el-icon-arrow-down"
+                                    readonly
+                            >
+                            </el-input>
+                            <el-dropdown-menu class="table-select check" slot="dropdown">
+                                <el-dropdown-item>
+                                    <div class="relative">
+                                        <div class="search-check-input-wrapper">
+                                            <el-input v-model="chartFilter.ptLike" class="search-input"
+                                                      :placeholder="$t('p21')">
+                                                <i slot="suffix" class="el-input__icon el-icon-search"></i>
+                                            </el-input>
+                                        </div>
+                                        <div class="search-check-space">
+                                            <el-scrollbar style="height: 100%;">
+                                                <div @click="chartFilterPtChange(pt)" v-for="pt in chartFilterTypeList"
+                                                     class="flex search-check-item select" :class="{'active': chartFilter.properType === pt.id}">
+                                                    {{pt.name}}
+                                                </div>
+                                            </el-scrollbar>
+                                        </div>
+                                    </div>
+                                </el-dropdown-item>
+                            </el-dropdown-menu>
+                        </el-dropdown>
+                        <el-dropdown @visible-change="function(isExpand) {initScreenList(isExpand, 'PROPERTY_BRAND')}"
+                                v-if="chartFilter.attrSwitch === 2" :hide-on-click="false" trigger="click" placement="bottom-start">
+                            <el-input
+                                    class="filter-input"
+                                    size="small"
+                                    :value="chartFilter.brand"
+                                    :placeholder="$t('p6')"
+                                    suffix-icon="el-icon-arrow-down"
+                                    readonly
+                            >
+                            </el-input>
+                            <el-dropdown-menu class="table-select check" slot="dropdown">
+                                <el-dropdown-item>
+                                    <div class="relative">
+                                        <div class="search-check-input-wrapper">
+                                            <el-input v-model="chartFilter.brandLike" class="search-input"
+                                                      :placeholder="$t('p22')">
+                                                <i slot="suffix" class="el-input__icon el-icon-search"></i>
+                                            </el-input>
+                                        </div>
+                                        <div class="search-check-space">
+                                            <el-scrollbar style="height: 100%;">
+                                                <div @click="chartFilterBrandChange(brand)" v-for="brand in chartFilterBrandList"
+                                                     class="flex search-check-item select" :class="{'active': chartFilter.brand === brand.name}">
+                                                    {{brand.name}}
+                                                </div>
+                                            </el-scrollbar>
+                                        </div>
+                                    </div>
+                                </el-dropdown-item>
+                            </el-dropdown-menu>
+                        </el-dropdown>
+                        <el-button style="margin-left: 12px" class="w-custom-button" type="primary" @click="chartExport(1)">{{$t('export')}}</el-button>
+                    </div>
+                </div>
+                <div v-loading="chartLoading[2]" class="item">
+                    <div class="chart-item" id="chart2"></div>
+                    <div class="filter-wrapper">
+                        <el-radio-group class="date-switch" v-model="chartFilter.dateSwitch" size="mini" @change="">
+                            <el-radio-button :label="1">{{$t('p7')}}</el-radio-button>
+                            <el-radio-button :label="2">{{$t('p8')}}</el-radio-button>
+                        </el-radio-group>
+                        <el-date-picker
+                                v-if="chartFilter.dateSwitch === 1"
+                                v-model="chartFilter.filterYear"
+                                class="date-picker-style"
+                                popper-class="year-popper"
+                                type="year"
+                                :clearable="false"
+                                size="small"
+                                prefix-icon="el-icon-caret-bottom"
+                                format="yyyy"
+                                placeholder=""
+                                value-format="timestamp"
+                                @change="changeDate(2)">
+                        </el-date-picker>
+                        <el-date-picker
+                                v-if="chartFilter.dateSwitch === 2"
+                                v-model="chartFilter.filterMonth"
+                                class="date-picker-style month-picker-style"
+                                popper-class="year-popper"
+                                type="month"
+                                :clearable="false"
+                                size="small"
+                                prefix-icon="el-icon-caret-bottom"
+                                format="yyyy-MM"
+                                placeholder=""
+                                value-format="timestamp"
+                                @change="changeDate(2)">
+                        </el-date-picker>
+                        <el-button style="margin-left: 12px" class="w-custom-button" type="primary" @click="chartExport(2)">{{$t('export')}}</el-button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="charts-wrapper">
+            <div class="charts-wrapper-inner">
+                <div v-loading="chartLoading[3]" class="item">
+                    <div class="chart-item" id="chart3"></div>
+                    <div class="filter-wrapper">
+                        <!-- TODO -->
+                        <el-dropdown :hide-on-click="false" trigger="click" placement="bottom-start">
+                            <el-input
+                                    class="filter-input"
+                                    size="small"
+                                    :value="chartFilter.place.name"
+                                    :placeholder="$t('tipsText[5]')"
+                                    suffix-icon="el-icon-arrow-down"
+                                    readonly
+                            >
+                            </el-input>
+                            <el-dropdown-menu class="table-select check" slot="dropdown">
+                                <el-dropdown-item>
+                                    <el-checkbox-group v-model="condition.names" class="relative">
+                                        <div class="search-check-input-wrapper">
+                                            <el-input v-model="chartFilter.placeLike" class="search-input"
+                                                      :placeholder="$t('tipsText[3]')">
+                                                <i slot="suffix" class="el-input__icon el-icon-search"></i>
+                                            </el-input>
+                                        </div>
+                                        <div class="search-check-space" v-loading="condition.loading.place">
+                                            <div
+                                                    v-if="place && place.length"
+                                                    @click="cancelNodeSelect('chartPlaceFilter', chartFilter, 1, 'place')"
+                                                    class="ztree-cancle ads"
+                                            >
+                                                <span>{{$t('all')}}</span>
+                                            </div>
+                                            <el-scrollbar style="height: 250px;">
+                                                <el-tree class="custom-tree" default-expand-all="true"
+                                                         ref="chartPlaceFilter" node-key="id"
+                                                         :data="place" :props="defaultProps"
+                                                         highlight-current="true"
+                                                         :filter-node-method="placeFilterChart"
+                                                         @node-click="chartFilterPlace($event)">
+                                                    <div class="custom-tree-label" slot-scope="scope">
+                                                        <span class="tree-label font-14">{{ scope.node.label }}</span>
+                                                    </div>
+                                                </el-tree>
+                                            </el-scrollbar>
+                                        </div>
+                                    </el-checkbox-group>
+                                </el-dropdown-item>
+                            </el-dropdown-menu>
+                        </el-dropdown>
+                        <el-button style="margin-left: 12px" class="w-custom-button" type="primary" @click="chartExport(3)">{{$t('export')}}</el-button>
+                    </div>
+                </div>
+                <div v-loading="chartLoading[4]" class="item">
+                    <div class="chart-item" id="chart4"></div>
+                    <div class="filter-wrapper">
+                        <el-radio-group class="date-switch" v-model="chartFilter.timeConsume.dateSwitch" size="mini" @change="">
+                            <el-radio-button :label="1">{{$t('p7')}}</el-radio-button>
+                            <el-radio-button :label="2">{{$t('p8')}}</el-radio-button>
+                        </el-radio-group>
+                        <el-date-picker
+                                v-if="chartFilter.timeConsume.dateSwitch === 1"
+                                v-model="chartFilter.timeConsume.filterYear"
+                                class="date-picker-style"
+                                popper-class="year-popper"
+                                type="year"
+                                :clearable="false"
+                                size="small"
+                                prefix-icon="el-icon-caret-bottom"
+                                format="yyyy"
+                                placeholder=""
+                                value-format="timestamp"
+                                @change="changeDate(4)">
+                        </el-date-picker>
+                        <el-date-picker
+                                v-if="chartFilter.timeConsume.dateSwitch === 2"
+                                v-model="chartFilter.timeConsume.filterMonth"
+                                class="date-picker-style month-picker-style"
+                                popper-class="year-popper"
+                                type="month"
+                                :clearable="false"
+                                size="small"
+                                prefix-icon="el-icon-caret-bottom"
+                                format="yyyy-MM"
+                                placeholder=""
+                                value-format="timestamp"
+                                @change="changeDate(4)">
+                        </el-date-picker>
+                        <el-button style="margin-left: 12px" class="w-custom-button" type="primary" @click="chartExport(4)">{{$t('export')}}</el-button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="charts-wrapper">
+            <div class="charts-wrapper-inner">
+                <div v-loading="chartLoading[5]" class="item">
+                    <div class="chart-item" id="chart5"></div>
+                    <div class="filter-wrapper">
+                        <el-radio-group class="date-switch" v-model="chartFilter.avgScore.dateSwitch" size="mini" @change="">
+                            <el-radio-button :label="1">{{$t('p7')}}</el-radio-button>
+                            <el-radio-button :label="2">{{$t('p8')}}</el-radio-button>
+                        </el-radio-group>
+                        <el-date-picker
+                                v-if="chartFilter.avgScore.dateSwitch === 1"
+                                v-model="chartFilter.avgScore.filterYear"
+                                class="date-picker-style"
+                                popper-class="year-popper"
+                                type="year"
+                                :clearable="false"
+                                size="small"
+                                prefix-icon="el-icon-caret-bottom"
+                                format="yyyy"
+                                placeholder=""
+                                value-format="timestamp"
+                                @change="changeDate(5)">
+                        </el-date-picker>
+                        <el-date-picker
+                                v-if="chartFilter.avgScore.dateSwitch === 2"
+                                v-model="chartFilter.avgScore.filterMonth"
+                                class="date-picker-style month-picker-style"
+                                popper-class="year-popper"
+                                type="month"
+                                :clearable="false"
+                                size="small"
+                                prefix-icon="el-icon-caret-bottom"
+                                format="yyyy-MM"
+                                placeholder=""
+                                value-format="timestamp"
+                                @change="changeDate(5)">
+                        </el-date-picker>
+                        <el-button style="margin-left: 12px" class="w-custom-button" type="primary" @click="chartExport(5)">{{$t('export')}}</el-button>
+                    </div>
+                </div>
+                <div v-loading="chartLoading[6]" class="item">
+                    <div class="chart-item" id="chart6"></div>
+                    <div class="filter-wrapper">
+                        <el-dropdown style="margin-right: 12px;width: 128px" v-loadmore="function() {tryGetUserList(chartFilter.assign.user.page.pageNum + 1)}" :hide-on-click="false" trigger="click" placement="bottom-start">
+                            <el-select :value="filtersUserText" class="fake-disabled" :placeholder="$t('p24')" disabled></el-select>
+                            <el-dropdown-menu class="table-select check" slot="dropdown">
+                                <el-dropdown-item>
+                                    <el-checkbox-group @change="_getChartsData(6)" v-model="chartFilter.assign.user.value" class="relative">
+                                        <div class="search-check-input-wrapper">
+                                            <el-input @input="filtersUserChange" v-model="chartFilter.assign.user.like" class="search-input" :placeholder="$t('p25')">
+                                                <i slot="suffix" class="el-input__icon el-icon-search"></i>
+                                            </el-input>
+                                        </div>
+                                        <div class="search-check-space" v-loading="chartFilter.assign.user.loading">
+                                            <el-scrollbar style="height: 100%;">
+                                                <div v-for="screen in chartFilter.assign.user.list" class="flex search-check-item">
+                                                    <el-checkbox :label="screen" :key="screen.id">{{screen.nickname}}</el-checkbox>
+                                                </div>
+                                                <div v-if="chartFilter.assign.user.page.finish" class="flex search-check-item justify-center">
+                                                    <span class="font-16">{{$t('p26')}}</span>
+                                                </div>
+                                            </el-scrollbar>
+                                        </div>
+                                    </el-checkbox-group>
+                                </el-dropdown-item>
+                            </el-dropdown-menu>
+                        </el-dropdown>
+                        <el-radio-group class="date-switch" v-model="chartFilter.assign.dateSwitch" size="mini" @change="">
+                            <el-radio-button :label="1">{{$t('p7')}}</el-radio-button>
+                            <el-radio-button :label="2">{{$t('p8')}}</el-radio-button>
+                        </el-radio-group>
+                        <el-date-picker
+                                v-if="chartFilter.assign.dateSwitch === 1"
+                                v-model="chartFilter.assign.filterYear"
+                                class="date-picker-style"
+                                popper-class="year-popper"
+                                type="year"
+                                :clearable="false"
+                                size="small"
+                                prefix-icon="el-icon-caret-bottom"
+                                format="yyyy"
+                                placeholder=""
+                                value-format="timestamp"
+                                @change="changeDate(6)">
+                        </el-date-picker>
+                        <el-date-picker
+                                v-if="chartFilter.assign.dateSwitch === 2"
+                                v-model="chartFilter.assign.filterMonth"
+                                class="date-picker-style month-picker-style"
+                                popper-class="year-popper"
+                                type="month"
+                                :clearable="false"
+                                size="small"
+                                prefix-icon="el-icon-caret-bottom"
+                                format="yyyy-MM"
+                                placeholder=""
+                                value-format="timestamp"
+                                @change="changeDate(6)">
+                        </el-date-picker>
+                        <el-button style="margin-left: 12px" class="w-custom-button" type="primary" @click="chartExport(6)">{{$t('export')}}</el-button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- charts-wrapper结束 -->
+
+    </div>
+</div>
+</body>
+<script src="/public/js/vue.min.js"></script>
+<script src="/public/elementui/element-ui.js"></script>
+<script src="/public/js/jquery-3.3.1.min.js"></script>
+<script src="/public/js/config/config.js"></script>
+
+<script src="/public/locales/vue-i18n.js"></script>
+<script src="/public/elementui/locale/lang/zh-CN.js"></script>
+<script src="/public/elementui/locale/lang/en.js"></script>
+<script src="/public/locales/i18n-config.js"></script>
+<script src="/public/locales/i18n-all.js"></script>
+
+<script src="/public/js/date.js"></script>
+<script src="/public/js/ajax.js"></script>
+<!--<script src="/public/js/image-compress.js"></script>-->
+<script src="/public/js/moment.min.js"></script>
+<script src="/public/js/common/iframe.js"></script>
+<script src="/public/js/common/constants.js"></script>
+<script src="/public/js/common/import-tip.js"></script>
+<script src="/public/js/common/common-util.js"></script>
+<script src="/public/js/echarts.min.js"></script>
+<script src="/public/js/qrcode.min.js"></script>
+<!--<script src="/public/js/components/ChooseDialog.js"></script>-->
+<script src="/public/js/bluebird.min.js"></script>
+<!--<script src="/public/js/html2canvas.min.js"></script>-->
+<!--<script src="/public/js/print2img.js"></script>-->
+<script src="/public/js/common/vue-directive.js"></script>
+<script src="/public/js/repair/report.js"></script>
+</html>

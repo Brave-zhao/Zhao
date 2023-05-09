@@ -1,0 +1,688 @@
+/* 第三版新增用户模态框样式
+
+--------------------------------------------------------------------------------------------*/
+.add-user-title {
+    color: #43B498;
+    font-size: 18px;
+    font-weight: bold;
+    border-left: 8px solid #43B498;
+    padding: 0 4px;
+}
+
+.add-user-content-wrapper {
+    background: #F7F7F7;
+    box-shadow: 0px 3px 7px 0px rgba(0, 0, 0, 0.05);
+    margin-top: 11px;
+    padding: 30px 40px 0 0;
+    box-sizing: border-box;
+}
+
+.add-user-row {
+    display: flex;
+    align-items: center;
+}
+
+.add-user-col {
+    width: 50%;
+}
+
+.add-user-label {
+    width: 80px;
+    flex-shrink: 0;
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    font-size: 16px;
+    color: #333333;
+    padding: 0 13px 0 0;
+    position: relative;
+}
+
+.add-user-label>span {
+    position: relative;
+}
+
+.add-user-content-wrapper>.add-user-row:nth-of-type(n+2) {
+    margin-top: 18px;
+}
+
+.add-user-col-full {
+    width: 100%;
+}
+
+.add-user-right {
+    margin-top: 35px;
+    margin-left: 40px;
+}
+
+.add-user-photo {
+    width: 139px;
+    height: 187px;
+    background: #F2F2F2;
+    border: 1px solid #43B498;
+}
+
+.button-basics {
+    background: #43B498;
+    box-shadow: 0px 0px 10px 0px rgba(67, 180, 152, 0.4);
+    font-size: 14px;
+    color: #fff;
+    padding: 10px 8px;
+    display: flex;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.button-radio {
+    border-radius: 4px;
+}
+
+.button-basics:hover {
+    opacity: .7;
+}
+
+.button-red {
+    background: #F47E7E;
+    color: #fff;
+}
+
+.add-user-tip {
+    position: absolute;
+    right: 8px;
+    top: 8px;
+}
+
+.add-user-tip > span {
+    border-radius: 10px;
+    border: 1px solid #A7A7A7;
+    width: 18px;
+    height: 18px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: #A7A7A7;
+    cursor: pointer;
+    user-select: none;
+}
+
+.disabled-input {
+    color: #333333;
+    background: #fff;
+    cursor: context-menu;
+    font-size: inherit;
+    height: 40px;
+    line-height: 40px;
+    outline: 0;
+    padding: 0 15px;
+    border-radius: 4px;
+    border: 1px solid #DCDFE6;
+    width: 100%;
+}
+
+.del-msg {
+    margin-top: 20px;
+    margin-bottom: 50px;
+    font-size: 20px;
+    color: #333333;
+}
+
+.view-modal>.el-dialog {
+    width: 500px;
+    height: auto;
+    display: flex;
+    flex-direction: column;
+    border-radius: 4px;
+}
+
+.view-modal .el-dialog__title::before {
+    content: '';
+    height: 6px;
+    background: rgba(67,180,152,1);
+    border-radius: 2px;
+    width: 100%;
+    position: absolute;
+    bottom: 2px;
+    z-index: -1;
+}
+
+.view-modal .el-dialog__body {
+    margin: 53px 0px 0px 0;
+    padding: 0;
+    border-top: 1px solid rgba(222,222,222,1);
+}
+
+.view-modal .el-dialog__title {
+    font-size: 18px;
+    font-weight: bold;
+    color: rgba(51,51,51,1);
+    margin: 16px 0;
+    display: inline-block;
+    position: relative;
+    z-index: 1;
+}
+
+.view-modal.confirm-modal .dialog-footer {
+    border-radius: 0px 0px 10px 10px;
+}
+
+.view-modal .dialog-footer {
+    border-radius: 0px 0px 5px 5px;
+    display: flex;
+    width: 100%;
+    height: 50px;
+    justify-content: center;
+    align-items: center;
+    background:rgba(67,180,152,1);
+    color:rgba(255,255,255,1);
+    cursor: pointer;
+}
+
+.view-modal .el-dialog__footer {
+    padding: 0;
+    display: flex;
+    height: 100%;
+}
+
+.double-footer {
+    border-radius: 0px 0px 5px 5px;
+    display: flex;
+    width: 100%;
+    height: 50px;
+    align-items: center;
+    background: rgba(67,180,152,1);
+    color: rgba(255,255,255,1);
+    cursor: pointer;
+    border-top: 1px solid #DEDEDE;
+    overflow: hidden;
+}
+
+.double-footer>span {
+    width: 50%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: rgba(67,180,152,1);
+    color: rgba(255,255,255,1);
+}
+
+.double-footer>span:first-of-type {
+    background: #F1F1F1;
+    color: #999999;
+}
+
+.view-modal.confirm-modal .el-dialog__body {
+    margin: 20px 0px 0px 0;
+    padding: 0;
+    border-top: 1px solid transparent;
+}
+
+.view-modal.confirm-modal .el-dialog__header {
+    display: none;
+}
+
+.import-tip {
+    display: flex;
+    align-items: flex-start;
+    position: relative;
+}
+
+.import-tip>img {
+    position: absolute;
+    left: -73px;
+}
+
+.import-tip>span {
+    font-size: 18px;
+    color: #2DA6EC;
+}
+
+.import-body-wrapper {
+    margin: 25px 25px 25px 90px;
+}
+
+.export-body-wrapper {
+    margin: 25px 25px 25px 40px;
+}
+
+.import-button-wrapper {
+    border: 2px solid #F1F1F1;
+    border-radius: 4px;
+    padding: 6px;
+    width: 100%;
+    font-size: 16px;
+    color: #AAAAAA;
+}
+
+.import-loading {
+    font-size: 20px;
+    color: #aaa;
+    margin-left: 5px;
+    display: none !important;
+}
+
+.import-loading.active {
+    display: inline-block !important;
+}
+
+.msg-popover > span {
+    margin-left: 5px;
+    border-radius: 10px;
+    border: 1px solid #A7A7A7;
+    width: 18px;
+    height: 18px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: #A7A7A7;
+    cursor: pointer;
+    user-select: none;
+}
+
+.import-error-wrapper {
+    margin: 0 20px;
+    border: 1px dashed #DADADA;
+    padding: 10px 10px 10px 70px;
+    position: relative;
+    display: none;
+}
+
+.import-error-wrapper.active {
+    display: block;
+}
+
+.import-error-img {
+    position: absolute;
+    left: 20px;
+    top: 20px;
+}
+
+.import-error {
+    font-size: 16px;
+    color: #F34B4B;
+    line-height: 24px;
+}
+
+.small .view-form-wrapper {
+    width: 320px;
+}
+
+.export-modal .view-form-wrapper>div>span {
+    width: 100px;
+    justify-content: flex-end;
+    display: flex;
+}
+
+.import-modal .el-dialog__body {
+    padding: 25px 25px 30px !important;
+}
+
+/*
+   后台管理左中右选择模态框样式
+------------------------------------------------------- */
+.bind-box {
+    height: 444px;
+    margin-top: 30px;
+    background: #FFFFFF;
+    border: 1px solid #DEDEDE;
+    box-shadow: 0px -2px 10px 0px rgba(0, 0, 0, 0.05);
+}
+
+.bind-item {
+    display: flex;
+    padding: 12px 18px;
+    font-size: 16px;
+    color: #333333;
+    align-items: center;
+}
+
+.bind-name {
+    margin-left: 5px;
+    width: 100px;
+}
+
+.bind-name>i {
+    margin-right: 5px;
+}
+
+.bind-detail {
+    margin-left: 5px;
+    flex-grow: 1;
+}
+
+.bind-item .el-checkbox__label {
+    display: none;
+}
+
+.bind-item .el-checkbox__inner {
+    border: 2px solid #CCCCCC;
+}
+
+.bind-item .el-checkbox__input.is-checked .el-checkbox__inner {
+    border-color: rgba(67,180,152,1);
+}
+
+.bind-space>.bind-item:nth-of-type(n+2) {
+    border-top: 1px solid #E9E9E9;
+}
+
+.bind-item.bd-bottom {
+    border-bottom: 1px solid #E9E9E9;
+}
+
+/**
+右侧新增模态框
+ --------------------------------------------------*/
+.modal-form .el-radio__inner:hover {
+    border-color: #43B498;
+}
+
+.modal-form .el-radio__input.is-checked+.el-radio__label {
+    font-size: 14px;
+    color: rgba(51,51,51,1);
+}
+
+.modal-form .el-radio__input.is-disabled+span.el-radio__label {
+    color: #C0C4CC;
+}
+
+.modal-form .el-radio__input.is-checked .el-radio__inner {
+    background: #fff;
+    border-color: rgba(225, 225, 225, 1);
+}
+
+.modal-form .el-radio__inner::after {
+    background: #43B498;
+    width: 8px;
+    height: 8px;
+}
+
+.modal-form {
+    /*padding: 40px 0 20px 0;*/
+}
+
+.modal-form-wrapper {
+    margin-left: 10px;
+    width: 100%;
+    display: flex;
+}
+
+.modal-form-label.need::before {
+    content: '*';
+    color: #E72222;
+}
+
+.modal-form-label {
+    font-size: 14px;
+    color: #333333;
+    width: 80px;
+    display: flex;
+    justify-content: flex-end;
+    /*align-self: flex-start;*/
+    /*margin-top: 4px;*/
+    flex-shrink: 0;
+}
+
+.modal-form-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 22px;
+}
+
+.modal-form-input>input {
+    height:34px;
+    flex-grow: 1;
+}
+
+.modal-head-title>i:hover {
+    opacity: .6;
+}
+
+.modal-head-title>i {
+    width: 22px;
+    height: 22px;
+    background: #CCCCCC;
+    border-radius: 50%;
+    color: #fff;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-right: 10px;
+}
+
+.modal-head-title>span {
+    position: relative;
+}
+
+.modal-head-title>span::after {
+    content: '';
+    width: 100%;
+    background: #43B498;
+    height: 6px;
+    position: absolute;
+    bottom: 1px;
+    right: 0px;
+    z-index: -1;
+    padding: 0 5px;
+    left: -5px;
+    border-radius: 3px;
+}
+
+.modal-head-title {
+    font-size: 18px;
+    font-weight: bold;
+    color: rgba(51,51,51,1);
+    font-style: italic;
+    position: relative;
+    z-index: 1;
+    display: flex;
+}
+
+.modal-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-shrink: 0;
+    margin-bottom: 15px;
+}
+
+.background-green {
+    background: #43B498 !important;
+}
+
+.modal-head-button {
+    display: flex;
+}
+
+.modal-head-button>div:hover {
+    opacity: .6;
+}
+
+.modal-head-button>div {
+    width: 68px;
+    height: 34px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: rgba(204,204,204,1);
+    border-radius: 4px;
+    color: rgba(255,255,255,1);
+    font-size: 14px;
+    cursor: pointer;
+    margin-right: 10px;
+}
+
+.modal-form-wrapper>.el-select {
+    flex-grow: 1;
+}
+
+.right-modal {
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    height: 100%;
+    top: 0;
+    right: -576px;
+    width: 576px;
+    background: rgba(255,255,255,1);
+    box-shadow: 0px 4px 29px 1px rgba(0, 0, 0, 0.1);
+    border-radius: 20px 0px 0px 20px;
+    padding: 30px 38px 30px 22px;
+    box-sizing: border-box;
+    z-index: 1;
+    transition: all .2s;
+}
+
+.right-modal.active {
+    right: 0;
+}
+
+.modal-form-wrapper .msg-popover {
+    position: absolute;
+    right: -25px;
+    top: 7px;
+}
+/**
+    二维码样式
+ ----------------------------------------*/
+.qrcode-content {
+    position: absolute;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+}
+
+.qrcode-content>span {
+    font-size: 18px;
+    color: #000000;
+    margin-top: 40px;
+    height: 31px;
+}
+
+.qrcode-content>.qrcode-wrapper {
+    width: 210px;
+    height: 210px;
+    background: #FAFAFA;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 50px;
+}
+
+/**
+资产模板模态框样式
+ ----------------------------------------------*/
+.property-template-wrapper {
+    height: 442px;
+    background: #FCFCFD;
+    border: 2px solid #F1F1F1;
+    border-radius: 4px;
+    padding: 15px 25px;
+    margin: 18px 20px 0 20px;
+}
+
+.property-template-space {
+    display: flex;
+    flex-wrap: wrap;
+}
+
+.property-template-item {
+    width: 472px;
+    height: 128px;
+    background: #FFFFFF;
+    border: 2px solid #F1F1F1;
+    box-shadow: 0px 2px 5px 0px rgba(0, 0, 0, 0.06);
+    border-radius: 4px;
+    display: flex;
+    padding: 15px 20px;
+    box-sizing: border-box;
+    font-size: 14px;
+    color: #000000;
+    line-height: 24px;
+    cursor: pointer;
+}
+
+.property-template-item>div {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+}
+
+.property-template-item>div:nth-of-type(1) {
+    width: 260px;
+}
+
+.property-template-item>div>span {
+    text-align: left;
+}
+
+.property-template-space>.property-template-item:nth-of-type(odd) {
+    margin-right: 12px;
+}
+
+.property-template-space>.property-template-item:nth-of-type(n+3) {
+    margin-top: 13px;
+}
+
+.property-template-item:hover {
+    border: 2px solid rgba(67, 180, 152, 0.4);
+}
+
+.property-template-item.active {
+    border: 2px solid rgba(67, 180, 152, 1);
+}
+
+.footer-center {
+    display: flex;
+    width: 100%;
+    border-top: 1px solid #DEDEDE;
+    height: 78px;
+    justify-content: center;
+    align-items: center;
+}
+
+
+/* region # 修改样式统一下对齐 */
+.need {
+    position: relative;
+}
+.need::before {
+	content: '*';
+	color: #E72222; 
+    position: absolute;
+    left: -10px;
+    top: 0;
+}
+.modal-form-label {
+    position: relative;
+    width: 66px;
+    height: 19px;
+    font-size: 14px;
+}
+.modal-form-label > span {
+    position: absolute;
+    width: 100%;
+    text-align: justify;
+    text-justify: distribute;
+    left: 0;
+}
+.modal-form-label > span::after {
+    display: inline-block;
+    width: 100%;
+    content: "";
+}
+.manage-collapse-content .el-date-editor.el-input {
+    width: 100%;
+}
+.modal-form .modal-form-wrapper {
+    width: 300px;
+}
+.modal-form .el-radio {
+    margin-right: 26px;
+}
+/* endregion */
+
+

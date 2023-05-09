@@ -1,0 +1,156 @@
+* {
+	box-sizing: border-box;
+}
+
+html {
+	background: rgba(241,241,241,0.65);
+}
+
+.page-header {
+	width: 100%;
+	height: 80px;
+	border: 1px solid #e4dfdf;
+	box-shadow: 0 0 6px 1px #eaeaea;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background: white;
+}
+
+.page-header__wrapper {
+	width: 1200px;
+	font-size: 24px;
+	color: rgba(67,180,152,1);
+	letter-spacing: 2px;
+}
+
+.page-body_wrapper {
+	width: 1240px;
+	min-height: 800px;
+	margin-top: 20px;
+	margin-bottom: 20px;
+	background: white;
+	border-radius: 4px;
+	border: 1px solid #efefef;
+}
+
+.page-body {
+	display: flex;
+	justify-content: center;
+}
+
+.page-box {
+	padding: 20px 30px 50px 30px;
+	border-bottom: 1px solid #f1f1f1;
+}
+
+.page-box:last-child{
+	border-bottom: none;
+}
+
+.page-box__title {
+	display: flex;
+	align-items: center;
+	font-size: 18px;
+	margin-bottom: 30px;
+	padding-bottom: 15px;
+	border-bottom: 1px solid rgba(205, 214, 212, 0.29);
+}
+
+.page-box__title:before {
+	content: "";
+	background: rgba(67,180,152,1);
+	width: 4px;
+	height: 18px;
+	margin-right: 10px;
+}
+
+.input-group {
+	display: flex;
+	align-items: center;
+	width: 350px;
+	
+}
+
+.input-group .el-button {
+	margin-left: 8px;
+}
+
+.row-group + .row-group {
+	margin-top: 20px;
+}
+
+.place-tooltip {
+	width: 700px;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+	overflow: hidden;
+	color: #999;
+	margin-left: 20px;
+}
+
+.status-box {
+    display: flex;
+    align-items: center;
+    width: auto;
+
+}
+
+.status-box>span {
+    display: inline-block;
+    padding: 1px 6px;
+    border-radius: 2px;
+}
+
+.status-box.flashing > span {
+	background: rgba(255, 0, 0, .3);
+	color: rgba(255, 0, 0, .8);
+}
+
+.status-box.flashing {
+	animation: flashing 1.5s infinite ease-in-out;
+}
+
+.status-box.active::before {
+    background: #43B498;
+}
+
+.status-box.active>span {
+    background: none;
+    color: inherit;
+}
+
+.status-box::before {
+    content: "";
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #dc3545;
+    margin-right: 4px;
+}
+
+
+.upload-wrapper {
+	border: 1px dashed #d9d9d9;
+    border-radius: 6px;
+    cursor: pointer;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	min-width: 100px;
+	min-height: 40px;
+}
+
+.upload-wrapper .el-image {
+	width: 100%;
+	height: 100%;
+}
+
+.upload-wrapper > i {
+	font-size: 24px;
+	color: #8c939d;
+}
+
+.upload-wrapper:hover {
+	border-color: #409EFF;
+}

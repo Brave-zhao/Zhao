@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>开门记录</title>
+    <link rel="stylesheet" href="/public/css/v3/common/common.css">
+    <link rel="stylesheet" href="/public/css/v3/common/modal.css">
+    <link rel="stylesheet" href="/public/elementui/element-ui.css">
+    <link rel="stylesheet" href="/public/ali-icon/iconfont.css">
+    <link rel="stylesheet" href="/public/css/v3/common/el-custom.css">
+    <link rel="stylesheet" href="/public/css/v3/common/progress.css">
+    <link rel="stylesheet" href="/public/font-awesome/css/font-awesome.min.css">
+    <link rel="stylesheet" href="/public/css/access-control/open-log/manage.css">
+</head>
+<body>
+<div id="app" v-cloak>
+    <div>
+        <div class="head-wrapper">
+            <div class="head">
+                <span></span><span v-t="'head'"></span>
+            </div>
+        </div>
+
+        <div class="content-wrapper" style="margin-bottom: 0;">
+            <div class="screen">
+                <div class="flex">
+                    <div class="screen-item">
+                        <div @click="refreshData" class="custom-button button-style6" v-t="'b1'"></div>
+                        <div @click="multipleDelete" class="custom-button button-style2 margin-l-20"><i class="el-icon-delete"></i>{{$t('b2')}}</div>
+                        <div @click="deleteAllLogs" class="custom-button button-style2 margin-l-20"><i class="el-icon-delete"></i>{{$t('deleteAll')}}</div>
+                        <el-date-picker
+                                class="margin-l-20"
+                                v-model="timeRange"
+                                type="datetimerange"
+                                align="right"
+                                :start-placeholder="_i18n.t('ph1')"
+                                :end-placeholder="_i18n.t('ph2')"
+                                @change="timeRangeChange"
+                                :default-time="['00:00:00', '23:59:59']">
+                        </el-date-picker>
+                    </div>
+                </div>
+                <div class="margin-l-20">
+                    <div @click="exportData" class="custom-button button-style1" v-t="'b3'"></div>
+<!--                    <div class="screen-item">
+                        <el-input
+                                v-model="condition.like"
+                                class="search-input"
+                                placeholder="搜索相关内容"
+                                @keyup.enter.native="toFirstPage">
+                            <i @click="toFirstPage" slot="suffix" class="el-input__icon el-icon-search"></i>
+                        </el-input>
+                    </div>-->
+                </div>
+            </div>
+        </div>
+
+        <div class="content-wrapper flex" style="margin: 0 30px">
+            <div class="width-full">
+                <el-table
+                        class="custom-table border-table"
+                        ref="multipleTable"
+                        v-loading="mainLoading"
+                        :data="list"
+                        tooltip-effect="dark"
+                        style="width: 100%"
+                        @selection-change="handleSelectionChange">
+                    <el-table-column
+                            type="selection"
+                            width="55">
+                    </el-table-column>
+<!--                    <el-table-column
+                            prop="number"
+                            label="名称">
+                        <template slot-scope="scope">
+                            <span @click="showViewModal(scope.row)" class="clickable">{{scope.row.name}}</span>
+                        </template>
+                    </el-table-column>-->
+                    <el-table-column width="120">
+                        <template scope="scope" slot="header">
+                            <el-dropdown :hide-on-click="false" trigger="click" placement="bottom-start">
+                                <span class="custom-table-th pointer">{{$t('table.h1')}}<i class="el-icon-caret-bottom margin-l-5"></i></span>
+                                <el-dropdown-menu class="table-select check" slot="dropdown">
+                                    <el-dropdown-item>
+                                        <el-checkbox-group @change="toFirstPage" v-model="condition.acList" class="relative">
+                                            <div class="search-check-input-wrapper">
+                                                <el-input v-model="condition.acLike" class="search-input" :placeholder="_i18n.t('table.ph1')">
+                                                    <i slot="suffix" class="el-input__icon el-icon-search"></i>
+                                                </el-input>
+                                            </div>
+                                            <div class="search-check-space">
+                                                <el-scrollbar style="height: 100%;">
+                                                    <div v-for="pt in screenAcList" class="flex search-check-item">
+                                                        <el-checkbox :label="pt.uniqueCode" :key="pt.uniqueCode">{{pt.name}}</el-checkbox>
+                                                    </div>
+                                                </el-scrollbar>
+                                            </div>
+                                        </el-checkbox-group>
+                                    </el-dropdown-item>
+                                </el-dropdown-menu>
+                            </el-dropdown>
+                        </template>
+                        <template slot-scope="scope">
+<!--                            <span>{{ acUniqueCodeMap[scope.row.unique_code] | byKey("name")}}</span>-->
+                            <div class="name-wrapper">
+                                <div class="offline-label" v-if="scope.row.open_type === 0">离</div>
+                                <div class="name" :title="scope.row.propertyName||'——'">{{scope.row.propertyName||"——"}}</div>
+                            </div>
+                        </template>
+                    </el-table-column>
+
+                    <!-- 门禁类型 -->
+                    <el-table-column>
+                        <template scope="scope" slot="header">
+                            <el-dropdown @command="selectType" trigger="click" placement="bottom-start">
+                                <span class="custom-table-th pointer">{{$t('table.h2')}}<i class="el-icon-caret-bottom margin-l-5"></i></span>
+                                <el-dropdown-menu class="table-select" slot="dropdown">
+                                    <el-dropdown-item :class="{active: null == condition.type}" :command="[condition, {}, 1]">{{$t('all')}}</el-dropdown-item>
+                                    <el-dropdown-item :class="{active: key === condition.type}"
+                                                      v-for="(value, key) in _i18n.t('acType')" :command="[condition, {value: key, label: value}, 1]">{{value}}</el-dropdown-item>
+                                </el-dropdown-menu>
+                            </el-dropdown>
+                        </template>
+                        <template slot-scope="scope">
+                            <span>{{_i18n.t('acType[' + scope.row.type + ']') | text}}</span>
+                        </template>
+                    </el-table-column>
+
+                    <!-- 所在地点 -->
+                    <el-table-column>
+                        <template scope="scope" slot="header">
+                            <el-dropdown :hide-on-click="false" trigger="click" placement="bottom-start">
+                                <span class="custom-table-th pointer">{{$t('table.h3')}}<i class="el-icon-caret-bottom margin-l-5"></i></span>
+                                <el-dropdown-menu class="table-select check" slot="dropdown">
+                                    <el-dropdown-item>
+                                        <el-checkbox-group v-model="condition.names" class="relative">
+                                            <div class="search-check-input-wrapper">
+                                                <el-input v-model="condition.placeLike" class="search-input"
+                                                          :placeholder="_i18n.t('table.ph3')">
+                                                    <i slot="suffix" class="el-input__icon el-icon-search"></i>
+                                                </el-input>
+                                            </div>
+                                            <div class="search-check-space" v-loading="condition.loading.place">
+                                                <div v-if="place && place.length" @click="cancelNodeSelect('condition', condition, 1, 'placeId', 'placeName')" class="relative ztree-cancle font-14 ads"><span v-t="'all'"></span></div>
+                                                <el-scrollbar style="height: 300px;">
+                                                    <el-tree class="custom-tree" default-expand-all="true"
+                                                             ref="condition" node-key="id"
+                                                             :data="place" :props="defaultProps"
+                                                             highlight-current="true"
+                                                             :filter-node-method="placeFilter"
+                                                             @node-click="handleNodeClick($event, condition, 1, 'placeId', 'placeName')">
+                                                        <div class="custom-tree-label" slot-scope="scope">
+                                                            <span class="tree-label">{{ scope.node.label }}</span>
+                                                        </div>
+                                                    </el-tree>
+                                                </el-scrollbar>
+<!--                                                <div @click="cancelNodeSelect('condition', condition, 1, 'placeId', 'placeName')" class="relative ztree-cancle font-14"><span v-t="'cancel'"></span></div>-->
+                                            </div>
+                                        </el-checkbox-group>
+                                    </el-dropdown-item>
+                                </el-dropdown-menu>
+                            </el-dropdown>
+                        </template>
+                        <template slot-scope="scope">
+<!--                            <span v-if="scope.row.placeName">{{scope.row.placeName||"——"}}</span>-->
+<!--                            <span v-else>——</span>-->
+                            <span>{{placeIdNameMap[scope.row.place_id] | text}}</span>
+                        </template>
+                    </el-table-column>
+
+<!--                    <el-table-column
+                            prop="placeName"
+                            label="所在地点">
+                        <template slot-scope="scope">
+                            <span v-if="scope.row.placeName">{{scope.row.placeName}}</span>
+                            <span v-else>-</span>
+                        </template>
+                    </el-table-column>-->
+
+                    <el-table-column
+                            show-overflow-tooltip
+                            prop="depName">
+                        <template scope="scope" slot="header">
+                            <el-dropdown :hide-on-click="false" trigger="click" placement="bottom-start">
+                                <span class="custom-table-th pointer">{{$t('table.h4')}}<i class="el-icon-caret-bottom margin-l-5"></i></span>
+                                <el-dropdown-menu class="table-select check" slot="dropdown">
+                                    <el-dropdown-item>
+                                        <el-checkbox-group class="relative">
+                                            <div class="search-check-input-wrapper">
+                                                <el-input v-model="condition.depLike" class="search-input" :placeholder="_i18n.t('table.ph4')">
+                                                    <i slot="suffix" class="el-input__icon el-icon-search"></i>
+                                                </el-input>
+                                            </div>
+                                            <div class="search-check-space" v-loading="condition.loading.dep">
+                                                <div v-if="department && department.length" @click="cancelDepNodeSelect('depCondition', condition, 1, 'depId', 'depName')" class="relative ztree-cancle font-14 ads"><span v-t="'all'"></span></div>
+                                                <el-scrollbar style="height: 300px;">
+                                                    <el-tree class="custom-tree" default-expand-all="true" ref="depCondition" node-key="id"
+                                                             :data="department" :props="defaultProps" highlight-current="true"
+                                                             :filter-node-method="depFilter" @node-click="handleDepNodeClick($event, condition, 1, 'depId', 'depName')">
+                                                        <div class="custom-tree-label" slot-scope="scope">
+                                                            <span class="tree-label">{{ scope.node.label }}</span>
+                                                        </div>
+                                                    </el-tree>
+                                                </el-scrollbar>
+<!--                                                <div @click="cancelDepNodeSelect('depCondition', condition, 1, 'depId', 'depName')" class="relative ztree-cancle font-14"><span v-t="'cancel'"></span></div>-->
+                                            </div>
+                                        </el-checkbox-group>
+                                    </el-dropdown-item>
+                                </el-dropdown-menu>
+                            </el-dropdown>
+                        </template>
+                        <template slot-scope="scope">
+                            {{scope.row.dep_name | text}}
+                        </template>
+                    </el-table-column>
+
+                    <!-- 出入人员 -->
+                    <el-table-column
+                            show-overflow-tooltip
+                            prop="nickname">
+                        <template scope="scope" slot="header">
+                            <el-dropdown v-loadmore="function() {tryGetUserList(condition.screen.user.page.pageNum + 1)}" :hide-on-click="false" trigger="click" placement="bottom-start">
+                                <span class="custom-table-th pointer">{{$t('table.h5')}}<i class="el-icon-caret-bottom margin-l-5"></i></span>
+                                <el-dropdown-menu class="table-select check" slot="dropdown">
+                                    <el-dropdown-item>
+                                        <el-checkbox-group @change="toFirstPage" v-model="condition.screen['user'].value" class="relative">
+                                            <div class="search-check-input-wrapper">
+                                                <el-input @input="tableUserChange" v-model="condition.screen.user.like" class="search-input" :placeholder="_i18n.t('table.ph5')">
+                                                    <i slot="suffix" class="el-input__icon el-icon-search"></i>
+                                                </el-input>
+                                            </div>
+                                            <div class="search-check-space" v-loading="condition.loading.user">
+                                                <el-scrollbar style="height: 100%;">
+                                                    <div v-for="screen in condition.screen.user.list" class="flex search-check-item">
+                                                        <el-checkbox :label="screen.id" :key="screen.id">{{screen.nickname}}</el-checkbox>
+                                                    </div>
+                                                    <div v-if="condition.screen.user.page.finish" class="flex search-check-item justify-center">
+                                                        <span class="font-16" v-t="'noMore'"></span>
+                                                    </div>
+                                                </el-scrollbar>
+                                            </div>
+                                        </el-checkbox-group>
+                                    </el-dropdown-item>
+                                </el-dropdown-menu>
+                            </el-dropdown>
+                        </template>
+                        <template slot-scope="scope">
+                            <span>{{scope.row.nickname | text}}</span>
+                        </template>
+                    </el-table-column>
+
+                    <!-- 用户类型 -->
+                    <el-table-column>
+                        <template scope="scope" slot="header">
+                            <el-dropdown @command="selectUserType" trigger="click" placement="bottom-start">
+                                <span class="custom-table-th pointer">{{$t('table.h6')}}<i class="el-icon-caret-bottom margin-l-5"></i></span>
+                                <el-dropdown-menu class="table-select" slot="dropdown">
+                                    <el-dropdown-item :class="{active: null == condition.userType}" :command="[condition, {}, 1]">{{$t('all')}}</el-dropdown-item>
+                                    <el-dropdown-item :class="{active: key === condition.userType}"
+                                                      v-for="(value, key) in _i18n.t('userTypeMap')" :command="[condition, {value: key, label: value}, 1]">{{value}}</el-dropdown-item>
+                                </el-dropdown-menu>
+                            </el-dropdown>
+                        </template>
+                        <template slot-scope="scope">
+                            <span>{{scope.row.user_type ? _i18n.t('userTypeMap[' + scope.row.user_type + ']') : '——'}}</span>
+                        </template>
+                    </el-table-column>
+
+                    <!-- 开门方式 -->
+                    <el-table-column>
+                        <template scope="scope" slot="header">
+                            <el-dropdown @command="selectWay" trigger="click" placement="bottom-start">
+                                <span class="custom-table-th pointer">{{$t('table.h7')}}<i class="el-icon-caret-bottom margin-l-5"></i></span>
+                                <el-dropdown-menu class="table-select" slot="dropdown">
+                                    <el-dropdown-item :class="{active: null == condition.way}" :command="[condition, {}, 1]">{{$t('all')}}</el-dropdown-item>
+                                    <el-dropdown-item :class="{active: key === condition.way}"
+                                                      v-for="(value, key) in _i18n.t('openWay')" :command="[condition, {value: key, label: value}, 1]">{{value}}</el-dropdown-item>
+                                </el-dropdown-menu>
+                            </el-dropdown>
+                        </template>
+                        <template slot-scope="scope">
+                            <span>{{_i18n.t('openWay[' + scope.row.way + ']') | text}}</span>
+                        </template>
+                    </el-table-column>
+
+                    <!-- 开门结果 -->
+                    <el-table-column
+                            label="开门结果">
+                        <template scope="scope" slot="header">
+                            <el-dropdown @command="selectStatus" trigger="click" placement="bottom-start">
+                                <span class="custom-table-th pointer">{{$t('table.h8')}}<i class="el-icon-caret-bottom margin-l-5"></i></span>
+                                <el-dropdown-menu class="table-select" slot="dropdown">
+                                    <el-dropdown-item :class="{active: null == condition.status}" :command="[condition, {}, 1]">{{$t('all')}}</el-dropdown-item>
+                                    <el-dropdown-item :class="{active: key === condition.status}"
+                                                      v-for="(value, key) in _i18n.t('statusMap')" :command="[condition, {value: key, label: value}, 1]">{{value}}</el-dropdown-item>
+                                </el-dropdown-menu>
+                            </el-dropdown>
+                        </template>
+                        <template slot-scope="scope">
+                            <span>{{_i18n.t('statusMap[' + scope.row.status + ']') | text}}</span>
+                        </template>
+                    </el-table-column>
+
+                    <!-- 开门时间 -->
+                    <el-table-column
+                            width="180"
+                            :label="_i18n.t('table.h9')">
+                        <template slot-scope="scope">
+                            <span>{{scope.row.time | dateFull}}</span>
+                        </template>
+                    </el-table-column>
+
+                    <!-- 响应时间 -->
+                    <el-table-column
+                            width="180"
+                            :label="_i18n.t('table.h10')">
+                        <template slot-scope="scope">
+                            <span>{{scope.row.create_time | dateFull}}</span>
+                        </template>
+                    </el-table-column>
+
+
+                    <el-table-column
+                        :label="_i18n.t('table.h11')"
+                        align="center"
+                        width="100">
+                        <template slot-scope="scope">
+                            <div class="table-operation">
+                                <i @click="singleDelete(scope.row.id)" :title="_i18n.t('table.b1')" class="iconfont iconlajitong1" type="delete"></i>
+                            </div>
+                        </template>
+                    </el-table-column>
+                </el-table>
+
+                <!-- 分页 -->
+                <div class="flex table-bottom relative justify-center">
+                    <div class="absolute left-0">
+                        <!--							<div @click="multipleDelete" class="custom-button button-style2"><i class="el-icon-delete"></i>删除选中</div>-->
+                    </div>
+<!--                    <div>
+                        <el-pagination
+                                background
+                                layout="prev, pager, next"
+                                :current-page="page.pageNum"
+                                :page-size="page.pageSize"
+                                :total="page.count"
+                                @current-change="getList">
+                        </el-pagination>
+                    </div>-->
+                    <div class="common-page-wrapper">
+                        <span @click="toFirstPage" v-t="'page.home'"></span>
+                        <el-pagination
+                                class="common-page"
+                                background
+                                layout="prev, pager, next"
+                                :current-page="page.pageNum"
+                                :page-size="page.pageSize"
+                                :total="page.count"
+                                    @current-change="getList">
+                        </el-pagination>
+                        <span @click="toLastPage" v-t="'page.tail'"></span>
+                        <div class="common-page-input-wrapper">
+                            <span v-t="'page.t1'"></span>
+                            <div><input @keyup.enter="toTargetPage" @input="handleAmountChange(page, 'target', 1)" type="text" v-model="page.target"/></div>
+                            <span v-t="'page.t2'"></span>
+                            <div @click="toTargetPage" class="common-page-btn margin-l-10 custom-button button-style1 main-bg" v-t="'page.ok'"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+<script src="/public/js/vue.min.js"></script>
+<script src="/public/elementui/element-ui.js"></script>
+<script src="/public/js/jquery-3.3.1.min.js"></script>
+<script src="/public/js/config/config.js"></script>
+<script src="/public/js/date.js"></script>
+<script src="/public/js/ajax-el.js"></script>
+<script src="/public/js/moment.min.js"></script>
+<script src="/public/js/common/iframe.js"></script>
+<script src="/public/js/common/constants.js"></script>
+<script src="/public/js/common/import-tip.js"></script>
+<script src="/public/js/common/common-util.js"></script>
+<script src="/public/js/echarts.min.js"></script>
+<script src="/public/js/brand-tree.js"></script>
+<script src="/public/js/check-all-checkbox.js"></script>
+<script src="/public/js/axios.min.js"></script>
+<script src="/public/js/common/vue-directive.js"></script>
+<script src="/public/js/vue-i18n.js"></script>
+<script src="/public/js/config/i18n-config.js"></script>
+<script src="/public/js/i18n/manage/access-control/open-log/i18n-manage.js"></script>
+<script src="/public/elementui/locale/lang/zh-CN.js"></script>
+<script src="/public/elementui/locale/lang/en.js"></script>
+<script src="/public/js/access-control/open-log/manage.js"></script>
+</html>

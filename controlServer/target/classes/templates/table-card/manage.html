@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>桌牌管理</title>
+    <link rel="stylesheet" href="/public/css/v3/common/common.css">
+    <link rel="stylesheet" href="/public/elementui/element-ui.css">
+    <link rel="stylesheet" href="/public/ali-icon/iconfont.css">
+    <link rel="stylesheet" href="/public/css/v3/common/el-custom.css">
+    <link rel="stylesheet" href="/public/css/components/common.css">
+    <link rel="stylesheet" href="/public/css/common/admin-common.css">
+    <link rel="stylesheet" href="/public/css/table-card/manage.css">
+</head>
+<body>
+<div id="app" v-cloak v-loading="loading">
+    <div>
+        <div class="head-wrapper">
+            <div class="head">
+                <span></span><span >{{manageType == 1 ? $t('p1') : $t('p31')}}</span>
+            </div>
+        </div>
+        
+        <div class="content-wrapper" style="margin-bottom: 0;">
+            <div class="screen">
+                <div class="flex">
+                	<div class="screen-item">
+                		<div @click="showEditDialog(true)" class="custom-button button-style1">{{$t('p2')}}
+                        </div>
+                	</div>
+                	<div class="screen-item">
+                        <div @click="multiDelete" class="custom-button button-style2"><i class="el-icon-delete"></i>{{$tc('d', 2)}}
+                        </div>
+                    </div>
+                </div>
+                <div class="margin-l-20">
+                    <div class="screen-item">
+                        <el-input
+                                v-model="search"
+                                class="search-input"
+                                :placeholder="$t('p3')"
+                                @keyup.enter.native="changeSearch">
+                            <i @click="changeSearch" slot="suffix" class="el-input__icon el-icon-search"></i>
+                        </el-input>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="content-wrapper flex" style="margin: 0 30px">
+            <div class="width-full">
+                <el-table
+                        class="custom-table border-table"
+                        v-loading="tableLoading"
+                        :data="tableData"
+                        tooltip-effect="dark"
+                        style="width: 100%"
+                        @selection-change="handleSelectionChange">
+                    <el-table-column
+                         type="selection"
+                         width="55"
+                         align="center">
+                    </el-table-column>
+                    <el-table-column
+				      prop="name"
+				      :label="$t('p4')"
+				      :show-overflow-tooltip="true"
+				      min-width="80"
+				      align="center"
+				      :formatter="formatNull">
+					</el-table-column>
+					
+					<el-table-column
+				      prop="placeName"
+				      :show-overflow-tooltip="true"
+				      min-width="100"
+				      align="center"
+				      :formatter="formatNull">
+				      <template slot="header" slot-scope="scope">
+				      	<table-tree-filter v-model="placeIds" :data="placeData" 
+				      		:is-single="false" @change="changePlaces" :searchable="true">{{$t('p7')}}</table-tree-filter>
+				      </template>
+					</el-table-column>
+					
+					<el-table-column
+				      prop="uniqueCode"
+				      label="UUID"
+				      :show-overflow-tooltip="true"
+				      min-width="100"
+				      align="center"
+				      :formatter="formatNull">
+					</el-table-column>
+					
+					<el-table-column
+				      :label="$t('p8')"
+				      :show-overflow-tooltip="true"
+				      min-width="100"
+				      align="center">
+				      <template slot-scope="scope">
+				      	{{formatType(scope.row)}}
+				      </template>
+					</el-table-column>
+					
+					<el-table-column
+				      :label="$t('p9')"
+				      :show-overflow-tooltip="true"
+				      min-width="120"
+				      align="center">
+				      <template slot-scope="scope">
+				      	{{scope.row.station ?  (scope.row.station.name + '(' + scope.row.station.uniqueCode + ')'): "——"}}
+				      </template>
+					</el-table-column>
+					
+					<el-table-column
+				      :label="$t('p28')"
+				      :show-overflow-tooltip="true"
+				      min-width="60"
+				      align="center">
+				      <template slot-scope="scope">
+				      	{{scope.row.einkAttribute && scope.row.einkAttribute.power ? scope.row.einkAttribute.power + "%" : "——"}}
+				      </template>
+					</el-table-column>
+					
+					<el-table-column
+				      :label="$t('p29')"
+				      :show-overflow-tooltip="true"
+				      min-width="60"
+				      align="center">
+				      <template slot-scope="scope">
+				      	{{scope.row.einkAttribute && scope.row.einkAttribute.temperature ? scope.row.einkAttribute.temperature + "℃" : "——"}}
+				      </template>
+					</el-table-column>
+					
+					<el-table-column
+				      :show-overflow-tooltip="true"
+				      min-width="100"
+				      align="center">
+				      <template slot="header" slot-scope="scope">
+				      	<table-filter :data="onlineOptions" v-model="online" @change="changeOnline">{{$t('p10')}}</table-filter>
+				      </template>
+				      <template slot-scope="scope">
+				      	<div style="display: flex;align-content: center;justify-content: center;">
+		                  	 <div class="status-box active" v-if="scope.row.online">
+						      	 <span >{{$t('p11')}}</span>
+						     </div>
+						      	
+						     <div class="status-box" v-if="!scope.row.online" :class="{'flashing': isFlashingByUuid(scope.row.uniqueCode)}">
+						      	 <span>{{$t('p12')}}</span>
+						     </div>
+		                  </div>
+				      </template>
+					</el-table-column>
+					
+					<el-table-column
+			     	   :label="$t('operate')"
+                       align="center"
+                       min-width="140">
+                       <template slot-scope="scope">
+                       	 	<div class="flex justify-center">
+                       	 		<div @click="showEditDialog(false, scope.row)" class="font-btn" >{{$t('edit')}}</div>
+                                <div @click="singleDelete(scope.row)" class="font-btn" >{{$tc('d', 1)}}</div>
+                                <div @click="showLogDialog(scope.row)" class="font-btn" >{{$t('p13')}}</div>
+                            </div>
+                            
+                            <div class="flex justify-center">
+                            	<div @click="refreshStatus(scope.row, 'online')" class="font-btn" >{{$t('p32')}}</div>
+                            	<div @click="refreshStatus(scope.row, 'power')" class="font-btn" >{{$t('p33')}}</div>
+                            	<div @click="refreshStatus(scope.row, 'temperature')" class="font-btn" >{{$t('p34')}}</div>
+                            </div>
+                       </template>
+					</el-table-column>
+                </el-table>
+                <div class="flex table-bottom relative justify-center">
+                    <tr-pagination
+                             background
+                             layout="prev, pager, next"
+                             :current-page="page.pageNum"
+                             :page-size="page.pageSize"
+                             :total="page.count"
+                             @current-change="getTableData">
+                     </tr-pagination>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <tr-drawer
+    	:visible.sync="editDialogVisible"
+    	class="padding-drawer"
+    	@confirm="confirmSubmit"
+    	:title="editDialog.isAdd ? $t('p14') : $t('p15')"
+    	v-loading="editLoading">
+    	<el-form ref="form" label-width="1rem" :rules="formRules" :model="editDialog" class="padding-form">
+			  <el-form-item prop="name" class="is-required">
+			  	<div class="padding-label" slot="label">{{$t('p4')}}</div>
+			    <el-input class="custom-input w-full" v-model="editDialog.name" :placeholder="$t('p16')"></el-input>
+			  </el-form-item>
+			  
+			  <el-form-item prop="uniqueCode" class="is-required">
+			  	<div class="align-center" slot="label">
+			  		<auto-padding  text="UUID" ></auto-padding>
+			  		<el-tooltip effect="dark" :content="uuidTooltip" placement="top">
+			  			<i class="icon-tooltip el-icon-question" style="margin-left: 3px;"></i>
+			  		</el-tooltip>
+			  	</div>
+			    <el-input class="custom-input w-full" v-model="editDialog.uniqueCode" :placeholder="$t('p17')"></el-input>
+			  </el-form-item>
+			  
+			   <el-form-item prop="type"  class="is-required">
+				  <div class="padding-label" slot="label">{{$t('p8')}}</div>
+				  <div>
+				  	   <el-select v-model="editDialog.type" class="w-full">
+					      <el-option v-for="option in einkTypes" :label="option.label" :value="option.type"></el-option>
+					   </el-select>
+					   <p class="cr-grey mt-1" v-if="typeTooltip">{{typeTooltip}}</p>
+				  </div>
+				  
+			  </el-form-item>
+			  
+			  <el-form-item prop="placeId" >
+			  	 <div class="padding-label" slot="label">{{$t('p18')}}</div>
+			     <tree-select :data="placeData" v-model="editDialog.placeId" class="w-full"></tree-select>
+			  </el-form-item>
+			  
+			  <el-form-item >
+			  	<div class="align-center" slot="label">
+			  		<auto-padding  :text="$t('p9')" ></auto-padding>
+			  		<el-tooltip effect="dark" :content="$t('p19')" placement="top">
+			  			<i class="icon-tooltip el-icon-question" style="margin-left: 3px;"></i>
+			  		</el-tooltip>
+			  	</div>
+			    <el-select class="w-full" 
+			    	v-model="editDialog.station"
+			    	filterable>
+			    	<el-option
+				      v-for="item in stations"
+				      :key="item.uniqueCode"
+				      :label="item.name"
+				      :value="item.uniqueCode">
+				      <div class="station-option" :title="item.name + '(' + item.uniqueCode + ')'">
+				      	<div>{{item.name}}</div>
+				      	<div v-if="item.placeName">
+				      		<i class="el-icon-location-information"></i>
+				      		<span>{{item.placeName}}</span>
+				      	</div>
+				      </div>
+			    </el-select>
+			  </el-form-item>
+			  
+			  
+		</el-form>
+    </tr-drawer>
+    
+    	<!-- 日志查看 -->
+        <el-dialog 
+         	class="log-dialog"
+         	:title="$t('commonLog.title')"
+         	width="1100px"
+         	top="30px"
+         	center
+         	:visible.sync="logDialogVisible">
+         	<div class="log-dialog__body" v-loading="logDialog.loading">
+         		<div class="log-pane-tab__wrapper">
+         			<div class="log-pane__info " v-if="logDialog.record != null">
+	         			<p><label><i class="el-icon-receiving"></i>{{$t('commonLog.name')}}</label>{{logDialog.record.name}}</p>
+	         			<p v-if="logDialog.record.placeName != null"><label><i class="el-icon-location-information"></i>{{$t('commonLog.place')}}</label>
+	         				{{logDialog.record.placeName}}
+	         			</p>
+	         		</div>
+	         		
+	         		<el-radio-group v-model="logDialog.tabActive" class="log-radio-group" @change="changeLogTab">
+      					<el-radio-button v-for="item in logTypeOptions" :key="item.value" :label="item.value">
+      						<i :class="item.icon" v-if="item.icon != null && item.icon != ''"></i>
+      						{{item.name}}
+      					</el-radio-button>
+      				</el-radio-group>
+         		</div>
+         		
+			  	 <div class="log-pane">
+			  	 	<div class="log-pane__header">
+			  	 		<div class="flex-center">
+				  	 		<el-date-picker
+				  	 		  size="small"
+						      v-model="logDialog.selectTimes"
+						      type="datetimerange"
+						      :start-placeholder="$t('commonLog.startTime')"
+						      :end-placeholder="$t('commonLog.endTime')"
+						      prefix-icon="el-icon-date"
+						      class="log-date-picker"
+						      format="yyyy-MM-dd HH:mm"
+						      popper-class="log-date-picker__popper"
+						      @change="changeLogTimes">
+						    </el-date-picker>
+						    <el-button size="small" type="primary" 
+						    	style="margin-left: 8px;" 
+						    	icon="el-icon-upload"
+						    	@click="exportLog">{{$t('commonLog.export')}}</el-button>
+					    </div>
+				    	<div class="log-search-group">
+							<input :placeholder="$t('commonLog.searchPlaceholder')" v-model="logDialog.search" @keyup.enter="changeLogSearch">
+						</div>
+			  	 	</div>
+			  	 	
+			  	 	<div class="log-pane__body">
+			  	 		<el-table size="small" 
+			  	 			border 
+			  	 			stripe
+			  	 			:max-height="10 * 45"
+			  	 			class="log-table"
+			  	 			:data="logDialog.data"
+			  	 			v-if="logDialog.showTable">
+			  	 			<el-table-column
+			  	 			  label="#"
+						      type="index"
+						      align="center"
+						      width="60">
+						    </el-table-column>
+			  	 			 <el-table-column
+							      prop="time"
+							      :label="$t('commonLog.time')"
+							      width="180"
+							      align="center"
+							      :show-overflow-tooltip="true"
+							      :formatter="formatLogTime">
+							</el-table-column>
+							
+							<el-table-column
+								  prop="nickname"
+							      :label="$t('commonLog.user')"
+							      :show-overflow-tooltip="true"
+							      width="120"
+							      :formatter="formatNull"
+							      align="center"
+							      v-if="logDialog.tabActive == '2'">
+							</el-table-column>
+							
+							<el-table-column
+							      :label="$t('commonLog.type')"
+							      width="140"
+							      align="center"
+							      :show-overflow-tooltip="true"
+							      :formatter="formatNull">
+							      <template slot-scope="scope">
+							      	{{logSubTypeMap[scope.row.subType] || $t('commonLog.unknown')}}
+							      </template>
+							</el-table-column>
+							<el-table-column
+							      prop="content"
+							      :label="$t('commonLog.desc')"
+							      :show-overflow-tooltip="true"
+							      min-width="200"
+							      align="center"
+							      :formatter="formatNull">
+							</el-table-column>
+							
+							<el-table-column
+							      :label="$t('commonLog.operate')"
+							      :show-overflow-tooltip="true"
+							      width="100"
+							      align="center"
+							      :formatter="formatNull">
+							      <template slot-scope="scope">
+							      	<el-button type="danger" size="mini" icon="el-icon-delete" circle @click="deleteLog(scope.row)"></el-button>
+							      </template>
+							</el-table-column>
+			  	 		</el-table>
+			  	 	</div>
+			  	 	
+			  	 	<div class="log-pane__footer" v-if="logPage.count > 0">
+			  	 		<div class="operate-wrapper">
+			  	 			<el-button size="small" type="danger" 
+						    	icon="el-icon-delete"
+						    	@click="deleteAllLogs">{{$t('commonLog.deleteAll')}}</el-button>
+			  	 		</div>
+			  	 		<el-pagination
+			  	 			background
+			  	 		    class="log-pagination"
+		                    :page-size="logPage.pageSize"
+		                    layout="prev, pager, next"
+		                    :current-page="logPage.pageNum"
+		                    :total="logPage.count"
+		                    @current-change="changeLogPage">
+		                  </el-pagination>
+			  	 	</div>
+			  	 </div>
+         	</div>
+         </el-dialog>
+</div>
+</body>
+<script src="/public/js/bluebird.min.js"></script>
+<script src="/public/js/vue.min.js"></script>
+<script src="/public/elementui/element-ui.js"></script>
+<script src="/public/js/jquery-3.3.1.min.js"></script>
+<script src="/public/js/config/config.js"></script>
+
+<script src="/public/locales/vue-i18n.js"></script>
+<script src="/public/element-ui-2.15.9/locale/lang/zh-CN.js"></script>
+<script src="/public/element-ui-2.15.9/locale/lang/en.js"></script>
+<script src="/public/locales/i18n-config.js"></script>
+<script src="/public/locales/i18n-all.js"></script>
+
+<script src="/public/js/ajax-el.js"></script>
+<script src="/public/js/moment.min.js"></script>
+<script src="/public/js/common/iframe.js"></script>
+<script src="/public/js/common/common-util.js"></script>
+<script src="/public/js/common/vue-common-util.js"></script>
+<script src="/public/js/common/vue-directive.js"></script>
+<script src="/public/js/components/common.js"></script>
+<script src="/public/js/table-card/manage.js"></script>
+</html>

@@ -1,0 +1,271 @@
+html {
+	height: 100%;
+	background: #24222a;
+	/* overflow-x: hidden; */
+}
+
+body {
+	margin: 0;
+}
+.ml-15 {
+    margin-left: 15px;
+}
+.mb-15 {
+    margin-bottom: 15px;
+}
+
+div,span {
+    box-sizing: border-box;
+}
+span {
+    display: inline-block;
+}
+.flex-grow-1 {
+    flex-grow: 1;
+}
+
+.el-month-table td.current:not(.disabled) .cell {
+    color: #43B498;
+}
+
+
+/* region # 标题 */
+.head-wrapper {
+	margin: 8px 20px;
+}
+.head {
+    border-left: 3px solid #43B498;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    padding: 0 11px;
+    color: #999999;
+    font-size: 16px;
+}
+.head>span:nth-child(2) {
+	color: #43B498;
+}
+/* endregion */
+
+/* region # 容器 */
+.content-wrapper {
+    margin: 20px 30px 20px 30px;
+}
+/* endregion */
+
+/* region # 横条栏 */
+.screen {
+    overflow: hidden;
+    height: 80px;
+    background: rgba(241,241,241,1);
+    border: 1px solid rgba(222,222,222,1);
+    border-radius: 4px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 30px;
+    font-size: 14px;
+}
+.screen-item {
+	display: flex;
+    align-items: center;
+    margin-right: 30px;
+}
+.screen-item input {
+    font-weight: bold;
+    color: #666;
+}
+.screen-item input::placeholder {
+    color: #C0C4CC;
+    font-weight: normal;
+}
+.screen-item_title {
+	/* margin-right: 10px; */
+	flex-shrink: 0;
+    font-size: 22px;
+    font-weight: bold;
+    color: #333;
+}
+/* endregion */
+
+
+/* -------------------- */
+
+/* region # 选择时间 */
+.time-button {
+    width: 53px;
+    height: 39px;
+    background: #FFFFFF;
+}
+.time-button-wrapper {
+    display: flex;
+}
+.time-button-wrapper .el-radio-button {
+    margin-right: 15px;
+}
+.time-button-wrapper .el-radio-button__inner {
+    border: none !important;
+    box-shadow: none !important;
+    background-color: #4e4b4b;
+    color: white;
+}
+.time-button-wrapper .el-radio-button__inner:hover {
+}
+.time-button-wrapper .is-active .el-radio-button__inner {
+    color: #fff;
+}
+.time-button-wrapper .el-radio-button__inner {
+    border-radius: 0 !important;
+}
+/* endregion */
+
+/* region # 能耗饼图 */
+.negery-wrapper {
+    position: relative;
+    width: 514px;
+    flex-shrink: 0;
+    height: 357px;
+    background: #FFFFFF;
+    box-shadow: 0px 5px 9px 1px rgba(210, 210, 210, 0.36);
+    border-radius: 10px;
+    padding: 10px;
+
+    margin-right: 15px;
+}
+.title-wrapper {
+    height: 27px;
+    line-height: 27px;
+    font-size: 16px;
+    font-weight: bold;
+    color: white;
+    padding-left: 10px;
+    border-left: 4px solid #4B7DFD;
+    margin-bottom: 10px;
+}
+.w-custom-button {
+    width: 53px;
+    height: 26px;
+    line-height: 26px;
+    padding: 0;
+    background: #4B7DFD;
+    box-shadow: 0px 0px 10px 0px rgba(75, 125, 253, 0.4);
+    position: absolute;
+    top: 13px;
+    right: 20px;
+}
+
+.w-custom-button:focus, .w-custom-button:hover {
+	background: #4B7DFD;
+}
+
+#echart1 {
+    /* height: 300px; */
+    height: calc(100% - 37px);
+    /* box-shadow: 0 0 3px black; */
+}
+/* 能耗表格 */
+.negery-table {
+    width: 0;
+    flex-grow: 1;
+}
+.negery-table_inner {
+    background: #292732;
+    border-radius: 10px;
+}
+.negery-table_inner {
+    height: 100%;
+}
+.negery-table_inner.el-table th {
+    overflow: hidden;
+    -ms-user-select: none;
+    user-select: none;
+    height: 41px;
+    background: #4B7DFD;
+    color: #fff;
+    padding: 8px 0;
+}
+
+.negery-table_inner::after, .negery-table_inner::before {
+	background: #292732;
+}
+
+.negery-table_inner tbody > tr:nth-child(2n) > td {
+    background-color: #313131;
+}
+.negery-table_inner tbody > tr:nth-child(2n+1) > td {
+    background-color: #292732;
+}
+.negery-table_inner tbody td {
+    color: white;
+}
+.negery-table_inner tbody .el-table_1_column_1 {
+    font-weight: bold;
+    color: white;
+}
+.negery-table_inner .el-table td, .el-table th {
+    padding: 8px 0;
+}
+
+.negery-table_inner td, .el-table th.is-leaf {
+	border-color: #555f75;
+}
+
+.negery-table_inner.el-table--enable-row-hover .el-table__body tr:hover>td {
+	background: #555f75;
+}
+/* endregion */
+
+/* region # 能耗柱形图 */
+.negery-zhu-wrapper {
+    position: relative;
+    width: 836px;
+    height: 480px;
+    background: #FFFFFF;
+    box-shadow: 0px 5px 9px 1px rgba(210, 210, 210, 0.36);
+    border-radius: 10px 0px 0px 0px;
+    padding: 10px;
+
+    margin-right: 15px;
+}
+#echart2 {
+    height: calc(100% - 37px);
+}
+
+.negery-zhe-wrapper {
+    position: relative;
+    width: 728px;
+    height: 480px;
+    background: #FFFFFF;
+    box-shadow: 0px 5px 9px 1px rgba(210, 210, 210, 0.36);
+    border-radius: 10px 0px 0px 0px;
+    padding: 10px;
+}
+#echart3 {
+    height: calc(100% - 37px);
+}
+
+.wrapper-dark {
+	background: #292732;
+	border: 1px solid #39393a;
+	box-shadow: 0px 5px 9px 1px rgb(58, 56, 56, 0.36);
+}
+
+.wrapper-dark .screen-item_title {
+	color: white;
+}
+
+.x-diDian-wrapper {
+	background: #2f2c2c;
+	border-color: #4a4a4a;
+}
+
+.x-diDian-wrapper:hover,.x-diDian-wrapper:focus {
+	border-color: #4a4a4a;
+}
+
+.dark-date-picker .el-input__inner{
+	background: #2f2c2c;
+	border-color: #4a4a4a;
+	color: white;
+	
+}

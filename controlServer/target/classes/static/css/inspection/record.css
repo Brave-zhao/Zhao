@@ -1,0 +1,133 @@
+@charset "UTF-8";
+p {
+	line-height: normal;
+}
+.head-wrapper {
+	margin: 8px 20px;
+}
+
+.head {
+    border-left: 3px solid #43B498;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    padding: 0 11px;
+    color: #999999;
+}
+
+.head>span:nth-child(2) {
+	color: #43B498;
+}
+
+.content-wrapper {
+    margin: 20px 30px 20px 30px;
+}
+
+.screen {
+    height: 80px;
+    background: rgba(241,241,241,1);
+    border: 1px solid rgba(222,222,222,1);
+    border-radius: 4px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 30px;
+    font-size: 14px;
+}
+
+.screen-item {
+	display: flex;
+    align-items: center;
+}
+
+.screen-item>span{
+	color: #BBBBBB;
+	margin-right: 10px;
+	flex-shrink: 0;
+}
+
+.screen .el-input__inner {
+	height: 34px;
+	line-height: 34px;
+    padding-left: 10px;
+}
+
+.screen .el-input__icon {
+	line-height: 34px;
+}
+
+.screen .el-input__prefix {
+	display: flex;
+    align-items: center;
+    right: 5px;
+    left: auto;
+}
+
+.screen .el-icon-date {
+	height: auto;
+}
+
+.screen .screen-item:nth-child(n+2) {
+	margin-left: 20px;
+}
+
+.table-bottom {
+    margin: 20px 0 20px 0;
+}
+
+/**********搜索输入框样式**************/
+.search-input input {
+    box-shadow: 0px 2px 5px 0px rgba(0, 0, 0, 0.06);
+    border-radius: 17px;
+}
+
+.search-input .el-input__suffix {
+    display: flex;
+    align-items: center;
+}
+
+.search-input .el-input__suffix-inner {
+    color: #43B498;
+    font-size: 20px;
+}
+
+.text-success {
+	color: #67C23A;
+}
+
+.text-danger {
+	color: #F56C6C;
+}
+/*******************单选样式*****************************/
+.custom-radio-group .el-radio-button__orig-radio:checked+.el-radio-button__inner {
+	background: #43B498;
+	border-color: #43B498;
+}
+
+.custom-radio-group .el-radio-button__inner:hover {
+	color: #43B498;
+}
+
+.text-btn {
+	outline: none;
+	background: none;
+	cursor: pointer;
+	border: none;
+	display: flex;
+	align-items: center;
+	font-size: 14px;
+}
+
+.text-btn > i {
+	margin-right: 1px;
+}
+
+.text-btn:active {
+	opacity: 0.6;
+}
+
+.table-bottom__left {
+	position: absolute;
+	top: 0;
+	left: 0;
+}

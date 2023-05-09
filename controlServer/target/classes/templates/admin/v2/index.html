@@ -1,0 +1,863 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+<meta name="renderer" content="webkit">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=0.5, maximum-scale=2.0, user-scalable=yes" />
+<title>首页</title>
+<link rel="stylesheet" href="/public/element-ui-2.15.9/theme/index.css">
+<link rel="stylesheet" href="/public/css/components/common.css">
+<link rel="stylesheet" href="/public/font-awesome/css/font-awesome.min.css">
+<link rel="stylesheet" href="/public/ali-icon/control/iconfont.css">
+<link rel="stylesheet" href="/public/css/common/custom-element.css">
+
+<link rel="stylesheet" href="/public/css/admin/v2/index.css">
+<style type="text/css">
+	[v-cloak] {
+		display: none;
+	}
+	
+</style>
+</head>
+<body>
+<div id="app" v-cloak>
+	<div class="main-container" v-if="!showUnattendedMask" :class="{'is-fold': isHeaderFold, 'first-open-fold': isHeaderFold && firstOpen}">
+		<div class="header-mask" ref="headerMask"></div>
+		<transition name="fold">
+		<div class="header-wrapper" v-show="!isHeaderFold">
+			<div class="header"  ref="header">
+				<div class="logo-wrapper">
+					<img alt="" :src="logo" class="logo">
+				</div>
+				<div class="menu-wrapper">
+					<div class="menu" v-for="item in menus" :key="item.mark" 
+						:class="{'active': item.active}" @click="changeMenu(item)"
+						:disabled="!isMenuEnable(item)">
+						{{item.title}}
+					</div>
+				</div>
+				
+				<div class="info-wrapper" >
+					<div class="info-opertea flex items-center">
+						<div class="info-operate__btn relative flex items-center" v-if="openIpIntercom">
+							<div @click="showCallDialog = true" v-if="onCallAndDotWatch" class="on-call-total">
+								<span>{{ callTimeTotal }}</span>
+							</div>
+							<button :disabled="!openIpIntercom" class="relative info-operate__btn" :title="onCallAndDotWatch ? $t('v2Iml1') : $t('v2Iml2')" @click="showIpIntercom">
+								<img alt="" v-if="!onCallAndDotWatch" src="/public/images/admin/v2/yuyin.png">
+								<i v-else class="iconfont iconguaduan"></i>
+							</button>
+						</div>
+						<button class="info-operate__btn" :title="$t('v2Iml3')" @click="showOnekeyPatrolDialog">
+							<img alt="" src="/public/images/admin/v2/xunjian.png">
+						</button>
+						
+						<button class="info-operate__btn" :title="$t('v2Iml4')" @click="doFullScreen">
+							<img alt="" src="/public/images/admin/v2/quanping.png">
+						</button>
+						
+						<!-- <button class="info-operate__btn" title="IP对讲详情" @click="goToIpIntercom">
+							<img alt="" src="/public/images/admin/v2/yuyin.png">
+						</button> -->
+						
+						<el-dropdown class="info-operate__btn" @visible-change="hoverMessage" :hide-on-click="false" placement="top">
+							<div class="relative">
+								<button class="info-operate__btn" :title="$t('v2Iml5')">
+									<img alt="" src="/public/images/admin/v2/lingsheng.png">
+								</button>
+								<div class="absolute message-count-number ellipsis" v-if="messageCount > 0" :title="messageCount">
+									<span>{{ messageCount > 99 ? "99+" : messageCount}}</span>
+								</div>
+							</div>
+							<el-dropdown-menu slot="dropdown" class="message-dropdown-menu">
+							  <el-dropdown-item>
+								<div v-loading="messageLoading">
+									<div class="message_bg-image wh100">
+										<img class="wh100" src="/public/images/admin/v2/message-dialog.png">
+									</div>
+									<div class="message-container absolute wh100">
+										<!-- 标题 -->
+										<div class="message_title flex items-center">
+											<div class="message_title-icon relative">
+												<img class="wh100 absolute" src="/public/images/admin/v2/title-icon.png">
+											</div>
+											<div class="message_title-text">
+												<span>{{ $t("v2Iml5") }}</span>
+											</div>
+										</div>
+										<div class="message__content">
+											<!-- 全部已读 -->
+											<div class="message__read flex items-center">
+												<div class="flex items-center" @click="allRead">
+													<i class="iconfont iconline-mailcheckyoujianyidu"></i>
+													<span>{{ $t("v2Iml6") }}</span>
+												</div>
+											</div>
+											<!-- 消息列表 -->
+											<el-scrollbar class="custom-scrollbar message__scrollbar">
+												<div class="message__list">
+													<div v-if="!messageListData.length" class="message__placeholder-text">
+														<span>{{ $t("v2Iml7") }}</span>
+													</div>
+													<transition-group tag="div" name="message-slide-fade">
+														<div v-for="(dateItem, key) in initDateSeparatorFormat" :key="key" class="message__date-item">
+															<!-- 时间分割 -->
+															<div class="message__separator flex items-center">
+																<span class="message__separator-text shrink-0">{{ key }}</span>
+																<div class="message__separator-line"></div>
+															</div>
+															<!-- 消息列表 -->
+															<div class="message__item" v-for="(item, index) in dateItem" :key="item.id">
+																<div class="message__item-content flex items-center">
+																	<!-- 消息内容 -->
+																	<div class="message__item-text flex items-center">
+																		<i class="iconfont iconduanxinguanli"></i>
+																		<span class="ellipsis" :title="item.title">{{ item.title }}</span>
+																	</div>
+																	<div class="message__item-right flex shrink-0">
+																		<!-- 消息时间 -->
+																		<div class="message__item-time">{{ messageTime(item) }}</div>
+																		<!-- 消息操作 -->
+																		<div class="message__item-operation flex">
+																			<div class="right__icon-box look-icon flex flex-center" @click="toMessageDetail(item)" :title="$t('v2Iml8')">
+																				<svg class="icon wh100" aria-hidden="true">
+																					<use xlink:href="#iconeye"></use>
+																				</svg>
+																			</div>
+																			<div class="right__icon-box flex flex-center" @click="removeCurrMessage(item)" :title="$t('v2Iml9')">
+																				<div class="remove-icon flex flex-center wh100">
+																					<i class="el-icon-minus"></i>
+																				</div>
+																			</div>
+																		</div>
+																	</div>
+																</div>
+															</div>
+														</div>
+													</transition-group>
+												</div>
+											</el-scrollbar>
+										</div>
+									</div>
+								</div>
+							  </el-dropdown-item>
+							</el-dropdown-menu>
+						</el-dropdown>
+	
+						<button class="info-operate__btn" :title="$t('v2Iml10')" @click="showSetUnattendedDialog">
+							<i class="iconfont iconsuoding"></i>
+						</button>
+					</div>
+					<div class="info-press" @click="console.log('press')"  v-longpress="showSuperUserDialog" longpress-time="5000"></div>
+					<div class="info-user">
+						<el-dropdown @command="handleDropCommand">
+						  	<div class="info-user__dropdown el-dropdown-link">
+						  		<div class="info-user__avatar">
+						  			<img alt="" :src="loginUser.avatar" v-if="loginUser != null">
+						  		</div>
+								<div class="info-user__name" v-if="loginUser != null">{{loginUser.nickname || $t("v2Iml11")}}</div>
+								<div v-else class="info-user__name" >{{ $t("v2Iml11") }}</div>
+								<i class="el-icon-caret-bottom"></i>
+							</div>
+							  <el-dropdown-menu slot="dropdown">
+							    <el-dropdown-item command="logout">{{ $t("v2Iml12") }}</el-dropdown-item>
+							  </el-dropdown-menu>
+						</el-dropdown>
+						
+					</div>
+				</div>
+			</div>
+		</div>
+		</transition>
+
+		<!-- 设置无人值守弹框 -->
+		<el-dialog class="unattended-dialog" title=" " top="25vh" center width="620px" :show-close="false"
+			:visible.sync="showUnattendedDialog">
+
+			<div>
+				<div class="unnatteded-bg absolute">
+					<img class="wh100" src="/public/images/admin/v2/message-dialog.png">
+				</div>
+				<div class="iconfont icon17cuowu absolute dialog-close-icon" @click="showUnattendedDialog = false"></div>
+				<div class="absolute unnatteded-container wh100">
+					<!-- 标题 -->
+					<div class="message_title flex items-center">
+						<div class="message_title-icon relative">
+							<img class="wh100 absolute" src="/public/images/admin/v2/title-icon.png">
+						</div>
+						<div class="message_title-text">
+							<span>{{ $t("v2Iml10") }}</span>
+						</div>
+					</div>
+
+					<div class="unnatteded-form__list">
+						<!-- 转接号码 -->
+						<div class="unnatteded-form__item" v-if="openIpIntercom">
+							<div class="flex items-center unnatteded-form__label">
+								<div class="unnatteded-form__label__icon label-icon-phone">
+									<img class="wh100" src="/public/images/admin/v2/phone.png">
+								</div>
+								<div class="unnatteded-form__label__text"><span>{{ $t("v2Iml13") }}</span></div>
+							</div>
+							<div class="unnatteded-form__input relative">
+								<div class="absolute unnatteded-form__input-bg wh100">
+									<img class="wh100" src="/public/images/admin/v2/input.png">
+								</div>
+								<el-input class="wh100" v-model.trim="unattendedConfig.number" :placeholder="$t('v2Iml14')" type="number"></el-input>
+							</div>
+						</div>
+						<!-- 锁屏密码 -->
+						<div class="unnatteded-form__item">
+							<div class="flex items-center unnatteded-form__label">
+								<div class="unnatteded-form__label__icon label-icon-password">
+									<img class="wh100" src="/public/images/admin/v2/password.png">
+								</div>
+								<div class="unnatteded-form__label__text"><span>{{ $t("v2Iml15") }}</span></div>
+							</div>
+							<div class="unnatteded-form__input relative">
+								<div class="absolute unnatteded-form__input-bg wh100">
+									<img class="wh100" src="/public/images/admin/v2/input.png">
+								</div>
+								<el-input class="wh100" v-model.trim="unattendedConfig.password" :placeholder="$t('v2Iml16')"></el-input>
+							</div>
+						</div>
+					</div>
+
+					<div class="unnatteded-form__footer flex flex-between">
+						<button class="unnatteded-form__footer__confirm pointer" @click="confirmSetUnnatteded">{{ $t("confirm") }}</button>
+						<button class="unnatteded-form__footer__cancel pointer" @click="cancelSetUnnatteded">{{ $t("cancel") }}</button>
+					</div>
+				</div>
+			</div>
+		</el-dialog>
+
+		<!-- 无人值守 -->
+		<!-- <el-dialog class="unattended-mask" title=" " :close-on-press-escape="false" top="0" center width="100%" :show-close="false"
+			:visible.sync="showUnattendedMask">
+			
+		</el-dialog> -->
+
+		<!-- 一键巡检 -->
+		<el-dialog v-loading="exportLoading" class="patrol-dialog" title=" " top="5vh" center width="1510px" :show-close="false"
+			:visible.sync="showPatrolDialog">
+			<div>
+				<div class="patrol-bg absolute">
+					<img class="wh100" src="/public/images/admin/v2/xunjian-dialog.png">
+				</div>
+				<div class="iconfont icon17cuowu absolute dialog-close-icon" @click="showPatrolDialog = false"></div>
+				<div class="absolute patrol-container wh100">
+					<!-- 标题 -->
+					<div class="message_title flex items-center">
+						<div class="message_title-icon relative">
+							<img class="wh100 absolute" src="/public/images/admin/v2/title-icon.png">
+						</div>
+						<div class="message_title-text">
+							<span>{{ $t("v2Iml3") }}</span>
+						</div>
+					</div>
+					<!-- 进度和数据 -->
+					<div class="patrol-wrapper">
+						<!-- 巡检类型 -->
+						<div class="patrol-type flex flex-between">
+							<div class="patrol-type__wrapper flex">
+								<div 
+									@click="changePatrolType(0)"
+									class="patrol-type__wrapper__item wrapper__dev pointer" 
+									:class="{'patrol-active': patrolType === 0}"
+								>
+									<button class="wh100">{{ $t("v2Iml17") }}</button>
+								</div>
+								<div 
+									@click="changePatrolType(1)"
+									class="patrol-type__wrapper__item wrapper__place pointer" 
+									:class="{'patrol-active': patrolType === 1}"
+								>
+									<button class="wh100">{{ $t("v2Iml18") }}</button>
+								</div>
+							</div>
+
+							<!-- 选择设备类型 -->
+							<div class="patrol-type-dev__type">
+								<el-select :disabled="startPatrol" v-show="patrolType === 0" multiple collapse-tags popper-class="patrol-type-dev__popper" v-model="devType" :placeholder="devType.length ? $t('v2Iml19'): $t('all')">
+									<el-option
+									  v-for="item in devList"
+									  :key="item.id"
+									  :label="item.name"
+									  :value="item.id">
+									</el-option>
+								</el-select>
+
+								<tree-check :collapse-tags="true" v-show="patrolType !== 0" @change="changePlace" :placeholder="$t('tipsText[5]')" :disabled="startPatrol" ref="patrolTypePlace" :props="placeProps" select-class="patrol-type-dev__popper" v-model="placeId" :auto-obtain-data="false" :data="placeList"></tree-check>
+
+							</div>
+						</div>
+						<!-- 设备信息 -->
+						<div class="patrol-info flex">
+							<!-- 设备状态 -->
+							<div class="patrol-info__item">
+								<div class="patrol-info__title flex items-center">
+									<span class="patrol-info__title__text">{{ $t("v2Iml20") }}</span>
+								</div>
+								<!-- 数据 -->
+								<div class="patrol-status__list flex flex-between">
+									<div class="patrol-status__item relative" v-for="item in 3" :key="item">
+										<div class="patrol-status__item__icon">
+											<img class="wh100" :src="$global.fullServerUrl('public/images/admin/v2/status-' + item + '.png')">
+										</div>
+										<div class="patrol-status__item__content absolute">
+											<div 
+												class="patrol-status__value ellipsis" 
+												:title="patrolStatusData[item - 1].value" 
+												:style="{color: patrolStatusData[item - 1].color}"
+											>
+												<span>{{ patrolStatusData[item - 1].value }}</span>
+											</div>
+											<div class="patrol-status__name">
+												<span>{{ $t("patrolStatusDataName")[item - 1] }}</span>
+											</div>
+										</div>
+									</div>
+								</div>
+							</div>
+							<!-- 预警 -->
+							<div class="patrol-info__item">
+								<div class="patrol-info__title flex items-center">
+									<span class="patrol-info__title__text">{{ $t("v2Iml21") }}</span>
+								</div>
+
+								<div class="patrol-info__warning flex">
+									<template v-if="patrolProgressType !== 'nothing'">
+										<!-- 正常 -->
+										<div class="flex flex-column info__warning__normal items-center" v-if="warningValue <= 0">
+											<div class="patrol-info__icon">
+												<img class="wh100" src="/public/images/admin/v2/normal.png">
+											</div>
+											<div class="patrol-info__name">
+												<span>{{ $t("v2Iml22") }}</span>
+											</div>
+										</div>
+										<!-- 异常 -->
+										<div class="flex flex-column items-center" v-if="warningValue > 0">
+											<div class="flex items-center">
+												<div class="patrol-info__icon icon__warning">
+													<img class="wh100" src="/public/images/admin/v2/warning.png">
+												</div>
+												<div class="patrol-info__value">
+													<span>{{ warningValue }}</span>
+												</div>
+											</div>
+											<div class="patrol-info__name name__warning">
+												<span>{{ $t("v2Iml23") }}</span>
+											</div>
+										</div>
+									</template>
+									<!-- 未检测时 -->
+									<div class="flex flex-column info__warning__normal items-center" v-else>
+										<div class="patrol-info__name nothing">
+											<span>{{ $t("v2Iml24") }}</span>
+										</div>
+									</div>
+								</div>
+							</div>
+							<!-- 故障 -->
+							<div class="patrol-info__item">
+								<div class="patrol-info__title flex items-center">
+									<span class="patrol-info__title__text">{{ $t("v2Iml25") }}</span>
+								</div>
+
+								<div class="flex patrol-info__fault">
+									<template v-if="patrolProgressType !== 'nothing'">
+										<!-- 正常 -->
+										<div class="flex flex-column info__warning__normal items-center" v-if="faultValue <= 0">
+											<div class="patrol-info__icon">
+												<img class="wh100" src="/public/images/admin/v2/normal.png">
+											</div>
+											<div class="patrol-info__name">
+												<span>{{ $t("v2Iml22") }}</span>
+											</div>
+										</div>
+										<!-- 异常 -->
+										<div class="flex items-center" v-else>
+											<div class="patrol-info__icon icon__fault">
+												<img class="wh100" src="/public/images/admin/v2/fault.png">
+											</div>
+											<div class="patrol-info__value">
+												<span>{{ faultValue }}</span>
+											</div>
+										</div>
+									</template>
+									<!-- 未检测时 -->
+									<div class="flex flex-column info__warning__normal items-center" v-else>
+										<div class="patrol-info__name nothing">
+											<span>{{ $t("v2Iml24") }}</span>
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+						<!-- 巡检进度 -->
+						<div class="patrol-rate-wrapper">
+							<div class="flex flex-between patrol-rate">
+								<div class="flex">
+									<div id="rate-echart" class="patrol-rate__echart"></div>
+									<div class="flex flex-column patrol-rate__title">
+										<!-- 上次巡检结果  消耗00:00:00 -->
+										<div class="patrol-rate__text">
+											<span>{{ $t("patrolProgressText")[patrolProgressType] }}</span>
+										</div>
+										<div class="patrol-rate__scanning"><span>{{ scanningText }}</span></div>
+									</div>
+									<div class="patrol-rate-title flex items-center">
+										<div v-show="showTimeLabel" class="shrink-0"><span>{{ $t("v2Iml26") }}：</span></div>
+										<div class="patrol-rate-title__time ellipsis"><span>{{ formatPatrolTimeText }}</span></div>
+									</div>
+									
+									<!-- <button class="patrol-button__export" @click="testAddPatrolRecordOffLine">添加巡检数据</button> -->
+									<!-- <button class="patrol-button__export"@click="testAddPatrolRecordOffLineAndWarning">添加离线和预警</button> -->
+	
+								</div>
+								<div class="flex patrol-button__wrapper items-center">
+									<button class="patrol-button__export hover pointer active-bg__color" @click="exportPatrolResult" v-if="!startPatrol">{{ $t("v2Iml27") }}</button>
+									<button class="patrol-button__cancel hover pointer active-color" @click="changePatrolStatus">{{startPatrol ? $t("v2Iml28") : $t("v2Iml29")}}</button>
+								</div>
+							</div>
+
+							<!-- 横向进度 -->
+							<div class="patrol-rate__line">
+								<div id="line-echart" class="patrol-rate__line__echart"></div>
+							</div>
+						</div>
+					</div>
+					<!-- 巡检记录 -->
+					<div class="patrol-record">
+						<el-scrollbar class="custom-scrollbar wh100" ref="patrolRecordScrollbar">
+							<el-collapse ref="atrolRecordCollapse" v-model="patrolRecordCollapseActive" accordion>
+								<!-- 设备离线巡检 -->
+								
+									<el-collapse-item  :class="'patrol-record__' + key" :name="key" v-for="(item, key) in patrolRecordCollapseData" :key="key">
+										<template slot="title">
+											<div class="patrol-record-title w100 flex">
+												<div class="patrol-record-title__label flex">
+													<i v-if="!patrolRecordCollapseData[key].loading" class="iconfont" :class="item.icon"></i>
+													<div 
+														v-else
+														class="patrol-record-title__loading" 
+														element-loading-background="transparent" 
+														v-loading="patrolRecordCollapseData[key].loading" 
+														element-loading-spinner="el-icon-loading"
+													></div>
+													<span :class="{ 'is-loading': patrolRecordCollapseData[key].loading }">{{ $t("patrolRecordCollapseDataLabel")[key] }}</span>
+												</div>
+												<div 
+													class="patrol-record-title__text ellipsis" 
+													:class="{'abnormal': patrolRecordContent[key].content.length > 0 && !patrolRecordCollapseData[key].loading}"
+												>
+													<span>
+														{{ patrolRecordCollapseData[key].loading ? $t("v2Iml30") : patrolRecordStatisticsText(item, key) }}
+													</span>
+												</div>
+											</div>
+										</template>
+	
+										<transition-group tag="div" name="patrol-record" :style="{height: patrolRecordContent[key].content.length * 40 + 'px'}" class="patrol-record-content">
+											<div class="content__wrapper" v-for="content in patrolRecordContent[key].content" :key="content.id">
+												<div class="patrol-record-content__item flex flex-between" >
+													<!-- 巡检内容 -->
+													<div class="flex content__item__wrapper">
+														<div class="content__item__label ellipsis shrink-0" :title="content.propertyName">
+															<span>{{ content.propertyName }}</span>
+														</div>
+														<div class="content__item__place ellipsis shrink-0" :title="content.placeName">
+															<span>{{ content.placeName }}</span>
+														</div>
+														<div class="content__item__detail ellipsis shrink-0" :title="content.content" :class="{'abnormal': content.status === 2}">
+															<span>{{ content.content }}</span>
+														</div>
+														<div class="content__item__time ellipsis shrink-0">
+															<span>{{ $global.formatDate(content.time, "YYYY-MM-DD HH:mm:ss") || "——————" }}</span>
+														</div>
+													</div>
+													<!-- 操作巡检内容 -->
+													<div class="flex content__item__operation shrink-0">
+														<!-- <div class="content__item__status pointer hover">
+															<span>{{ patrolRecordStatus[content.status] }}</span>
+														</div> -->
+														<div v-if="!startPatrol" @click="ignoreInspectionDetail(item, content)" class="content__item__ignore pointer hover">
+															<span>{{ $t("v2Iml31") }}</span>
+														</div>
+													</div>
+												</div>
+											</div>
+										</transition-group>
+									</el-collapse-item>
+							</el-collapse>
+						</el-scrollbar>
+					</div>
+				</div>
+			</div>
+		</el-dialog>
+
+		<!-- Ip呼叫列表 -->
+		<el-dialog @close="clearIntervalIntercomList" class="patrol-dialog intercom-dialog" title=" " top="15vh" center width="1210px" :show-close="false"
+			:visible.sync="showIpDialog">
+
+			<div>
+				<!-- <div class="absolute intercom-colse__button pointer" @click="colseIntercomDialog">
+					<i class="iconfont iconshiliangzhinengduixiang33_fuzhi"></i>
+				</div> -->
+				<div class="patrol-bg">
+					<img class="wh100" src="/public/images/admin/v2/xunjian-dialog.png">
+				</div>
+				<div class="iconfont icon17cuowu absolute dialog-close-icon" @click="showIpDialog = false"></div>
+				<div class="absolute intercom-container wh100">
+					<!-- 标题 -->
+					<div class="message_title flex items-center">
+						<div class="message_title-icon relative">
+							<img class="wh100 absolute" src="/public/images/admin/v2/title-icon.png">
+						</div>
+						<div class="message_title-text">
+							<span>{{ $t("v2Iml2") }}</span>
+						</div>
+					</div>
+					<div class="intercom-wrapper">
+						<div class="intercom-search-content">
+                            <div class="flex intercom-search">
+                                <i class="iconfont iconsousuo2 active-color"></i>
+                                <el-input type="text" :placeholder="$t('v2Iml32')" v-model.trim="intercomParams.number"></el-input>
+                            </div>
+                        </div>
+
+
+						<div class="intercom-list">
+							<el-tabs @tab-click="changeIntercomNumberTypes" v-model="activeIntercomNumberType" type="card" class="h100">
+								<el-tab-pane class="h100" :label="item.label" :name="item.name" v-for="(item, itemIndex) in intercomNumberTypes" :key="$t('intercomNumberTypes')[itemIndex]">
+									<el-scrollbar class="custom-scrollbar intercom-list__scrollbar" v-loading="intercomListLoading">
+										<el-table :data="intercomList" style="width: 100%">
+											<el-table-column
+												:show-overflow-tooltip="true"
+												align="center"
+												:prop="item.name == 'place' ? 'placeName' : 'nickname'"
+												:label="item.name == 'place' ? $t('local') : $t('name')"
+												width="220"
+											>
+											</el-table-column>
+											<el-table-column
+												:show-overflow-tooltip="true"
+												align="center"
+												prop="number"
+												:label="$t('v2Iml33')"
+												width="220">
+											</el-table-column>
+											<el-table-column 
+												:show-overflow-tooltip="true" 
+												width="220" 
+												align="center" 
+												:label="$t('status')"
+											>
+												<template slot-scope="scope">
+													<div class="flex flex-center">
+														<div 
+															class="intercom-status relative" 
+															:class="{'status-offline': handleIntercomStatus(scope.row) == 0}"
+														></div>
+														<span>{{ intercomStatus[handleIntercomStatus(scope.row)] }}</span>
+													</div>
+													</template>
+											</el-table-column>
+											<el-table-column
+												:show-overflow-tooltip="true" 
+												width="220"
+												prop="type"
+												align="center"
+												:label="$t('v2Iml34')"
+											>
+												<template slot-scope="scope">
+													<div class="flex intercom-call__wrapper">
+														<span>{{ terminalTypes[scope.row.type] }}</span>
+													</div>
+												</template>
+											</el-table-column>
+											<el-table-column
+												width="220"
+												align="center"
+												:label="$t('operate')"
+											>
+												<template slot-scope="scope">
+													<div class="flex intercom-call__wrapper">
+														<div class="call__wrapper__content pointer flex flex-center active-bg__color" @click="callNumber(scope.row)">
+															<i class="iconfont iconjisuanqi"></i>
+														</div>
+													</div>
+												</template>
+											</el-table-column>
+										</el-table>
+									</el-scrollbar>
+								</el-tab-pane>
+							</el-tabs>
+						</div>
+					</div>
+				</div>
+			</div>
+		</el-dialog>
+
+		<!-- 呼叫中 -->
+		<el-dialog class="patrol-dialog call-dialog" :close-on-click-modal="false" :close-on-press-escape="false" width="520px" top="25vh" center :show-close="false" :visible.sync="showCallDialog">
+			<div>
+				<div v-if="onCallAndDotWatch" class="absolute intercom-colse__button pointer" @click="showCallDialog = false">
+					<i class="iconfont iconshiliangzhinengduixiang33_fuzhi"></i>
+				</div>
+				<div class="unnatteded-bg">
+					<img class="wh100" src="/public/images/admin/v2/message-dialog.png">
+				</div>
+				<div class="call-container wh100 absolute">
+					<div class="message_title flex items-center">
+						<div class="message_title-icon relative">
+							<img class="wh100 absolute" src="/public/images/admin/v2/title-icon.png">
+						</div>
+						<div class="message_title-text">
+							<span>{{ $t("v2Iml35") }}</span>
+						</div>
+					</div>
+
+					<div class="call-wrapper flex column">
+						<div class="call-text" v-if="currCallSpeed == 'call'">
+							<span>{{ $t("v2Iml36") }}</span>
+						</div>
+						<div class="flex flex-center">
+							<div class="call-time" v-if="onCallAndDotWatch">
+								<span>{{ callTimeTotal }}</span>
+							</div>
+
+							<div class="call-hang__up call-button">
+								<button :title="$t('v2Iml1')" @click="handleHangUp" class="iconfont iconguaduan pointer"></button>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</el-dialog>
+
+		<!-- 呼入 -->
+		<el-dialog class="patrol-dialog call-dialog" :close-on-click-modal="false" :close-on-press-escape="false" width="520px" top="25vh" center :show-close="false" :visible.sync="showIncomingCallDialog">
+			<div>
+				<div class="unnatteded-bg">
+					<img class="wh100" src="/public/images/admin/v2/message-dialog.png">
+				</div>
+				<div class="call-container wh100 absolute">
+					<div class="message_title flex items-center">
+						<div class="message_title-icon relative">
+							<img class="wh100 absolute" src="/public/images/admin/v2/title-icon.png">
+						</div>
+						<div class="message_title-text">
+							<span>{{ $t("v2Iml35") }}</span>
+						</div>
+					</div>
+
+					<div class="call-wrapper flex column">
+						<div class="call-text">
+							<span>{{ dialogTipstext }}</span>
+						</div>
+						<div class="flex flex-center">
+							<div class="call-hang__up call-button">
+								<button class="pointer iconfont iconguaduan" :title="$t('v2Iml1')" @click="responseCallRequire(0)">
+								</button>
+							</div>
+							<div class="call-answer call-button">
+								<button :title="$t('v2Iml37')" class="pointer active-bg__color iconfont iconoutBound-hujiao" @click="responseCallRequire(1)">
+								</button>
+							</div>
+							<!-- <div class="call-transfer call-button">
+								<button class="pointer" @click="showTransferDialog = true">转接</button>
+							</div> -->
+						</div>
+					</div>
+				</div>
+			</div>
+		</el-dialog>
+
+		<!-- 转接号码 -->
+		<el-dialog class="patrol-dialog call-dialog" width="520px" top="25vh" center :show-close="false" :visible.sync="showTransferDialog">
+			<div>
+				<div class="unnatteded-bg">
+					<img class="wh100" src="/public/images/admin/v2/message-dialog.png">
+				</div>
+				<div class="iconfont icon17cuowu absolute dialog-close-icon" @click="showTransferDialog = false"></div>
+				<div class="call-container wh100 absolute">
+					<div class="message_title flex items-center">
+						<div class="message_title-icon relative">
+							<img class="wh100 absolute" src="/public/images/admin/v2/title-icon.png">
+						</div>
+						<div class="message_title-text">
+							<span>{{ $t("v2Iml35") }}</span>
+						</div>
+					</div>
+
+					<div class="unnatteded-form__list">
+						<!-- 转接号码 -->
+						<div class="unnatteded-form__item">
+							<div class="flex items-center unnatteded-form__label">
+								<div class="unnatteded-form__label__icon label-icon-phone">
+									<img class="wh100" src="/public/images/admin/v2/phone.png">
+								</div>
+								<div class="unnatteded-form__label__text"><span>{{ $t("v2Iml13") }}</span></div>
+							</div>
+							<div class="unnatteded-form__input relative">
+								<div class="absolute unnatteded-form__input-bg wh100">
+									<img class="wh100" src="/public/images/admin/v2/input.png">
+								</div>
+								<el-input class="wh100" v-model.trim="transferId" :placeholder="$t('v2Iml14')" type="number"></el-input>
+							</div>
+						</div>
+					</div>
+
+					<div class="unnatteded-form__footer flex flex-between">
+						<button class="unnatteded-form__footer__confirm pointer" @click="confirmTransfer">{{ $t("confirm") }}</button>
+						<button class="unnatteded-form__footer__cancel pointer" @click="showTransferDialog = false">{{ $t("cancel") }}</button>
+					</div>
+				</div>
+			</div>
+		</el-dialog>
+
+		<!-- 提示打开或者下载omcs插件 -->
+		<el-dialog
+			class="omcs-dialog"
+			:title="$t('tips')"
+			top="35vh"
+			:visible.sync="showOpenOMCSDialog"
+			width="25%"
+		>
+			<span>{{ $t("v2Iml38") }}</span>
+			<div slot="footer" class="dialog-footer">
+				<span class="dot-remind pointer" @click="setDotRemind">{{ $t("v2Iml39") }}</span>
+				<el-button @click="downOmcsCallback">{{ $t("down") }}</el-button>
+				<el-button @click="openOmcs">{{ $t("open") }}</el-button>
+				<el-button type="primary" @click="retryOpenOmcs">{{ $t("v2Iml40") }}</el-button>
+			</div>
+		</el-dialog>
+
+		<!-- 设置超级管理员密码 -->
+		<el-dialog class="unattended-dialog super-dialog" title=" " top="25vh" center width="620px" :show-close="false"
+			:visible.sync="superUserData.show">
+
+			<div>
+				<div class="unnatteded-bg absolute">
+					<img class="wh100" src="/public/images/admin/v2/message-dialog.png">
+				</div>
+				<div class="iconfont icon17cuowu absolute dialog-close-icon" @click="superUserData.show = false"></div>
+				<div class="absolute unnatteded-container wh100">
+					<!-- 标题 -->
+					<div class="message_title flex items-center">
+						<div class="message_title-icon relative">
+							<img class="wh100 absolute" src="/public/images/admin/v2/title-icon.png">
+						</div>
+						<div class="message_title-text">
+							<span>{{ $t("v2Iml10") }}</span>
+						</div>
+					</div>
+
+					<div class="unnatteded-form__list">
+						<!-- 锁屏密码 -->
+						<div class="unnatteded-form__item">
+							<div class="flex items-center unnatteded-form__label">
+								<div class="unnatteded-form__label__icon label-icon-password">
+									<img class="wh100" src="/public/images/admin/v2/password.png">
+								</div>
+								<div class="unnatteded-form__label__text"><span>{{ $t("v2Iml43") }}</span></div>
+							</div>
+							<div class="unnatteded-form__input relative">
+								<div class="absolute unnatteded-form__input-bg wh100">
+									<img class="wh100" src="/public/images/admin/v2/input.png">
+								</div>
+								<el-input class="wh100" v-model.trim="superUserData.password" 
+									:placeholder="$t('v2Iml43')"
+									type="password"
+									autocomplete="new-password"
+									@keyup.enter.native="confirmSetSuperAdmin">
+								</el-input>
+							</div>
+						</div>
+					</div>
+
+					<div class="unnatteded-form__footer flex flex-between">
+						<button class="unnatteded-form__footer__confirm pointer" @click="confirmSetSuperAdmin">{{ $t("confirm") }}</button>
+						<button class="unnatteded-form__footer__cancel pointer" @click="superUserData.show = false">{{ $t("cancel") }}</button>
+					</div>
+				</div>
+			</div>
+		</el-dialog>
+
+		<div class="iframe-wrapper">
+			<iframe :src="activeUrl" ref="iframe" :key="activeUrl"></iframe>
+		</div>
+	</div>
+
+	<div class="unattended-mask" v-if="showUnattendedMask">
+		<div class="unattended-mask-bg absolute">
+			<img class="wh100" src="/public/images/admin/v2/unattended-bg.png">
+		</div>
+		<div class="absolute unattended-mask-container wh100">
+			<!-- 标题 -->
+			<div class="message_title flex items-center">
+				<div class="message_title-icon relative">
+					<img class="wh100 absolute" src="/public/images/admin/v2/title-icon.png">
+				</div>
+				<div class="message_title-text">
+					<span>{{ $t("v2Iml10") }}</span>
+				</div>
+			</div>
+			<!-- 文本 && 解决 -->
+			<div class="flex items-center unattended-mask-wrapper flex-column">
+				<div class="unattended-mask-wrapper__title">
+					<img class="wh100" src="/public/images/admin/v2/zhishou.png">
+				</div>
+				<!-- 解锁 -->
+				<div class="unattended-mask-wrapper-form relative">
+					<div class="absolute unattended-mask-wrapper-form__bg">
+						<img class="wh100" src="/public/images/admin/v2/unattended-form__bg.png">
+					</div>
+					<div class="absolute wh100 flex items-center flex-column unattended-mask-wrapper-form__content">
+						<div class="form__content-label"><span>{{ $t("v2Iml41") }}</span></div>
+						<div class="form__content-sublabel" v-if="openIpIntercom"><span>{{ $t("v2Iml42") }}</span></div>
+						<div class="form__content-input relative">
+							<div class="absolute form__content-input-bg wh100">
+								<img class="wh100" src="/public/images/admin/v2/input.png">
+							</div>
+							<el-input class="wh100" @change="confirmUnlockUnattended" v-model="unattendedConfig.password" :placeholder="$t('v2Iml16')"></el-input>
+						</div>
+						<div class="form__content-button">
+							<button class="pointer" @click="confirmUnlockUnattended">{{ $t("confirm") }}</button>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+</body>
+	
+<script src="/public/js/bluebird.min.js"></script>
+<script src="/public/js/vue.min.js"></script>
+<script src="/public/element-ui-2.15.9/index.js"></script>
+<script src="/public/js/jquery-3.3.1.min.js"></script>
+<script src="/public/js/moment.min.js"></script>
+<script src="/public/js/config/config.js"></script>
+<script src="/public/js/common/vue-common-util.js"></script>
+<script src="/public/js/common/vue-ajax.js"></script>
+
+<script src="/public/locales/vue-i18n.js"></script>
+<script src="/public/element-ui-2.15.9/locale/lang/zh-CN.js" ></script>
+<script src="/public/element-ui-2.15.9/locale/lang/en.js" ></script>
+<script src="/public/locales/i18n-config.js" ></script>
+<script src="/public/locales/i18n-all.js" ></script>
+
+<script src="/public/js/echarts.min.js"></script>
+<script src="/public/js/websocket/sockjs.min.js"></script>
+<script src="/public/js/websocket/stomp.min.js"></script>
+
+<script src="/public/js/components/template/OMCS_M.js"></script>
+<script src="/public/js/components/template/omcs-client.min.js"></script>
+<script src="/public/js/components/template/DragDrop.js"></script>
+<script src="/public/ali-icon/control/iconfont.js"></script>
+<script src="/public/js/components/common.js"></script>
+<script src="/public/js/admin/v2/index.js"></script>
+</html>

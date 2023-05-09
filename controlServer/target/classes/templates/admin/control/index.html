@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="renderer" content="webkit">
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, minimum-scale=0.5, maximum-scale=2.0, user-scalable=yes" />
+    <title>自定义模块</title>
+    <link rel="stylesheet" href="/public/element-ui-2.15.9/theme/index.css">
+	<link rel="stylesheet" href="/public/css/components/common.css">
+	<link rel="stylesheet" href="/public/css/common/admin-common.css">
+	<link rel="stylesheet" href="/public/font-awesome/css/font-awesome.min.css">
+	<link rel="stylesheet" href="/public/ali-icon/control/iconfont.css">
+    <link rel="stylesheet" href="/public/css/common/custom-element.css">
+
+    <link rel="stylesheet" href="/public/css/admin/control/index.css">
+
+    <style type="text/css">
+        [v-cloak] {
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="main-container" id="app" v-cloak>
+        <div class="breadcrumbs mb-3">
+            <span class="cr-green">{{ $t("ctiml6") }}</span>
+        </div>
+        <div class="l-custom">
+            <div class="l-custom-header active">
+                <span>1</span>
+            </div>
+            <!-- <span class="l-custom-span active">{{modesName[activeModule-1]}}模板</span> -->
+            <span class="l-custom-span active">{{ $t("ctiml6") }}</span>
+            <div class="l-Hborder"></div>
+            <div class="l-custom-header">
+                <span>2</span>
+            </div>
+            <span class="l-custom-span">{{ $t('ctiml3') }}</span>
+            <div class="l-Hborder"></div>
+            <div class="l-custom-header">
+                <span>3</span>
+            </div>
+            <span class="l-custom-span">{{ $t('publish') }}</span>
+        </div>
+
+
+        <div class="footer flex-center mt-2">
+        </div>
+
+        <div class="header align-center">
+
+            <div class="l-flex-row-center l-flex-row-between"></div>
+
+            <div>
+                <!-- 导入 -->
+                <el-upload v-if="editTemplate" :action="$global.fullServerUrl('/api/control-template/import')"
+                    :show-file-list="false" accept="application/zip" :on-success="handleImportSuccess"
+                    :on-error="handleImportError" :before-upload="handleBeforeImport">
+                    <el-button class="ter-btn ter-btn--success mr-3" :title="$t('ctiml5')"
+                        v-loading.fullscreen.lock="importLoading" element-loading-background="rgba(0, 0, 0, 0.7)">{{
+                        $t('ctiml5') }}
+                    </el-button>
+                </el-upload>
+                <div class="search-group">
+                    <input :placeholder="$t('tipsText[1]')" v-model.trim="page.search">
+                </div>
+            </div>
+        </div>
+
+        <div class="footer flex-center mt-2"></div>
+        <div class="l-body" ref="elementWidthHeight">
+            <div class="l-border">
+                <div class="l-flex">
+                    <div class="l-border-active pointer l-module-hover l-relative" v-if="editTemplate">
+                        <div class="width-height-100 l-add l-bottom-10" @click="addTemplate">
+                            <img class="height-100" src="/public/images/control/add.png">
+                        </div>
+                        <p>{{ $t('ctiml4') }}</p>
+                    </div>
+                    <div v-for="(item,index) in templateList" :key="index"
+                        class="l-border-active pointer l-module-hover l-relative l-modes-border">
+                        <div class="width-height-100 l-bottom-10" @dblclick="dblclickUpdate(item)">
+
+                            <el-image :src="$global.fullServerUrl(item.cover)" class="width-height-100" pointer
+                                fit="contain">
+                            </el-image>
+                        </div>
+                        <div class="l-delete-bg-color" v-show="item.system!=1" @click="showDeleteConfirm(item)">
+                            <div>
+                                <img src="/public/images/control/delete.png">
+                            </div>
+                        </div>
+                        <p :title='item.title' class="l-not-select">{{item.title || item.name}}
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex-center mt-2">
+                <!-- <el-button class="ter-btn ter-btn--danger" @click="showDeleteConfirm(false)">
+					<i class="icon"></i>
+					删除选中
+				</el-button> -->
+
+
+                <div class="footer flex-center width-100">
+
+                    <tr-pagination class="" background layout="prev, pager, next" @current-change="pageChange"
+                        :current-page="page.pageNum" :page-size="page.pageSize" :total="page.count">
+                    </tr-pagination>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- 新增 -->
+        <tr-dialog :title="$t('add')" top="25vh" center :confirm-text="$t('confirm')" :cancel-text="$t('cancel')"
+            @keyup.enter.native="confirmAddTemplate" :visible.sync="showAddTemplate" @confirm="confirmAddTemplate">
+            <el-form label-width="0.8rem" @submit.native.prevent>
+                <el-form-item :label="$t('ctiml2')" class="module-name" style="margin-left: -0.15rem">
+                    <el-input v-model.trim="templateName" ref="addInput" :placeholder="$t('tipsText[11]')" type="text"
+                        class="editor-input">
+                    </el-input>
+                </el-form-item>
+            </el-form>
+        </tr-dialog>
+
+        <!-- 发布 -->
+        <tr-dialog :title="$tc('publish')" class="publish-dialog" top="25vh" center :confirm-text="$t('confirm')"
+            :cancel-text="$t('cancel')" :visible.sync="showPublish" @confirm="confirmPublish">
+            <div class="tr-brand-dialog__box--body">
+                <el-tabs v-model="activeTab">
+                    <el-tab-pane :label="$t('ctiml7')" name="first">
+                        <el-scrollbar class="tr-brand-dialog__scrollbar custom-scrollbar">
+                            <div class="tr-brand-dialog__pane">
+                                <el-tree :data="placeData" node-key="id" :props="treeProps" :show-checkbox="true"
+                                    class="tr-select--tree tr-select--tree__check" :default-checked-keys="placeId"
+                                    :default-expand-all="true" @check="handlePlaceCheck">
+                                </el-tree>
+                            </div>
+                        </el-scrollbar>
+                    </el-tab-pane>
+                </el-tabs>
+
+            </div>
+        </tr-dialog>
+    </div>
+    <!-- 基础 -->
+    <script src="/public/js/bluebird.min.js"></script>
+    <script src="/public/js/vue.min.js"></script>
+    <script src="/public/element-ui-2.15.9/index.js"></script>
+    <script src="/public/js/jquery-3.3.1.min.js"></script>
+    <script src="/public/js/moment.min.js"></script>
+    <script src="/public/js/config/config.js"></script>
+    <script src="/public/js/common/vue-common-util.js"></script>
+    <script src="/public/js/common/vue-ajax.js"></script>
+    <script src="/public/js/common/iframe.js"></script>
+
+    <!-- 翻译 -->
+    <script src="/public/locales/vue-i18n.js"></script>
+    <script src="/public/element-ui-2.15.9/locale/lang/zh-CN.js" ></script>
+    <script src="/public/element-ui-2.15.9/locale/lang/en.js" ></script>
+    <script src="/public/locales/i18n-config.js" ></script>
+    <script src="/public/locales/i18n-all.js" ></script>
+
+    <script src="/public/js/components/common.js"></script>
+    <script src="/public/js/echarts.min.js"></script>
+    <script src="/public/js/websocket/sockjs.min.js"></script>
+    <script src="/public/js/websocket/stomp.min.js"></script>
+ 
+
+    <!-- 当前 -->
+    <script src="/public/js/components/template/DragDrop.js"></script>
+    <script src="/public/js/admin/control/index.js"></script>
+</body>
+
+</html>
